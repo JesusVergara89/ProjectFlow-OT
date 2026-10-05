@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listar, guardar, borrar, suscribir } from "./db.js";
 
-/** Estado de los proyectos: carga inicial, tiempo real y escritura optimista. */
 export function useProyectos(activo) {
   const [items, setItems] = useState([]);
   const [listo, setListo] = useState(false);

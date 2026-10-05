@@ -6,7 +6,7 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const configurado = Boolean(url && key);
 export const supabase = configurado ? createClient(url, key) : null;
 
-/* La app usa camelCase; la tabla usa snake_case. */
+
 const aApp = r => ({
   id: r.id,
   nombre: r.nombre,
@@ -57,7 +57,7 @@ export async function borrar(id) {
   if (error) throw error;
 }
 
-/** Avisa cuando cualquier persona cambia un proyecto. Devuelve la función para cancelar la suscripción. */
+
 export function suscribir(alCambiar) {
   const canal = supabase
     .channel("proyectos-cambios")

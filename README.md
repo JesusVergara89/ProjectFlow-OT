@@ -23,7 +23,7 @@ Para publicar: `npm run build` genera la carpeta `dist/`, que sirve en Vercel, N
 
 | Archivo | Qué contiene |
 | --- | --- |
-| `src/flow.js` | Las 7 fases y los 38 pasos, con sus decisiones y destinos. Para cambiar el flujo, edita solo este archivo. |
+| `src/flow.js` | Las 7 fases y los 38 pasos, con sus decisiones y destinos. Para cambiar el flujo, solo se edita este archivo. |
 | `src/reglas.js` | `avanzar`, `deshacer`, días en el paso, detenidos y filtros. Son funciones puras. |
 | `src/db.js` | Conexión a Supabase y conversión entre la tabla y la app. |
 | `src/useProyectos.js` | Carga, tiempo real y guardado de proyectos. |

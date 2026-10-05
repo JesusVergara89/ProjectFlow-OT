@@ -1,5 +1,3 @@
--- Ejecuta este script en Supabase: SQL Editor > New query > Run.
-
 create table if not exists public.proyectos (
   id           uuid primary key default gen_random_uuid(),
   nombre       text        not null,
@@ -19,7 +17,6 @@ create table if not exists public.proyectos (
 
 create index if not exists proyectos_estado_paso_idx on public.proyectos (estado, paso);
 
--- Seguridad: solo usuarios con sesión iniciada leen y escriben.
 alter table public.proyectos enable row level security;
 
 drop policy if exists "equipo lee proyectos" on public.proyectos;
@@ -36,5 +33,4 @@ create policy "equipo escribe proyectos"
   using (true)
   with check (true);
 
--- Tiempo real: avisa a todas las pantallas abiertas cuando alguien cambia un proyecto.
 alter publication supabase_realtime add table public.proyectos;

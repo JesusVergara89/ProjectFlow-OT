@@ -35,7 +35,6 @@ export function avanzar(p, eleccion, nota) {
   return q;
 }
 
-/** Revierte el último avance (o el cierre) y devuelve el proyecto actualizado. */
 export function deshacer(p) {
   const q = structuredClone(p);
   const h = q.historial || [];

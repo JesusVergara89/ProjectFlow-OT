@@ -5,10 +5,9 @@ Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: s
 ## Puesta en marcha
 
 1. **Crea el proyecto en Supabase** (supabase.com) y abre *SQL Editor*. Pega y ejecuta `supabase/schema.sql`. Crea la tabla `proyectos`, activa la seguridad por filas y el tiempo real.
-2. **Activa el acceso por correo**: *Authentication > Providers > Email* debe estar habilitado. En *Authentication > URL Configuration* agrega `http://localhost:5173` (y la URL final cuando publiques) como Redirect URL.
+2. **Activa el acceso por correo**: *Authentication > Providers > Email* debe estar habilitado. En *Authentication > URL Configuration* agrega `https://ansycarprojectflow.netlify.app/` (y la URL final cuando publiques) como Redirect URL.
 3. **Copia las claves**: en *Project Settings > API* toma la URL y la clave `anon`.
    ```bash
-   cp .env.example .env
    # edita .env con esos dos valores
    ```
 4. **Instala y arranca**:
@@ -16,7 +15,7 @@ Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: s
    npm install
    npm run dev
    ```
-   Abre http://localhost:5173, escribe tu correo y entra con el enlace que te llega.
+   Abre https://ansycarprojectflow.netlify.app, escribe tu correo y entra con el enlace que te llega.
 
 Para publicar: `npm run build` genera la carpeta `dist/`, que sirve en Vercel, Netlify o Cloudflare Pages. Ahí mismo configura las dos variables `VITE_SUPABASE_*`.
 

@@ -40,17 +40,21 @@ export function useProyectos(activo) {
   );
 
   const guardarProyecto = useCallback(
-    p => {
+    (p, accion = "editar") => {
       setItems(prev => (prev.some(x => x.id === p.id) ? prev.map(x => (x.id === p.id ? p : x)) : [...prev, p]));
-      encolar(p.id, () => guardar(p));
+      encolar(p.id, async () => {
+        const historial = await guardar(p, accion);
+        // El servidor sella el historial con el autor; reflejarlo de inmediato.
+        if (historial) setItems(prev => prev.map(x => (x.id === p.id ? { ...x, historial } : x)));
+      });
     },
     [encolar]
   );
 
   const quitarProyecto = useCallback(
-    id => {
+    (id, nombre) => {
       setItems(prev => prev.filter(x => x.id !== id));
-      encolar(id, () => borrar(id));
+      encolar(id, () => borrar(id, nombre));
     },
     [encolar]
   );

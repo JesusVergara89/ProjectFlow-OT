@@ -209,3 +209,13 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .login form{display:flex;flex-direction:column;gap:10px}
 .login input{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
 .top-acciones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* Usuario en sesión */
+.top-acciones { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.usuario-chip {
+  font: 500 13px/1 "Barlow", system-ui, sans-serif;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(127,127,127,.14);
+  white-space: nowrap;
+}

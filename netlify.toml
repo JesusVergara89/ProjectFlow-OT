@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# /api/login -> /.netlify/functions/login, etc.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA: todo lo demás sirve el index.html de React.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

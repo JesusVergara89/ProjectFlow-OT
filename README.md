@@ -2,36 +2,88 @@
 
 Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
 
+**Acceso con usuarios propios** (definidos por ti, sin registro) y **bitácora**: cada acción —entrar, crear, editar, avanzar, deshacer, eliminar— queda registrada con quién la hizo y cuándo.
+
+## Cómo funciona la seguridad (importante)
+
+- La app es puro frontend, así que **todo lo que empieza con `VITE_` termina siendo público** (visible en el navegador). Por eso las contraseñas **no** se guardan en variables `VITE_`.
+- El login y la escritura de datos se validan en el **servidor**, con **Netlify Functions**. Ahí sí las variables (sin prefijo `VITE_`) son secretas de verdad.
+- Las contraseñas se guardan **cifradas** (scrypt) dentro de la variable `APP_USERS`. Nunca en texto plano.
+- Con la llave pública (`anon`) la base de datos **solo se puede leer**. Toda escritura pasa por las funciones, que usan la llave secreta `service_role`. Así nadie puede escribir ni borrar saltándose el login, y el rastro de la bitácora no se puede falsificar.
+
 ## Puesta en marcha
 
-1. **Crea el proyecto en Supabase** (supabase.com) y abre *SQL Editor*. Pega y ejecuta `supabase/schema.sql`. Crea la tabla `proyectos`, activa la seguridad por filas y el tiempo real.
-2. **Activa el acceso por correo**: *Authentication > Providers > Email* debe estar habilitado. En *Authentication > URL Configuration* agrega `https://ansycarprojectflow.netlify.app/` (y la URL final cuando publiques) como Redirect URL.
-3. **Copia las claves**: en *Project Settings > API* toma la URL y la clave `anon`.
-   ```bash
-   # edita .env con esos dos valores
-   ```
-4. **Instala y arranca**:
-   ```bash
-   npm install
-   npm run dev
-   ```
-   Abre https://ansycarprojectflow.netlify.app, escribe tu correo y entra con el enlace que te llega.
+### 1. Supabase
+1. Crea el proyecto en [supabase.com](https://supabase.com) y abre **SQL Editor**.
+2. Pega y ejecuta `supabase/schema.sql`. Crea las tablas `proyectos` y `bitacora`, los permisos y el tiempo real.
+3. En **Project Settings > API** toma tres cosas: la **URL**, la llave **anon** (pública) y la llave **service_role** (secreta).
 
-Para publicar: `npm run build` genera la carpeta `dist/`, que sirve en Vercel, Netlify o Cloudflare Pages. Ahí mismo configura las dos variables `VITE_SUPABASE_*`.
+### 2. Genera las credenciales de acceso
+En tu computadora, dentro de la carpeta del proyecto:
+
+```bash
+# un secreto para firmar las sesiones
+node scripts/usuario.mjs --secreto
+
+# una entrada por cada persona que podrá entrar
+node scripts/usuario.mjs ana "ClaveSegura#1" "Ana López" admin
+node scripts/usuario.mjs luis "OtraClave#2" "Luis Pérez"
+```
+
+Junta todas las entradas de usuario en **un solo arreglo JSON** para `APP_USERS`, por ejemplo:
+
+```json
+[{"usuario":"ana","nombre":"Ana López","rol":"admin","hash":"scrypt$...$..."},{"usuario":"luis","nombre":"Luis Pérez","rol":"usuario","hash":"scrypt$...$..."}]
+```
+
+### 3. Variables de entorno en Netlify
+En **Site settings > Environment variables** agrega (mira `.env.example` como guía):
+
+| Variable | Qué es | ¿Secreta? |
+| --- | --- | --- |
+| `VITE_SUPABASE_URL` | URL de Supabase | pública |
+| `VITE_SUPABASE_ANON_KEY` | llave anon | pública |
+| `SUPABASE_URL` | la misma URL, para las funciones | secreta |
+| `SUPABASE_SERVICE_ROLE` | llave service_role | **secreta** |
+| `AUTH_SECRET` | el secreto del paso 2 | **secreta** |
+| `APP_USERS` | el arreglo JSON de usuarios | **secreta** |
+| `SESION_HORAS` | opcional, horas de sesión (12 por defecto) | — |
+
+> Marca las secretas con el candado de Netlify ("Contains secret values"). Eso las oculta en el panel, pero lo que de verdad las protege es que **no** llevan prefijo `VITE_` y solo las leen las funciones.
+
+### 4. Publica
+Netlify detecta `netlify.toml` (build `npm run build`, carpeta `dist`, funciones en `netlify/functions`). Haz deploy y entra con el usuario y contraseña que creaste.
+
+### Probar localmente
+```bash
+npm install
+npm install -g netlify-cli   # una sola vez
+# llena .env con los valores (incluidas las secretas)
+netlify dev                  # levanta el frontend Y las funciones juntas
+```
+> `npm run dev` solo levanta el frontend; el login necesita `netlify dev` para que respondan las funciones `/api/*`.
 
 ## Dónde está cada cosa
 
 | Archivo | Qué contiene |
 | --- | --- |
-| `src/flow.js` | Las 7 fases y los 38 pasos, con sus decisiones y destinos. Para cambiar el flujo, solo se edita este archivo. |
-| `src/reglas.js` | `avanzar`, `deshacer`, días en el paso, detenidos y filtros. Son funciones puras. |
-| `src/db.js` | Conexión a Supabase y conversión entre la tabla y la app. |
-| `src/useProyectos.js` | Carga, tiempo real y guardado de proyectos. |
-| `src/components/` | Tablero, Lista, Flujo, Panel de detalle, formulario nuevo, KPIs, filtros y login. |
-| `supabase/schema.sql` | Tabla, políticas de seguridad y tiempo real. |
+| `netlify/functions/login.js` | Valida usuario/contraseña contra `APP_USERS` y entrega el token de sesión. |
+| `netlify/functions/guardar.js` | Crea/edita proyectos y registra cada cambio en la bitácora. |
+| `netlify/functions/borrar.js` | Elimina proyectos y lo registra en la bitácora. |
+| `netlify/functions/bitacora.js` | Devuelve la actividad registrada. |
+| `netlify/functions/_lib/util.js` | Tokens, cifrado de contraseñas y acceso a Supabase con la llave secreta. |
+| `src/auth.js` | Sesión en el navegador y llamadas a las funciones. |
+| `src/db.js` | Lectura y tiempo real (anon); las escrituras van a las funciones. |
+| `src/components/Login.jsx` | Pantalla de usuario y contraseña. |
+| `src/components/Bitacora.jsx` | Panel con el rastro de actividad. |
+| `src/flow.js` | Las 7 fases y los 38 pasos. Para cambiar el flujo, solo se edita este archivo. |
+| `src/reglas.js` | `avanzar`, `deshacer`, días en el paso, detenidos y filtros. |
+| `scripts/usuario.mjs` | Genera el hash de contraseñas y el `AUTH_SECRET`. |
+| `supabase/schema.sql` | Tablas, permisos y tiempo real. |
 
-## Ajustes habituales
+## Tareas habituales
 
-- **Cuándo se marca un proyecto como detenido**: `umbral` de cada fase en `src/flow.js`, en días. Los valores actuales son un punto de partida.
-- **Quién puede entrar**: las políticas del esquema dejan leer y escribir a cualquier usuario con sesión. Si solo debe entrar tu equipo, desactiva *Allow new users to sign up* en *Authentication > Sign In / Providers* e invita a cada persona desde *Authentication > Users*.
-- **Paso 25 → 27**: el flujo original lleva de "Se coordina depósito y/o realización" directo a "Se ejecuta el servicio", sin pasar por "Se crea plan de calidad" (26). Si el plan de calidad debe hacerse siempre, cambia `A(25, ..., 27)` a `A(25, ..., 26)` en `src/flow.js`.
+- **Agregar o quitar personas**: vuelve a generar `APP_USERS` con `scripts/usuario.mjs` y actualiza la variable en Netlify. No hace falta redesplegar el código, pero sí volver a desplegar para que tome la variable nueva (o usa "Clear cache and deploy").
+- **Cambiar una contraseña**: genera de nuevo esa entrada con el script y reemplázala en `APP_USERS`.
+- **Cuándo se marca un proyecto como detenido**: `umbral` de cada fase en `src/flow.js`, en días.
+- **Paso 25 → 27**: el flujo lleva de "Se coordina depósito y/o realización" directo a "Se ejecuta el servicio", saltando "Se crea plan de calidad" (26). Si el plan de calidad debe hacerse siempre, cambia `A(25, ..., 27)` a `A(25, ..., 26)` en `src/flow.js`.

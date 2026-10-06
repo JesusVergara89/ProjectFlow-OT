@@ -1,3 +1,9 @@
+-- ============================================================
+-- Tablero de Proyectos y OT — esquema de Supabase
+-- Ejecuta todo esto en el SQL Editor de tu proyecto de Supabase.
+-- ============================================================
+
+-- ---------- Proyectos ----------
 create table if not exists public.proyectos (
   id           uuid primary key default gen_random_uuid(),
   nombre       text        not null,
@@ -19,18 +25,43 @@ create index if not exists proyectos_estado_paso_idx on public.proyectos (estado
 
 alter table public.proyectos enable row level security;
 
-drop policy if exists "equipo lee proyectos" on public.proyectos;
+-- Permisos: con la llave pública (anon) SOLO se puede LEER.
+-- Toda escritura entra por las Netlify Functions con la llave service_role,
+-- que ignora RLS. Así nadie puede escribir ni borrar saltándose el login/bitácora.
+drop policy if exists "equipo lee proyectos"     on public.proyectos;
 drop policy if exists "equipo escribe proyectos" on public.proyectos;
+drop policy if exists "lectura proyectos"        on public.proyectos;
 
-create policy "equipo lee proyectos"
+create policy "lectura proyectos"
   on public.proyectos for select
-  to authenticated
+  to anon, authenticated
   using (true);
 
-create policy "equipo escribe proyectos"
-  on public.proyectos for all
-  to authenticated
-  using (true)
-  with check (true);
+-- ---------- Bitácora (rastro de actividad) ----------
+create table if not exists public.bitacora (
+  id              bigint generated always as identity primary key,
+  creado          timestamptz not null default now(),
+  usuario         text        not null,
+  nombre          text,
+  accion          text        not null,
+  proyecto_id     uuid,
+  proyecto_nombre text,
+  detalle         jsonb       not null default '{}'::jsonb
+);
 
+create index if not exists bitacora_creado_idx  on public.bitacora (creado desc);
+create index if not exists bitacora_proyecto_idx on public.bitacora (proyecto_id);
+
+alter table public.bitacora enable row level security;
+
+-- La bitácora se puede LEER con la llave pública (para mostrarla en la app),
+-- pero solo se ESCRIBE desde el servidor (service_role). Nadie la edita ni borra.
+drop policy if exists "lectura bitacora" on public.bitacora;
+create policy "lectura bitacora"
+  on public.bitacora for select
+  to anon, authenticated
+  using (true);
+
+-- ---------- Tiempo real ----------
 alter publication supabase_realtime add table public.proyectos;
+alter publication supabase_realtime add table public.bitacora;

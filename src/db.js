@@ -1,11 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
+import { api } from "./auth.js";
 
+// La llave anon está PENSADA para ser pública: solo permite LEER (ver schema.sql).
+// Toda escritura pasa por las Netlify Functions, que usan la llave secreta service_role.
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const configurado = Boolean(url && key);
 export const supabase = configurado ? createClient(url, key) : null;
-
 
 const aApp = r => ({
   id: r.id,
@@ -24,39 +26,24 @@ const aApp = r => ({
   ejemplo: Boolean(r.ejemplo)
 });
 
-const aDb = p => ({
-  id: p.id,
-  nombre: p.nombre,
-  cliente: p.cliente,
-  responsable: p.responsable || "",
-  prioridad: p.prioridad,
-  monto: p.monto || 0,
-  estado: p.estado,
-  resultado: p.resultado ?? null,
-  paso: p.paso,
-  creado: p.creado,
-  paso_desde: p.pasoDesde,
-  cerrado_en: p.cerradoEn ?? null,
-  historial: p.historial || [],
-  ejemplo: Boolean(p.ejemplo)
-});
-
 export async function listar() {
-  const { data, error } = await supabase.from("proyectos").select("*").order("creado", { ascending: true });
+  const { data, error } = await supabase
+    .from("proyectos")
+    .select("*")
+    .order("creado", { ascending: true });
   if (error) throw error;
   return data.map(aApp);
 }
 
-export async function guardar(p) {
-  const { error } = await supabase.from("proyectos").upsert(aDb(p));
-  if (error) throw error;
+// Escritura por el servidor. Devuelve el historial ya sellado con el autor.
+export async function guardar(p, accion = "editar") {
+  const r = await api("guardar", { proyecto: p, accion });
+  return r.historial;
 }
 
-export async function borrar(id) {
-  const { error } = await supabase.from("proyectos").delete().eq("id", id);
-  if (error) throw error;
+export async function borrar(id, nombre) {
+  await api("borrar", { id, nombre });
 }
-
 
 export function suscribir(alCambiar) {
   const canal = supabase

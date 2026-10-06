@@ -60,7 +60,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const hasta = cerrado && p.resultado === "cerrado" ? FASES.length : fi;
   const historial = p.historial || [];
 
-  const mover = fn => { setNota(""); setBorrar(false); onGuardar(fn(p)); };
+  const mover = (fn, accion) => { setNota(""); setBorrar(false); onGuardar(fn(p), accion); };
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -74,7 +74,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         <span className="pb-n">Proyecto cerrado</span>
         <div className="pb-t">{RES[p.resultado] || "Cerrado"}</div>
         <p className="sig">Cerrado el {fecha(p.cerradoEn)}.</p>
-        <div className="fila"><button type="button" className="btn" onClick={() => mover(deshacer)}>Deshacer cierre</button></div>
+        <div className="fila"><button type="button" className="btn" onClick={() => mover(deshacer, "deshacer")}>Deshacer cierre</button></div>
       </div>
     );
   } else {
@@ -101,7 +101,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                   type="button"
                   id={"d-" + v}
                   className={"dbtn" + (atras ? " back" : "")}
-                  onClick={() => mover(q => avanzar(q, v, nota.trim()))}
+                  onClick={() => mover(q => avanzar(q, v, nota.trim()), "avanzar")}
                 >
                   <b>{v === "si" ? "Sí" : "No"}</b>
                   <span>{atras ? "↩ Regresa al paso " : "→ Paso "}{a}: {PASOS[a].txt}</span>
@@ -117,14 +117,14 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 : `Siguiente: paso ${pa.next} · ${PASOS[pa.next].txt}`}
             </p>
             <div className="fila">
-              <button type="button" id="d-completar" className="btn primary" onClick={() => mover(q => avanzar(q, null, nota.trim()))}>
+              <button type="button" id="d-completar" className="btn primary" onClick={() => mover(q => avanzar(q, null, nota.trim()), "avanzar")}>
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}
               </button>
             </div>
           </>
         )}
         {historial.length > 0 && (
-          <div className="fila"><button type="button" className="btn ghost" onClick={() => mover(deshacer)}>Deshacer último avance</button></div>
+          <div className="fila"><button type="button" className="btn ghost" onClick={() => mover(deshacer, "deshacer")}>Deshacer último avance</button></div>
         )}
       </div>
     );
@@ -187,6 +187,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                     <b>{e.p}</b> {PASOS[e.p]?.txt}
                     {e.d && <> <span className={"v v-" + e.d}>{e.d === "si" ? "Sí" : "No"}</span></>}
                   </span>
+                  {(e.nombre || e.u) && <p className="h-n">por {e.nombre || e.u}</p>}
                   {e.n && <p className="h-n">{e.n}</p>}
                 </div>
               </li>

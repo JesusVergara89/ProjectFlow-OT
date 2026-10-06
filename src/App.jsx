@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
+import { sesion as leerSesion, salir } from "./auth.js";
 import Kpis from "./components/Kpis.jsx";
 import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
@@ -8,6 +9,8 @@ import Lista from "./components/Lista.jsx";
 import Flujo from "./components/Flujo.jsx";
 import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
+import Login from "./components/Login.jsx";
+import Bitacora from "./components/Bitacora.jsx";
 
 const VISTAS = [
   ["tablero", "Tablero"],
@@ -31,8 +34,9 @@ const escribir = (k, v) => {
   }
 };
 
-function Tablas() {
+function Tablas({ usuario, onSalir }) {
   const { items, listo, error, setError, guardar, quitar } = useProyectos(true);
+  const [verBitacora, setVerBitacora] = useState(false);
 
   const [vista, setVista] = useState(() =>
     ["tablero", "lista", "flujo"].includes(leer("vista"))
@@ -145,11 +149,22 @@ function Tablas() {
         <div className="top-acciones">
           <button
             type="button"
+            className="btn"
+            onClick={() => setVerBitacora(true)}
+          >
+            Bitácora
+          </button>
+          <button
+            type="button"
             className="btn primary"
             onClick={() => setPanel({ tipo: "nuevo" })}
           >
             Nuevo proyecto
           </button>
+          <span className="usuario-chip" title={"Rol: " + (usuario?.rol || "usuario")}>
+            {usuario?.nombre || usuario?.usuario}
+          </span>
+          <button type="button" className="btn ghost" onClick={onSalir}>Salir</button>
         </div>
       </header>
 
@@ -182,7 +197,7 @@ function Tablas() {
               onClick={() =>
                 items
                   .filter(p => p.ejemplo)
-                  .forEach(p => quitar(p.id))
+                  .forEach(p => quitar(p.id, p.nombre))
               }
             >
               Quitar ejemplos
@@ -303,7 +318,7 @@ function Tablas() {
           onGuardar={guardar}
           onEliminar={id => {
             setPanel(null);
-            quitar(id);
+            quitar(id, proyectoAbierto.nombre);
           }}
           onCerrar={cerrarPanel}
         />
@@ -315,7 +330,7 @@ function Tablas() {
           responsables={responsables}
           onCerrar={cerrarPanel}
           onCrear={p => {
-            guardar(p);
+            guardar(p, "crear");
 
             setPanel({
               tipo: "detalle",
@@ -325,10 +340,30 @@ function Tablas() {
         />
       )}
 
+      {verBitacora && <Bitacora onCerrar={() => setVerBitacora(false)} />}
+
     </div>
   );
 }
 
 export default function App() {
-  return <Tablas />;
+  const [usuario, setUsuario] = useState(() => leerSesion());
+
+  useEffect(() => {
+    const alExpirar = () => setUsuario(null);
+    window.addEventListener("tpo:sesion-expirada", alExpirar);
+    return () => window.removeEventListener("tpo:sesion-expirada", alExpirar);
+  }, []);
+
+  if (!usuario) return <Login onEntrar={setUsuario} />;
+
+  return (
+    <Tablas
+      usuario={usuario}
+      onSalir={() => {
+        salir();
+        setUsuario(null);
+      }}
+    />
+  );
 }

@@ -2,9 +2,9 @@
 
 Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
 
-**Acceso con usuarios propios** (definidos por ti, sin registro) y **bitácora**: cada acción —entrar, crear, editar, avanzar, deshacer, eliminar— queda registrada con quién la hizo y cuándo.
+**Acceso con usuarios propios** (sin registro) y **bitácora**: cada acción —entrar, crear, editar, avanzar, deshacer, eliminar— queda registrada con quién la hizo y cuándo.
 
-## Cómo funciona la seguridad (importante)
+## ¿Cómo funciona la seguridad?
 
 - La app es puro frontend, así que **todo lo que empieza con `VITE_` termina siendo público** (visible en el navegador). Por eso las contraseñas **no** se guardan en variables `VITE_`.
 - El login y la escritura de datos se validan en el **servidor**, con **Netlify Functions**. Ahí sí las variables (sin prefijo `VITE_`) son secretas de verdad.
@@ -13,30 +13,10 @@ Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: s
 
 ## Puesta en marcha
 
-### 1. Supabase
-1. Crea el proyecto en [supabase.com](https://supabase.com) y abre **SQL Editor**.
-2. Pega y ejecuta `supabase/schema.sql`. Crea las tablas `proyectos` y `bitacora`, los permisos y el tiempo real.
-3. En **Project Settings > API** toma tres cosas: la **URL**, la llave **anon** (pública) y la llave **service_role** (secreta).
-
-### 2. Genera las credenciales de acceso
-En tu computadora, dentro de la carpeta del proyecto:
-
-```bash
 # un secreto para firmar las sesiones
 node scripts/usuario.mjs --secreto
 
-# una entrada por cada persona que podrá entrar
-node scripts/usuario.mjs ana "ClaveSegura#1" "Ana López" admin
-node scripts/usuario.mjs luis "OtraClave#2" "Luis Pérez"
-```
-
-Junta todas las entradas de usuario en **un solo arreglo JSON** para `APP_USERS`, por ejemplo:
-
-```json
-[{"usuario":"ana","nombre":"Ana López","rol":"admin","hash":"scrypt$...$..."},{"usuario":"luis","nombre":"Luis Pérez","rol":"usuario","hash":"scrypt$...$..."}]
-```
-
-### 3. Variables de entorno en Netlify
+### 1. Variables de entorno en Netlify
 En **Site settings > Environment variables** agrega (mira `.env.example` como guía):
 
 | Variable | Qué es | ¿Secreta? |
@@ -51,7 +31,7 @@ En **Site settings > Environment variables** agrega (mira `.env.example` como gu
 
 > Marca las secretas con el candado de Netlify ("Contains secret values"). Eso las oculta en el panel, pero lo que de verdad las protege es que **no** llevan prefijo `VITE_` y solo las leen las funciones.
 
-### 4. Publica
+### 3. Publica
 Netlify detecta `netlify.toml` (build `npm run build`, carpeta `dist`, funciones en `netlify/functions`). Haz deploy y entra con el usuario y contraseña que creaste.
 
 ### Probar localmente

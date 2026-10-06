@@ -219,3 +219,27 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   background: rgba(127,127,127,.14);
   white-space: nowrap;
 }
+
+/* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */
+:root{ --viol:#6B3FA0; --viol-soft:#ECE3F7; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --viol:#C4A2E8; --viol-soft:#2A1E3D; } }
+:root[data-theme="dark"]{ --viol:#C4A2E8; --viol-soft:#2A1E3D; }
+
+.card.alerta-rojo{ background:var(--crit-soft); border-color:var(--crit); }
+.card.alerta-ambar{ background:var(--warn-soft); border-color:var(--warn); }
+.card.alerta-morado{ background:var(--viol-soft); border-color:var(--viol); }
+.card.alerta-rojo:hover{ border-color:var(--crit); }
+.card.alerta-ambar:hover{ border-color:var(--warn); }
+.card.alerta-morado:hover{ border-color:var(--viol); }
+
+tr.alerta-rojo td{ background:var(--crit-soft); }
+tr.alerta-ambar td{ background:var(--warn-soft); }
+tr.alerta-morado td{ background:var(--viol-soft); }
+
+/* Leyenda de colores */
+.leyenda{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:12px; font-size:12px; color:var(--muted); }
+.leyenda span{ display:inline-flex; align-items:center; gap:6px; }
+.pt{ width:11px; height:11px; border-radius:3px; display:inline-block; }
+.pt-rojo{ background:var(--crit); }
+.pt-ambar{ background:var(--warn); }
+.pt-morado{ background:var(--viol); }

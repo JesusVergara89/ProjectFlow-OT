@@ -1,5 +1,5 @@
 import { money, norm } from "../format.js";
-import { paso, RES, dias, detenido, diasTxt } from "../reglas.js";
+import { paso, RES, dias, detenido, diasTxt, alerta, MOTIVO } from "../reglas.js";
 
 const valor = {
   nombre: p => norm(p.nombre),
@@ -56,8 +56,9 @@ export default function Lista({ items, orden, onOrden, onAbrir }) {
           )}
           {filas.map(p => {
             const pa = paso(p);
+            const al = alerta(p);
             return (
-              <tr key={p.id} onClick={() => onAbrir(p.id)}>
+              <tr key={p.id} className={al ? "alerta-" + al : ""} title={al ? MOTIVO[al] : undefined} onClick={() => onAbrir(p.id)}>
                 <td>
                   <button
                     type="button"

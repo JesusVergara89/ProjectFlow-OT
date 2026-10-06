@@ -1,12 +1,19 @@
 import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
-import { paso, prioDe, PRIO, dias, detenido, diasTxt } from "../reglas.js";
+import { paso, prioDe, PRIO, dias, detenido, diasTxt, alerta, MOTIVO } from "../reglas.js";
 
 function Tarjeta({ p, onAbrir }) {
   const pa = paso(p);
   const det = detenido(p);
+  const al = alerta(p);
   return (
-    <button type="button" className="card" data-proyecto={p.id} onClick={() => onAbrir(p.id)}>
+    <button
+      type="button"
+      className={"card" + (al ? " alerta-" + al : "")}
+      title={al ? MOTIVO[al] : undefined}
+      data-proyecto={p.id}
+      onClick={() => onAbrir(p.id)}
+    >
       <span className="c-top">
         <span className="c-nombre">{p.nombre}</span>
         {p.ejemplo && <span className="tag">Ejemplo</span>}
@@ -25,6 +32,12 @@ function Tarjeta({ p, onAbrir }) {
 export default function Tablero({ items, onAbrir }) {
   const masAntiguoPrimero = (a, b) => Date.parse(a.pasoDesde) - Date.parse(b.pasoDesde);
   return (
+    <>
+    <div className="leyenda" aria-label="Significado de los colores">
+      <span><i className="pt pt-rojo" /> +5 días sin autorizar</span>
+      <span><i className="pt pt-ambar" /> +6 días en planeación</span>
+      <span><i className="pt pt-morado" /> +21 días hábiles sin entregar reporte</span>
+    </div>
     <div className="board">
       {FASES.map((f, i) => {
         const col = items.filter(p => paso(p).fase === f).sort(masAntiguoPrimero);
@@ -46,5 +59,6 @@ export default function Tablero({ items, onAbrir }) {
         );
       })}
     </div>
+    </>
   );
 }

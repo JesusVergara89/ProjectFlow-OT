@@ -46,7 +46,7 @@ export const PERMISOS = {
 };
 
 export function puedeConPaso(usuario, rol, n) {
-  if (rol === "admin") return true; // el admin puede con todo
+  if (rol === "admin" || rol === "yuli") return true; // el admin puede con todo
   const u = String(usuario || "").toLowerCase();
   const permitidos = PERMISOS[n];
   if (!permitidos || !permitidos.length) return false;

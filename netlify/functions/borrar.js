@@ -22,7 +22,17 @@ export default async function handler(req) {
   try {
     previo = await sbLeerProyecto(id);
   } catch {
-    /* si no se puede leer, igual se intenta borrar */
+    /* si no se puede leer, se decide el permiso con lo que haya */
+  }
+
+  // Solo el autor del proyecto o un admin pueden eliminarlo.
+  const autor = (previo?.creado_por || "").toLowerCase();
+  const esAutor = autor && autor === String(sesion.usuario).toLowerCase();
+  if (sesion.rol !== "admin" && !esAutor) {
+    return json(
+      { error: "Solo quien creó el proyecto o un administrador pueden eliminarlo." },
+      403
+    );
   }
 
   try {

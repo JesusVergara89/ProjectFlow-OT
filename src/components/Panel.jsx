@@ -68,6 +68,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n);
+  const puedoEliminar =
+    yo.rol === "admin" ||
+    (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = alc.trim() && req.trim() && enviado;
   const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
@@ -247,7 +250,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           </ol>
         </div>
 
-        {borrar ? (
+        {puedoEliminar && (borrar ? (
           <div className="borrar">
             <p>¿Eliminar «{p.nombre}»? No se puede deshacer.</p>
             <div className="fila">
@@ -259,7 +262,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           <div className="fila">
             <button type="button" className="btn ghost danger-t" onClick={() => setBorrar(true)}>Eliminar proyecto</button>
           </div>
-        )}
+        ))}
       </div>
     </Lateral>
   );

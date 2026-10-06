@@ -95,6 +95,8 @@ export default async function handler(req) {
   }
 
   const fila = aDb({ ...p, historial });
+  // Al crear, el servidor marca quién fue el autor (no se confía en el cliente).
+  if (accion === "crear") fila.creado_por = sesion.usuario;
 
   try {
     await sbUpsertProyecto(fila);

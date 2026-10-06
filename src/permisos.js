@@ -13,7 +13,7 @@ export const PERMISOS = {
   6: ["leonardo", "german"],
   7: ["leonardo", "german"],
   8: ["leonardo", "german"],
-  9: ["huber"], 
+  9: ["huber"], // ⚠ "huber" no existe en APP_USERS: agrégalo o cámbialo.
   10: ["leonardo", "german"],
   11: COMERCIAL,
   12: COMERCIAL,
@@ -46,7 +46,7 @@ export const PERMISOS = {
 };
 
 export function puedeConPaso(usuario, rol, n) {
-  if (rol === "admin" || rol === "yuli") return true; // el admin puede con todo
+  // El admin también respeta la tabla (solo puede los pasos donde esté listado).
   const u = String(usuario || "").toLowerCase();
   const permitidos = PERMISOS[n];
   if (!permitidos || !permitidos.length) return false;

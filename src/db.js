@@ -23,7 +23,8 @@ const aApp = r => ({
   pasoDesde: r.paso_desde,
   cerradoEn: r.cerrado_en || undefined,
   historial: r.historial || [],
-  ejemplo: Boolean(r.ejemplo)
+  ejemplo: Boolean(r.ejemplo),
+  creadoPor: r.creado_por || ""
 });
 
 export async function listar() {

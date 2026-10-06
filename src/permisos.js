@@ -1,9 +1,5 @@
-// ¿Quién puede COMPLETAR/avanzar cada paso? (por número de paso del flujo de 38)
-// Usuarios en minúsculas. El rol "admin" puede completar cualquier paso (evita bloqueos).
-// Para cambiar permisos, edita este archivo.
-
 const COMERCIAL = ["monse", "paola", "miriam", "cristina", "edgar"];
-
+ 
 export const PERMISOS = {
   1: COMERCIAL,
   2: COMERCIAL,
@@ -13,7 +9,7 @@ export const PERMISOS = {
   6: ["leonardo", "german"],
   7: ["leonardo", "german"],
   8: ["leonardo", "german"],
-  9: ["huber"], // ⚠ "huber" no existe en APP_USERS: agrégalo o cámbialo.
+  9: ["huber"],
   10: ["leonardo", "german"],
   11: COMERCIAL,
   12: COMERCIAL,
@@ -44,15 +40,15 @@ export const PERMISOS = {
   37: ["yuli", "lupita"], // Se programa pago de factura
   38: ["yuli", "lupita"]  // Se paga factura y cierre de OT
 };
-
+ 
 export function puedeConPaso(usuario, rol, n) {
-  // El admin también respeta la tabla (solo puede los pasos donde esté listado).
   const u = String(usuario || "").toLowerCase();
+  if (rol === "admin" || u === "yuli") return true; // admin y yuli pueden con todo
   const permitidos = PERMISOS[n];
   if (!permitidos || !permitidos.length) return false;
   return permitidos.includes(u);
 }
-
+ 
 export function etiquetaPermiso(n) {
   const permitidos = PERMISOS[n] || [];
   return permitidos.length ? permitidos.join(", ") : "nadie configurado";

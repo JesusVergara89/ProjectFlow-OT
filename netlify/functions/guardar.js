@@ -1,6 +1,7 @@
 import {
   json, usuarioDe, sbLeerProyecto, sbUpsertProyecto, sbInsertarBitacora
 } from "./_lib/util.js";
+import { puedeConPaso, etiquetaPermiso } from "../../src/permisos.js";
 
 // app -> columnas de la tabla
 const aDb = p => ({
@@ -48,6 +49,17 @@ export default async function handler(req) {
     }
   } catch (e) {
     return json({ error: "No se pudo leer el proyecto (" + e.message + ")" }, 502);
+  }
+
+  // Permiso por paso: solo ciertas personas pueden avanzar o deshacer cada paso.
+  if ((accion === "avanzar" || accion === "deshacer") && previo) {
+    const pasoAccion = previo.paso;
+    if (!puedeConPaso(sesion.usuario, sesion.rol, pasoAccion)) {
+      return json(
+        { error: `No tienes permiso para completar el paso ${pasoAccion}. Solo pueden: ${etiquetaPermiso(pasoAccion)}.` },
+        403
+      );
+    }
   }
 
   const historial = Array.isArray(p.historial) ? [...p.historial] : [];

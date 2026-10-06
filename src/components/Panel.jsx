@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
 import { fecha, hora } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
+import { puedeConPaso, etiquetaPermiso } from "../permisos.js";
+import { sesion } from "../auth.js";
 
 /** Campo de texto que guarda al salir del campo (no en cada tecla). */
 function Campo({ id, etiqueta, valor, onGuardar, tipo = "text", completo, ...resto }) {
@@ -64,6 +66,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const historial = p.historial || [];
 
   const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
+  const yo = sesion() || {};
+  const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n);
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = alc.trim() && req.trim() && enviado;
   const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
@@ -80,7 +84,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         <span className="pb-n">Proyecto cerrado</span>
         <div className="pb-t">{RES[p.resultado] || "Cerrado"}</div>
         <p className="sig">Cerrado el {fecha(p.cerradoEn)}.</p>
-        <div className="fila"><button type="button" className="btn" onClick={() => mover(deshacer, "deshacer")}>Deshacer cierre</button></div>
+        <div className="fila"><button type="button" className="btn" disabled={!puedo} onClick={() => mover(deshacer, "deshacer")}>Deshacer cierre</button></div>
       </div>
     );
   } else {
@@ -113,6 +117,11 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
             <input id="d-nota" type="text" maxLength={160} value={nota} onChange={e => setNota(e.target.value)} />
           </div>
         )}
+        {!puedo && (
+          <p className="sig" style={{ color: "var(--crit)" }}>
+            Solo pueden completar este paso: {etiquetaPermiso(pa.n)}.
+          </p>
+        )}
         {pa.tipo === "decision" ? (
           <div className="opciones">
             {["si", "no"].map(v => {
@@ -124,6 +133,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                   type="button"
                   id={"d-" + v}
                   className={"dbtn" + (atras ? " back" : "")}
+                  disabled={!puedo}
                   onClick={() => mover(q => avanzar(q, v, nota.trim()), "avanzar")}
                 >
                   <b>{v === "si" ? "Sí" : "No"}</b>
@@ -149,7 +159,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={esPaso10 && !paso10Valido}
+                disabled={!puedo || (esPaso10 && !paso10Valido)}
                 onClick={() =>
                   esPaso10
                     ? mover(q => avanzar(q, null, notaPaso10), "avanzar")
@@ -162,7 +172,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           </>
         )}
         {historial.length > 0 && (
-          <div className="fila"><button type="button" className="btn ghost" onClick={() => mover(deshacer, "deshacer")}>Deshacer último avance</button></div>
+          <div className="fila"><button type="button" className="btn ghost" disabled={!puedo} onClick={() => mover(deshacer, "deshacer")}>Deshacer último avance</button></div>
         )}
       </div>
     );

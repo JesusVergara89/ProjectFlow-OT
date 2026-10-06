@@ -243,3 +243,9 @@ tr.alerta-morado td{ background:var(--viol-soft); }
 .pt-rojo{ background:var(--crit); }
 .pt-ambar{ background:var(--warn); }
 .pt-morado{ background:var(--viol); }
+
+/* Paso 10: evidencias obligatorias */
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--fg); cursor:pointer; }
+.chk input{ margin-top:2px; }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.btn:disabled:hover{ border-color:var(--accent); }

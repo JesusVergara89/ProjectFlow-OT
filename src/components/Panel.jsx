@@ -54,13 +54,19 @@ export function Lateral({ onCerrar, children }) {
 export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const [nota, setNota] = useState("");
   const [borrar, setBorrar] = useState(false);
+  const [alc, setAlc] = useState("");
+  const [req, setReq] = useState("");
+  const [enviado, setEnviado] = useState(false);
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
   const cerrado = p.estado === "cerrado";
   const hasta = cerrado && p.resultado === "cerrado" ? FASES.length : fi;
   const historial = p.historial || [];
 
-  const mover = (fn, accion) => { setNota(""); setBorrar(false); onGuardar(fn(p), accion); };
+  const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
+  const esPaso10 = !cerrado && pa.n === 10;
+  const paso10Valido = alc.trim() && req.trim() && enviado;
+  const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -86,10 +92,27 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           </span>
           <div className="pb-t">{pa.txt}</div>
         </div>
-        <div className="campo">
-          <label htmlFor="d-nota">Nota para el historial (opcional)</label>
-          <input id="d-nota" type="text" maxLength={160} value={nota} onChange={e => setNota(e.target.value)} />
-        </div>
+        {esPaso10 ? (
+          <div className="campos">
+            <div className="campo full">
+              <label htmlFor="d-alc">Número(s) de alcances</label>
+              <input id="d-alc" type="text" maxLength={120} placeholder="Ej. 1024, 1025" value={alc} onChange={e => setAlc(e.target.value)} />
+            </div>
+            <div className="campo full">
+              <label htmlFor="d-req">Número(s) de requisiciones</label>
+              <input id="d-req" type="text" maxLength={120} placeholder="Ej. R-501, R-502" value={req} onChange={e => setReq(e.target.value)} />
+            </div>
+            <label className="chk full">
+              <input type="checkbox" checked={enviado} onChange={e => setEnviado(e.target.checked)} />
+              <span>Confirmo que se enviaron por correo los alcances y requisiciones a comercial.</span>
+            </label>
+          </div>
+        ) : (
+          <div className="campo">
+            <label htmlFor="d-nota">Nota para el historial (opcional)</label>
+            <input id="d-nota" type="text" maxLength={160} value={nota} onChange={e => setNota(e.target.value)} />
+          </div>
+        )}
         {pa.tipo === "decision" ? (
           <div className="opciones">
             {["si", "no"].map(v => {
@@ -116,8 +139,23 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 ? `Al completarlo, el proyecto se cierra como «${RES[pa.fin]}».`
                 : `Siguiente: paso ${pa.next} · ${PASOS[pa.next].txt}`}
             </p>
+            {esPaso10 && !paso10Valido && (
+              <p className="sig" style={{ color: "var(--warn)" }}>
+                Captura los números de alcances y requisiciones y confirma el envío por correo para poder avanzar.
+              </p>
+            )}
             <div className="fila">
-              <button type="button" id="d-completar" className="btn primary" onClick={() => mover(q => avanzar(q, null, nota.trim()), "avanzar")}>
+              <button
+                type="button"
+                id="d-completar"
+                className="btn primary"
+                disabled={esPaso10 && !paso10Valido}
+                onClick={() =>
+                  esPaso10
+                    ? mover(q => avanzar(q, null, notaPaso10), "avanzar")
+                    : mover(q => avanzar(q, null, nota.trim()), "avanzar")
+                }
+              >
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}
               </button>
             </div>

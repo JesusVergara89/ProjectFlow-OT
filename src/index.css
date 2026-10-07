@@ -221,8 +221,6 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 }
 
 /* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */
-/* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */
-
 :root{
   --viol:#6B3FA0;
   --viol-soft:#ECE3F7;

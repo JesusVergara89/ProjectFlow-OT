@@ -28,7 +28,7 @@ export const PERMISOS = {
   25: ["leonardo"], // Se coordina depósito y/o realización
   26: ["leonardo"], // Se crea plan de calidad
   27: ["leonardo"], // Se ejecuta el servicio
-  28: ["leonardo"], // Se entrega documentación
+  28: ["admin"], // Se entrega documentación
   29: ["leonardo"], // Se realiza el cierre parcial de la OT
   30: COMERCIAL,    // ¿Se ocupa reporte para facturar?
   31: ["german"],   // Se elabora reporte técnico

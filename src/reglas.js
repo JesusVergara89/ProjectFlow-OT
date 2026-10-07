@@ -50,7 +50,7 @@ export function entroFase(p) {
 }
 
 // Límites de tiempo (en días). Cámbialos aquí si necesitas otros valores.
-export const LIMITES = { autorizacion: 5, planeacion: 6, reporteHabiles: 21 };
+export const LIMITES = { autorizacion: 5, planeacion: 6, reporteHabiles: 21, entregaDocumentación: 1 };
 
 // Tipo de alerta de la tarjeta por tiempo excedido: null | "rojo" | "ambar" | "morado".
 export function alerta(p) {
@@ -59,13 +59,15 @@ export function alerta(p) {
   if (n < 13 && diasDesde(p.creado) > LIMITES.autorizacion) return "rojo";
   if (n >= 17 && n <= 23 && diasDesde(entroFase(p)) > LIMITES.planeacion) return "ambar";
   if (n >= 30 && n <= 35 && diasHabilesDesde(entroFase(p)) > LIMITES.reporteHabiles) return "morado";
+  if (n === 28 && diasHabilesDesde(entroFase(p)) > LIMITES.entregaDocumentación) return "naranja";
   return null;
 }
 
 export const MOTIVO = {
   rojo: "Más de 5 días desde la solicitud sin llegar a autorización (paso 13)",
   ambar: "Más de 6 días en planeación sin programar el servicio",
-  morado: "Más de 21 días hábiles sin entregar el reporte"
+  morado: "Más de 21 días hábiles sin entregar el reporte",
+  naranja: "Más de 1 día hábil sin entregar la documentación al cliente",
 };
 
 /** Completa el paso actual (con "si"/"no" si es una decisión) y devuelve el proyecto actualizado. */

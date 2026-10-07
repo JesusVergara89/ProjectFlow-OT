@@ -221,20 +221,91 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 }
 
 /* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */
-:root{ --viol:#6B3FA0; --viol-soft:#ECE3F7; }
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --viol:#C4A2E8; --viol-soft:#2A1E3D; } }
-:root[data-theme="dark"]{ --viol:#C4A2E8; --viol-soft:#2A1E3D; }
+/* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */
 
-.card.alerta-rojo{ background:var(--crit-soft); border-color:var(--crit); }
-.card.alerta-ambar{ background:var(--warn-soft); border-color:var(--warn); }
-.card.alerta-morado{ background:var(--viol-soft); border-color:var(--viol); }
-.card.alerta-rojo:hover{ border-color:var(--crit); }
-.card.alerta-ambar:hover{ border-color:var(--warn); }
-.card.alerta-morado:hover{ border-color:var(--viol); }
+:root{
+  --viol:#6B3FA0;
+  --viol-soft:#ECE3F7;
 
-tr.alerta-rojo td{ background:var(--crit-soft); }
-tr.alerta-ambar td{ background:var(--warn-soft); }
-tr.alerta-morado td{ background:var(--viol-soft); }
+  /* NUEVO: naranja */
+  --naranja:#C65D00;
+  --naranja-soft:#FBE3CC;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --viol:#C4A2E8;
+    --viol-soft:#2A1E3D;
+
+    /* NUEVO: naranja */
+    --naranja:#FFB36B;
+    --naranja-soft:#3D2818;
+  }
+}
+
+:root[data-theme="dark"]{
+  --viol:#C4A2E8;
+  --viol-soft:#2A1E3D;
+
+  /* NUEVO: naranja */
+  --naranja:#FFB36B;
+  --naranja-soft:#3D2818;
+}
+
+.card.alerta-rojo{
+  background:var(--crit-soft);
+  border-color:var(--crit);
+}
+
+.card.alerta-ambar{
+  background:var(--warn-soft);
+  border-color:var(--warn);
+}
+
+.card.alerta-morado{
+  background:var(--viol-soft);
+  border-color:var(--viol);
+}
+
+/* NUEVO: tarjeta naranja */
+.card.alerta-naranja{
+  background:var(--naranja-soft);
+  border-color:var(--naranja);
+}
+
+.card.alerta-rojo:hover{
+  border-color:var(--crit);
+}
+
+.card.alerta-ambar:hover{
+  border-color:var(--warn);
+}
+
+.card.alerta-morado:hover{
+  border-color:var(--viol);
+}
+
+/* NUEVO: hover naranja */
+.card.alerta-naranja:hover{
+  border-color:var(--naranja);
+}
+
+tr.alerta-rojo td{
+  background:var(--crit-soft);
+}
+
+tr.alerta-ambar td{
+  background:var(--warn-soft);
+}
+
+tr.alerta-morado td{
+  background:var(--viol-soft);
+}
+
+/* NUEVO: fila naranja */
+tr.alerta-naranja td{
+  background:var(--naranja-soft);
+}
 
 /* Leyenda de colores */
 .leyenda{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:12px; font-size:12px; color:var(--muted); }

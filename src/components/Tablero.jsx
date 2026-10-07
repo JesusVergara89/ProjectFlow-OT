@@ -37,6 +37,7 @@ export default function Tablero({ items, onAbrir }) {
       <span><i className="pt pt-rojo" /> +5 días sin autorizar</span>
       <span><i className="pt pt-ambar" /> +6 días en planeación</span>
       <span><i className="pt pt-morado" /> +21 días hábiles sin entregar reporte</span>
+      <span><i className="pt pt-naranja" /> +1 día hábil sin entregar documentación</span>
     </div>
     <div className="board">
       {FASES.map((f, i) => {

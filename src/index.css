@@ -314,6 +314,7 @@ tr.alerta-naranja td{
 .pt-rojo{ background:var(--crit); }
 .pt-ambar{ background:var(--warn); }
 .pt-morado{ background:var(--viol); }
+.pt-naranja{ background:var(--naranja); }
 
 /* Paso 10: evidencias obligatorias */
 .chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--fg); cursor:pointer; }

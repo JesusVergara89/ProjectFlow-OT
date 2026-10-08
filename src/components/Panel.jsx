@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
 import { fecha, hora } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
-import { puedeConPaso, etiquetaPermiso } from "../permisos.js";
+import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
 import { sesion } from "../auth.js";
 
@@ -60,6 +60,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const [alc, setAlc] = useState("");
   const [req, setReq] = useState("");
   const [enviado, setEnviado] = useState(false);
+  const [respRep, setRespRep] = useState(p.responsableReporte || "");
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
   const cerrado = p.estado === "cerrado";
@@ -77,6 +78,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = alc.trim() && req.trim() && enviado;
   const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
+  const esPasoAsigna = !cerrado && pa.n === PASO_ASIGNA_REPORTE;
+  const asignaValido = !!respRep;
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -98,10 +101,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
       <div className="paso-box">
         <div>
           <span className="pb-n">
-            Paso {pa.n} de 38 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
+            Paso {pa.n} de 40 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
           </span>
           <div className="pb-t">{pa.txt}</div>
         </div>
+        {(pa.n === 32 || pa.n === 34) && p.responsableReporte && (
+          <p className="sig">Responsable de reporte: <b>{p.responsableReporte}</b>.</p>
+        )}
         {esPaso10 ? (
           <div className="campos">
             <div className="campo full">
@@ -116,6 +122,18 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               <input type="checkbox" checked={enviado} onChange={e => setEnviado(e.target.checked)} />
               <span>Confirmo que se enviaron por correo los alcances y requisiciones a comercial.</span>
             </label>
+          </div>
+        ) : esPasoAsigna ? (
+          <div className="campos">
+            <div className="campo full">
+              <label htmlFor="d-resprep">Responsable de hacer el reporte</label>
+              <select id="d-resprep" value={respRep} disabled={!puedo} onChange={e => setRespRep(e.target.value)}>
+                <option value="">Elige a la persona…</option>
+                {REPORTE_ASIGNABLES.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
           </div>
         ) : (
           <div className="campo">
@@ -160,16 +178,23 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 Captura los números de alcances y requisiciones y confirma el envío por correo para poder avanzar.
               </p>
             )}
+            {esPasoAsigna && !asignaValido && (
+              <p className="sig" style={{ color: "var(--warn)" }}>
+                Elige al responsable de hacer el reporte para poder avanzar.
+              </p>
+            )}
             <div className="fila">
               <button
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={!puedo || (esPaso10 && !paso10Valido)}
+                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido)}
                 onClick={() =>
                   esPaso10
                     ? mover(q => avanzar(q, null, notaPaso10), "avanzar")
-                    : mover(q => avanzar(q, null, nota.trim()), "avanzar")
+                    : esPasoAsigna
+                      ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")
+                      : mover(q => avanzar(q, null, nota.trim()), "avanzar")
                 }
               >
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}

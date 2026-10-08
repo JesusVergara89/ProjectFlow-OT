@@ -16,6 +16,7 @@ const aApp = r => ({
   tipo: r.tipo || "",
   area: r.area || "",
   responsable: r.responsable || "",
+  responsableReporte: r.responsable_reporte || "",
   prioridad: r.prioridad,
   monto: Number(r.monto) || 0,
   estado: r.estado,

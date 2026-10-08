@@ -11,12 +11,13 @@ create table if not exists public.proyectos (
   tipo         text        not null default '',  -- tipo de servicio (ver src/servicios.js)
   area         text        not null default '',  -- área derivada: ingenieria | planeacion | comercial
   responsable  text        not null default '',
+  responsable_reporte text  not null default '',  -- quién elabora el reporte (se asigna en el paso 31)
   creado_por   text        not null default '',  -- autor; puede editar el proyecto (además del admin)
   prioridad    text        not null default 'media' check (prioridad in ('alta','media','baja')),
   monto        numeric     not null default 0 check (monto >= 0),
   estado       text        not null default 'activo' check (estado in ('activo','cerrado')),
   resultado    text        check (resultado in ('no-viable','archivado','cerrado')),
-  paso         int         not null default 1 check (paso between 1 and 38),
+  paso         int         not null default 1 check (paso between 1 and 40),
   creado       timestamptz not null default now(),
   paso_desde   timestamptz not null default now(),
   cerrado_en   timestamptz,
@@ -29,6 +30,13 @@ alter table public.proyectos add column if not exists tipo text not null default
 alter table public.proyectos add column if not exists area text not null default '';
 -- Autor del proyecto: define quién (además del admin) puede editarlo.
 alter table public.proyectos add column if not exists creado_por text not null default '';
+-- Responsable del reporte (se asigna en el paso 31).
+alter table public.proyectos add column if not exists responsable_reporte text not null default '';
+
+-- El flujo pasó de 38 a 40 pasos: amplía el rango permitido (esto es repetible/seguro).
+-- La REUBICACIÓN de proyectos en curso va aparte, en supabase/migracion-40-pasos.sql (corre UNA vez).
+alter table public.proyectos drop constraint if exists proyectos_paso_check;
+alter table public.proyectos add  constraint proyectos_paso_check check (paso between 1 and 40);
 
 create index if not exists proyectos_estado_paso_idx on public.proyectos (estado, paso);
 

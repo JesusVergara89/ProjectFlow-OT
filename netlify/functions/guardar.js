@@ -11,6 +11,7 @@ const aDb = p => ({
   tipo: p.tipo || "",
   area: p.area || "",
   responsable: p.responsable || "",
+  responsable_reporte: p.responsableReporte || "",
   prioridad: p.prioridad,
   monto: p.monto || 0,
   estado: p.estado,
@@ -47,7 +48,7 @@ export default async function handler(req) {
   try {
     const r = await sbLeerProyecto(p.id);
     if (r) {
-      previo = { ...r, historial: r.historial || [], pasoDesde: r.paso_desde };
+      previo = { ...r, historial: r.historial || [], pasoDesde: r.paso_desde, responsableReporte: r.responsable_reporte || "" };
     }
   } catch (e) {
     return json({ error: "No se pudo leer el proyecto (" + e.message + ")" }, 502);

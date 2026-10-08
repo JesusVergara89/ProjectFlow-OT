@@ -60,7 +60,7 @@ export function alerta(p) {
   if (n === 9 && diasDesde(p.pasoDesde) > LIMITES.huberPaso9) return "rosa";
   if (n < 13 && diasDesde(p.creado) > LIMITES.autorizacion) return "rojo";
   if (n >= 17 && n <= 23 && diasDesde(entroFase(p)) > LIMITES.planeacion) return "ambar";
-  if (n >= 30 && n <= 35 && diasHabilesDesde(entroFase(p)) > LIMITES.reporteHabiles) return "morado";
+  if (n >= 30 && n <= 37 && diasHabilesDesde(entroFase(p)) > LIMITES.reporteHabiles) return "morado";
   if (n === 28 && diasHabilesDesde(p.pasoDesde) > LIMITES.entregaDocumentación) return "naranja";
   return null;
 }

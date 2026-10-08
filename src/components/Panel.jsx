@@ -69,9 +69,11 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
-  const puedoEliminar =
+  // Solo el admin y quien creó el proyecto pueden editar sus datos o eliminarlo.
+  const puedoEditar =
     yo.rol === "admin" ||
     (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
+  const puedoEliminar = puedoEditar;
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = alc.trim() && req.trim() && enviado;
   const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
@@ -205,14 +207,20 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
 
         <div className="d-sec">
           <h3>Datos del proyecto</h3>
+          {!puedoEditar && (
+            <p className="sig" style={{ color: "var(--warn)" }}>
+              Solo {p.creadoPor || "quien lo creó"} y el administrador pueden editar estos datos.
+            </p>
+          )}
           <div className="campos">
-            <Campo id="d-nombre" etiqueta="Proyecto" valor={p.nombre} completo onGuardar={cambiar("nombre", v => v.trim() || p.nombre)} />
-            <Campo id="d-cliente" etiqueta="Cliente" valor={p.cliente} onGuardar={cambiar("cliente", v => v.trim() || p.cliente)} />
+            <Campo id="d-nombre" etiqueta="Proyecto" valor={p.nombre} completo disabled={!puedoEditar} onGuardar={cambiar("nombre", v => v.trim() || p.nombre)} />
+            <Campo id="d-cliente" etiqueta="Cliente" valor={p.cliente} disabled={!puedoEditar} onGuardar={cambiar("cliente", v => v.trim() || p.cliente)} />
             <div className="campo full">
               <label htmlFor="d-tipo">Tipo de servicio</label>
               <select
                 id="d-tipo"
                 value={p.tipo || ""}
+                disabled={!puedoEditar}
                 onChange={e => {
                   const s = servicioDe(e.target.value);
                   onGuardar({ ...p, tipo: e.target.value, area: s ? s.area : "" });
@@ -229,10 +237,10 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               </select>
               {p.area && <p className="sig">Área: {nombreArea(p.area)} · lo trabaja {AREAS[p.area].usuarios.join(", ")}.</p>}
             </div>
-            <Campo id="d-resp" etiqueta="Responsable" valor={p.responsable || ""} onGuardar={cambiar("responsable", v => v.trim())} />
+            <Campo id="d-resp" etiqueta="Responsable" valor={p.responsable || ""} disabled={!puedoEditar} onGuardar={cambiar("responsable", v => v.trim())} />
             <div className="campo">
               <label htmlFor="d-prio">Prioridad</label>
-              <select id="d-prio" value={prioDe(p)} onChange={e => onGuardar({ ...p, prioridad: e.target.value })}>
+              <select id="d-prio" value={prioDe(p)} disabled={!puedoEditar} onChange={e => onGuardar({ ...p, prioridad: e.target.value })}>
                 {Object.keys(PRIO).map(k => <option key={k} value={k}>{PRIO[k]}</option>)}
               </select>
             </div>
@@ -243,6 +251,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               min="0"
               step="1000"
               inputMode="numeric"
+              disabled={!puedoEditar}
               valor={+p.monto || 0}
               onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.monto) onGuardar({ ...p, monto: n }); return n; }}
             />

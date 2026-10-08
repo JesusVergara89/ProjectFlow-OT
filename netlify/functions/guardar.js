@@ -53,6 +53,19 @@ export default async function handler(req) {
     return json({ error: "No se pudo leer el proyecto (" + e.message + ")" }, 502);
   }
 
+  // Editar datos del proyecto: solo el admin y quien lo creó.
+  if (accion === "editar" && previo) {
+    const creador = String(previo.creado_por || "").toLowerCase();
+    const esAdmin = sesion.rol === "admin";
+    const esCreador = creador && creador === String(sesion.usuario || "").toLowerCase();
+    if (!esAdmin && !esCreador) {
+      return json(
+        { error: "Solo el administrador y quien creó el proyecto pueden editar sus datos." },
+        403
+      );
+    }
+  }
+
   // Permiso por paso: solo ciertas personas pueden avanzar o deshacer cada paso.
   if ((accion === "avanzar" || accion === "deshacer") && previo) {
     const pasoAccion = previo.paso;

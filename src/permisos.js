@@ -30,7 +30,7 @@ export const PERMISOS = {
   7: ["leonardo", "german"],
   8: ["leonardo", "german"],
   9: ["huber"],
-  10: c,
+  10: ["leonardo", "german"],
   11: COMERCIAL,
   12: COMERCIAL,
   13: COMERCIAL,

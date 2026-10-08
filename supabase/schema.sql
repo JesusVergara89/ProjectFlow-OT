@@ -8,6 +8,8 @@ create table if not exists public.proyectos (
   id           uuid primary key default gen_random_uuid(),
   nombre       text        not null,
   cliente      text        not null,
+  tipo         text        not null default '',  -- tipo de servicio (ver src/servicios.js)
+  area         text        not null default '',  -- área derivada: ingenieria | planeacion | comercial
   responsable  text        not null default '',
   prioridad    text        not null default 'media' check (prioridad in ('alta','media','baja')),
   monto        numeric     not null default 0 check (monto >= 0),
@@ -20,6 +22,10 @@ create table if not exists public.proyectos (
   historial    jsonb       not null default '[]'::jsonb,
   ejemplo      boolean     not null default false
 );
+
+-- Si la tabla ya existía, agrega las columnas nuevas (no falla si ya están).
+alter table public.proyectos add column if not exists tipo text not null default '';
+alter table public.proyectos add column if not exists area text not null default '';
 
 create index if not exists proyectos_estado_paso_idx on public.proyectos (estado, paso);
 

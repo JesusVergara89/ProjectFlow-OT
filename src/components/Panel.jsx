@@ -3,6 +3,7 @@ import { FASES, PASOS } from "../flow.js";
 import { fecha, hora } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso } from "../permisos.js";
+import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
 import { sesion } from "../auth.js";
 
 /** Campo de texto que guarda al salir del campo (no en cada tecla). */
@@ -67,7 +68,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
 
   const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
   const yo = sesion() || {};
-  const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n);
+  const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
   const puedoEliminar =
     yo.rol === "admin" ||
     (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
@@ -122,7 +123,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         )}
         {!puedo && (
           <p className="sig" style={{ color: "var(--crit)" }}>
-            Solo pueden completar este paso: {etiquetaPermiso(pa.n)}.
+            Solo pueden completar este paso: {etiquetaPermiso(pa.n, p)}.
           </p>
         )}
         {pa.tipo === "decision" ? (
@@ -207,6 +208,27 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           <div className="campos">
             <Campo id="d-nombre" etiqueta="Proyecto" valor={p.nombre} completo onGuardar={cambiar("nombre", v => v.trim() || p.nombre)} />
             <Campo id="d-cliente" etiqueta="Cliente" valor={p.cliente} onGuardar={cambiar("cliente", v => v.trim() || p.cliente)} />
+            <div className="campo full">
+              <label htmlFor="d-tipo">Tipo de servicio</label>
+              <select
+                id="d-tipo"
+                value={p.tipo || ""}
+                onChange={e => {
+                  const s = servicioDe(e.target.value);
+                  onGuardar({ ...p, tipo: e.target.value, area: s ? s.area : "" });
+                }}
+              >
+                <option value="">Sin asignar</option>
+                {Object.keys(AREAS).map(a => (
+                  <optgroup key={a} label={AREAS[a].nombre}>
+                    {SERVICIOS.filter(s => s.area === a).map(s => (
+                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {p.area && <p className="sig">Área: {nombreArea(p.area)} · lo trabaja {AREAS[p.area].usuarios.join(", ")}.</p>}
+            </div>
             <Campo id="d-resp" etiqueta="Responsable" valor={p.responsable || ""} onGuardar={cambiar("responsable", v => v.trim())} />
             <div className="campo">
               <label htmlFor="d-prio">Prioridad</label>

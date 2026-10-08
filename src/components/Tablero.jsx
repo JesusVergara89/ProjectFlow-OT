@@ -1,11 +1,13 @@
 import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
 import { paso, prioDe, PRIO, dias, detenido, diasTxt, alerta, MOTIVO } from "../reglas.js";
+import { nombreServicio } from "../servicios.js";
 
 function Tarjeta({ p, onAbrir }) {
   const pa = paso(p);
   const det = detenido(p);
   const al = alerta(p);
+  const srv = nombreServicio(p.tipo);
   return (
     <button
       type="button"
@@ -16,6 +18,7 @@ function Tarjeta({ p, onAbrir }) {
     >
       <span className="c-top">
         <span className="c-nombre">{p.nombre}</span>
+        {srv && <span className="tag">{srv}</span>}
         {p.ejemplo && <span className="tag">Ejemplo</span>}
       </span>
       <span className="c-cli">{p.cliente}{p.responsable ? ` · ${p.responsable}` : ""}</span>
@@ -38,6 +41,7 @@ export default function Tablero({ items, onAbrir }) {
       <span><i className="pt pt-ambar" /> +6 días en planeación</span>
       <span><i className="pt pt-morado" /> +21 días hábiles sin entregar reporte</span>
       <span><i className="pt pt-naranja" /> +1 día hábil sin entregar documentación</span>
+      <span><i className="pt pt-rosa" /> Huber +2 días en el paso 9</span>
     </div>
     <div className="board">
       {FASES.map((f, i) => {

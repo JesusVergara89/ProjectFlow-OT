@@ -13,6 +13,8 @@ const aApp = r => ({
   id: r.id,
   nombre: r.nombre,
   cliente: r.cliente,
+  tipo: r.tipo || "",
+  area: r.area || "",
   responsable: r.responsable || "",
   prioridad: r.prioridad,
   monto: Number(r.monto) || 0,

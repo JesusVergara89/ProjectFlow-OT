@@ -1,20 +1,25 @@
 import { useState } from "react";
 import { Lateral } from "./Panel.jsx";
+import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
-  const [f, setF] = useState({ nombre: "", cliente: "", responsable: "", prioridad: "media", monto: "" });
+  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "" });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
+  const srv = servicioDe(f.tipo);
 
   function enviar(e) {
     e.preventDefault();
     if (!f.nombre.trim()) { setError("Escribe el nombre del proyecto."); return; }
     if (!f.cliente.trim()) { setError("Escribe el nombre del cliente."); return; }
+    if (!f.tipo) { setError("Elige el tipo de servicio del proyecto."); return; }
     const ahora = new Date().toISOString();
     onCrear({
       id: crypto.randomUUID(),
       nombre: f.nombre.trim(),
       cliente: f.cliente.trim(),
+      tipo: f.tipo,
+      area: srv ? srv.area : "",
       responsable: f.responsable.trim(),
       prioridad: f.prioridad,
       monto: Math.max(0, +f.monto || 0),
@@ -44,6 +49,20 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
           <div className="campo">
             <label htmlFor="n-cliente">Cliente</label>
             <input id="n-cliente" type="text" list="dl-cli" autoComplete="off" value={f.cliente} onChange={set("cliente")} />
+          </div>
+          <div className="campo full">
+            <label htmlFor="n-tipo">Tipo de servicio</label>
+            <select id="n-tipo" value={f.tipo} onChange={set("tipo")}>
+              <option value="">Elige un servicio…</option>
+              {Object.keys(AREAS).map(a => (
+                <optgroup key={a} label={AREAS[a].nombre}>
+                  {SERVICIOS.filter(s => s.area === a).map(s => (
+                    <option key={s.id} value={s.id}>{s.nombre}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            {srv && <p className="sig">Área: {AREAS[srv.area].nombre} · lo trabaja {AREAS[srv.area].usuarios.join(", ")}.</p>}
           </div>
           <div className="campo">
             <label htmlFor="n-resp">Responsable</label>

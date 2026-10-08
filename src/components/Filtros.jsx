@@ -1,4 +1,5 @@
 import { PASOS } from "../flow.js";
+import { AREAS } from "../servicios.js";
 
 export default function Filtros({ filtros, setFiltro, vista, responsables }) {
   if (vista === "flujo") return null;
@@ -18,6 +19,13 @@ export default function Filtros({ filtros, setFiltro, vista, responsables }) {
         <option value="">Todos los responsables</option>
         {responsables.map(r => (
           <option key={r} value={r}>{r}</option>
+        ))}
+      </select>
+      <label className="sr" htmlFor="f-area">Área</label>
+      <select id="f-area" value={filtros.area || ""} onChange={e => setFiltro({ area: e.target.value })}>
+        <option value="">Todas las áreas</option>
+        {Object.keys(AREAS).map(a => (
+          <option key={a} value={a}>{AREAS[a].nombre}</option>
         ))}
       </select>
       <label className="sr" htmlFor="f-prio">Prioridad</label>

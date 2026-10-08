@@ -228,6 +228,10 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   /* NUEVO: naranja */
   --naranja:#C65D00;
   --naranja-soft:#FBE3CC;
+
+  /* NUEVO: rosa (atraso de Huber en paso 9) */
+  --rosa:#C2186A;
+  --rosa-soft:#FBD9EA;
 }
 
 @media (prefers-color-scheme:dark){
@@ -238,6 +242,10 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
     /* NUEVO: naranja */
     --naranja:#FFB36B;
     --naranja-soft:#3D2818;
+
+    /* NUEVO: rosa */
+    --rosa:#F58EBE;
+    --rosa-soft:#3D1529;
   }
 }
 
@@ -248,6 +256,10 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   /* NUEVO: naranja */
   --naranja:#FFB36B;
   --naranja-soft:#3D2818;
+
+  /* NUEVO: rosa */
+  --rosa:#F58EBE;
+  --rosa-soft:#3D1529;
 }
 
 .card.alerta-rojo{
@@ -271,6 +283,12 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   border-color:var(--naranja);
 }
 
+/* NUEVO: tarjeta rosa */
+.card.alerta-rosa{
+  background:var(--rosa-soft);
+  border-color:var(--rosa);
+}
+
 .card.alerta-rojo:hover{
   border-color:var(--crit);
 }
@@ -286,6 +304,11 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* NUEVO: hover naranja */
 .card.alerta-naranja:hover{
   border-color:var(--naranja);
+}
+
+/* NUEVO: hover rosa */
+.card.alerta-rosa:hover{
+  border-color:var(--rosa);
 }
 
 tr.alerta-rojo td{
@@ -305,6 +328,11 @@ tr.alerta-naranja td{
   background:var(--naranja-soft);
 }
 
+/* NUEVO: fila rosa */
+tr.alerta-rosa td{
+  background:var(--rosa-soft);
+}
+
 /* Leyenda de colores */
 .leyenda{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:12px; font-size:12px; color:var(--muted); }
 .leyenda span{ display:inline-flex; align-items:center; gap:6px; }
@@ -313,6 +341,7 @@ tr.alerta-naranja td{
 .pt-ambar{ background:var(--warn); }
 .pt-morado{ background:var(--viol); }
 .pt-naranja{ background:var(--naranja); }
+.pt-rosa{ background:var(--rosa); }
 
 /* Paso 10: evidencias obligatorias */
 .chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px; color:var(--fg); cursor:pointer; }

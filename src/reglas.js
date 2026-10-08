@@ -50,12 +50,14 @@ export function entroFase(p) {
 }
  
 // Límites de tiempo (en días). Cámbialos aquí si necesitas otros valores.
-export const LIMITES = { autorizacion: 5, planeacion: 6, reporteHabiles: 21, entregaDocumentación: 1 };
+export const LIMITES = { autorizacion: 5, planeacion: 6, reporteHabiles: 21, entregaDocumentación: 1, huberPaso9: 2 };
  
 // Tipo de alerta de la tarjeta por tiempo excedido: null | "rojo" | "ambar" | "morado".
 export function alerta(p) {
   if (p.estado !== "activo") return null;
   const n = p.paso;
+  // Huber tiene 2 días para entregar la información en el paso 9; pasados, se marca rosa.
+  if (n === 9 && diasDesde(p.pasoDesde) > LIMITES.huberPaso9) return "rosa";
   if (n < 13 && diasDesde(p.creado) > LIMITES.autorizacion) return "rojo";
   if (n >= 17 && n <= 23 && diasDesde(entroFase(p)) > LIMITES.planeacion) return "ambar";
   if (n >= 30 && n <= 35 && diasHabilesDesde(entroFase(p)) > LIMITES.reporteHabiles) return "morado";
@@ -64,6 +66,7 @@ export function alerta(p) {
 }
  
 export const MOTIVO = {
+  rosa: "Huber lleva más de 2 días en el paso 9 sin entregar la información (cotización de materiales/servicios)",
   rojo: "Más de 5 días desde la solicitud sin llegar a autorización (paso 13)",
   ambar: "Más de 6 días en planeación sin programar el servicio",
   morado: "Más de 21 días hábiles sin entregar el reporte",
@@ -111,6 +114,7 @@ export function filtrar(lista, f) {
     p =>
       (!q || norm(`${p.nombre} ${p.cliente} ${p.responsable || ""}`).includes(q)) &&
       (!f.resp || p.responsable === f.resp) &&
+      (!f.area || p.area === f.area) &&
       (!f.prio || prioDe(p) === f.prio) &&
       (!f.paso || p.paso === f.paso) &&
       (!f.detenidos || detenido(p))

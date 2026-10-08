@@ -47,6 +47,7 @@ function Tablas({ usuario, onSalir }) {
   const [filtros, setFiltros] = useState({
     q: "",
     resp: "",
+    area: "",
     prio: "",
     estado: "activos",
     paso: null,

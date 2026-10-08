@@ -1,5 +1,6 @@
 import { money, norm } from "../format.js";
 import { paso, RES, dias, detenido, diasTxt, alerta, MOTIVO } from "../reglas.js";
+import { nombreServicio } from "../servicios.js";
 
 const valor = {
   nombre: p => norm(p.nombre),
@@ -68,7 +69,7 @@ export default function Lista({ items, orden, onOrden, onAbrir }) {
                   >
                     {p.nombre}
                   </button>
-                  <span className="t-sub">{p.cliente}{p.ejemplo ? " · ejemplo" : ""}</span>
+                  <span className="t-sub">{p.cliente}{nombreServicio(p.tipo) ? " · " + nombreServicio(p.tipo) : ""}{p.ejemplo ? " · ejemplo" : ""}</span>
                 </td>
                 <td>{p.responsable || "—"}</td>
                 <td><span className="t-paso"><b>{pa.n}</b><span>{pa.txt}</span></span></td>

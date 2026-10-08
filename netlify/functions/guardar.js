@@ -8,6 +8,8 @@ const aDb = p => ({
   id: p.id,
   nombre: p.nombre,
   cliente: p.cliente,
+  tipo: p.tipo || "",
+  area: p.area || "",
   responsable: p.responsable || "",
   prioridad: p.prioridad,
   monto: p.monto || 0,
@@ -21,7 +23,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "responsable", "prioridad", "monto", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -54,9 +56,9 @@ export default async function handler(req) {
   // Permiso por paso: solo ciertas personas pueden avanzar o deshacer cada paso.
   if ((accion === "avanzar" || accion === "deshacer") && previo) {
     const pasoAccion = previo.paso;
-    if (!puedeConPaso(sesion.usuario, sesion.rol, pasoAccion)) {
+    if (!puedeConPaso(sesion.usuario, sesion.rol, pasoAccion, previo)) {
       return json(
-        { error: `No tienes permiso para completar el paso ${pasoAccion}. Solo pueden: ${etiquetaPermiso(pasoAccion)}.` },
+        { error: `No tienes permiso para completar el paso ${pasoAccion}. Solo pueden: ${etiquetaPermiso(pasoAccion, previo)}.` },
         403
       );
     }
@@ -81,7 +83,7 @@ export default async function handler(req) {
   } else if (accion === "deshacer") {
     detalle = { paso_antes: previo ? previo.paso : null, paso_despues: p.paso };
   } else if (accion === "crear") {
-    detalle = { nombre: p.nombre, cliente: p.cliente, responsable: p.responsable || "", prioridad: p.prioridad, monto: p.monto || 0 };
+    detalle = { nombre: p.nombre, cliente: p.cliente, tipo: p.tipo || "", area: p.area || "", responsable: p.responsable || "", prioridad: p.prioridad, monto: p.monto || 0 };
   } else {
     // editar: cambios campo por campo respecto a lo que había.
     const cambios = {};

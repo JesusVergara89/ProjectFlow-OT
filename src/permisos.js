@@ -30,7 +30,7 @@ export const PERMISOS = {
   7: ["leonardo", "german"],
   8: ["leonardo", "german"],
   9: ["huber"],
-  10: ["leonardo", "german"],
+  10: c,
   11: COMERCIAL,
   12: COMERCIAL,
   13: COMERCIAL,
@@ -51,7 +51,7 @@ export const PERMISOS = {
   28: ["admin"],    // Se entrega documentación
   29: ["leonardo"], // Se realiza el cierre parcial de la OT
   30: COMERCIAL,    // ¿Se ocupa reporte para facturar?
-  31: REPORTE_EQUIPO, // Se asigna responsable de reporte
+  31: ["german"], // Se asigna responsable de reporte
   32: REPORTE_EQUIPO, // Se elabora reporte técnico (se restringe al responsable asignado, ver usuariosPaso)
   33: COMERCIAL,      // ¿Hay servicios adicionales?
   34: REPORTE_EQUIPO, // Se entrega reporte a calidad

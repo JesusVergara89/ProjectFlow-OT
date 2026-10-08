@@ -98,6 +98,7 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 .card{display:flex;flex-direction:column;gap:6px;width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;text-align:left;transition:border-color .12s}
 .card:hover{border-color:var(--accent)}
 .c-top{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.c-tipo{align-self:flex-start;max-width:100%;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:600 10px/1.5 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere}
 .c-nombre{font-weight:600;font-size:15px;line-height:1.25;min-width:0;overflow-wrap:anywhere}
 .c-cli{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
 .c-paso{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;padding:5px 8px;background:var(--surface2);border-radius:4px;font-size:13px}

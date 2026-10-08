@@ -42,7 +42,7 @@ export const LISTA = [
   A(28, "Se entrega documentación - Calidad", 29),
   A(29, "Se realiza el cierre parcial de la OT - Leonardo", 30),
   D(30, "¿Se ocupa reporte para facturar? - COMERCIAL", 31, 38),
-  A(31, "Se asigna responsable de reporte - German / Ingeniería", 32),
+  A(31, "Se asigna responsable de reporte - German", 32),
   A(32, "Se elabora reporte técnico - Responsable de reporte", 33),
   D(33, "¿Hay servicios adicionales? - COMERCIAL", 7, 34),
   A(34, "Se entrega reporte a calidad - Responsable de reporte", 35),

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
+import { money } from "../format.js";
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
-  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "" });
+  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "" });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
   const srv = servicioDe(f.tipo);
@@ -23,6 +24,7 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
       responsable: f.responsable.trim(),
       prioridad: f.prioridad,
       monto: Math.max(0, +f.monto || 0),
+      anticipo: Math.max(0, +f.anticipo || 0),
       estado: "activo",
       paso: 1,
       creado: ahora,
@@ -79,6 +81,13 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
           <div className="campo">
             <label htmlFor="n-monto">Monto estimado (MXN)</label>
             <input id="n-monto" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.monto} onChange={set("monto")} />
+          </div>
+          <div className="campo">
+            <label htmlFor="n-anticipo">Anticipo (MXN)</label>
+            <input id="n-anticipo" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.anticipo} onChange={set("anticipo")} />
+            {(+f.anticipo > 0) && (
+              <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
+            )}
           </div>
         </div>
         <datalist id="dl-cli">{clientes.map(c => <option key={c} value={c} />)}</datalist>

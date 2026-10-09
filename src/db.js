@@ -19,6 +19,7 @@ const aApp = r => ({
   responsableReporte: r.responsable_reporte || "",
   prioridad: r.prioridad,
   monto: Number(r.monto) || 0,
+  anticipo: Number(r.anticipo) || 0,
   estado: r.estado,
   resultado: r.resultado || undefined,
   paso: r.paso,

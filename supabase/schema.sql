@@ -15,9 +15,10 @@ create table if not exists public.proyectos (
   creado_por   text        not null default '',  -- autor; puede editar el proyecto (además del admin)
   prioridad    text        not null default 'media' check (prioridad in ('alta','media','baja')),
   monto        numeric     not null default 0 check (monto >= 0),
+  anticipo     numeric     not null default 0 check (anticipo >= 0),  -- anticipo pagado por el cliente (se descuenta del monto)
   estado       text        not null default 'activo' check (estado in ('activo','cerrado')),
   resultado    text        check (resultado in ('no-viable','archivado','cerrado')),
-  paso         int         not null default 1 check (paso between 1 and 40),
+  paso         int         not null default 1 check (paso between 1 and 41),
   creado       timestamptz not null default now(),
   paso_desde   timestamptz not null default now(),
   cerrado_en   timestamptz,
@@ -32,11 +33,14 @@ alter table public.proyectos add column if not exists area text not null default
 alter table public.proyectos add column if not exists creado_por text not null default '';
 -- Responsable del reporte (se asigna en el paso 31).
 alter table public.proyectos add column if not exists responsable_reporte text not null default '';
+-- Anticipo pagado por el cliente (se descuenta del monto para el saldo por cobrar).
+alter table public.proyectos add column if not exists anticipo numeric not null default 0 check (anticipo >= 0);
 
--- El flujo pasó de 38 a 40 pasos: amplía el rango permitido (esto es repetible/seguro).
+-- El flujo pasó de 38 a 41 pasos (se dividió Facturación/Cobro y se agregó el paso de suma de cobrados):
+-- amplía el rango permitido (esto es repetible/seguro).
 -- La REUBICACIÓN de proyectos en curso va aparte, en supabase/migracion-40-pasos.sql (corre UNA vez).
 alter table public.proyectos drop constraint if exists proyectos_paso_check;
-alter table public.proyectos add  constraint proyectos_paso_check check (paso between 1 and 40);
+alter table public.proyectos add  constraint proyectos_paso_check check (paso between 1 and 41);
 
 create index if not exists proyectos_estado_paso_idx on public.proyectos (estado, paso);
 

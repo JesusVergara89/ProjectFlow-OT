@@ -1,12 +1,13 @@
-/* Flujo de proyectos: 40 pasos en 7 fases. "umbral" = días en un paso antes de marcarlo como detenido. */
+/* Flujo de proyectos: 41 pasos en 8 fases. "umbral" = días en un paso antes de marcarlo como detenido. */
 export const FASES = [
-  { id: "solicitud",  nombre: "Solicitud y viabilidad",     rango: [1, 4],   umbral: 2 },
-  { id: "alcance",    nombre: "Levantamiento y alcances",   rango: [5, 7],   umbral: 5 },
-  { id: "cotizacion", nombre: "Cotización y negociación",   rango: [8, 16],  umbral: 7 },
-  { id: "planeacion", nombre: "Planeación y OT",            rango: [17, 26], umbral: 5 },
-  { id: "ejecucion",  nombre: "Ejecución del servicio",     rango: [27, 29], umbral: 15 },
-  { id: "reporte",    nombre: "Reporte y calidad",          rango: [30, 37], umbral: 5 },
-  { id: "cobro",      nombre: "Facturación y cobro",        rango: [38, 40], umbral: 30 }
+  { id: "solicitud",   nombre: "Solicitud y viabilidad",     rango: [1, 4],   umbral: 2 },
+  { id: "alcance",     nombre: "Levantamiento y alcances",   rango: [5, 7],   umbral: 5 },
+  { id: "cotizacion",  nombre: "Cotización y negociación",   rango: [8, 16],  umbral: 7 },
+  { id: "planeacion",  nombre: "Planeación y OT",            rango: [17, 26], umbral: 5 },
+  { id: "ejecucion",   nombre: "Ejecución del servicio",     rango: [27, 29], umbral: 15 },
+  { id: "reporte",     nombre: "Reporte y calidad",          rango: [30, 37], umbral: 5 },
+  { id: "facturacion", nombre: "Facturación",                rango: [38, 38], umbral: 15 },
+  { id: "cobro",       nombre: "Cobro",                      rango: [39, 41], umbral: 30 }
 ];
 
 const A = (n, txt, next, fin) => ({ n, tipo: "accion", txt, next, fin });
@@ -51,7 +52,8 @@ export const LISTA = [
   A(37, "Se entrega al cliente - Calidad", 38),
   A(38, "Se realiza factura - Yuli, Lupita", 39),
   A(39, "Se programa pago de factura - Yuli, Lupita", 40),
-  A(40, "Se paga factura y cierre de OT - Yuli, Lupita", null, "cerrado")
+  A(40, "Se paga la factura - Yuli, Lupita", 41),
+  A(41, "Se suma el proyecto al total cobrado y cierre de OT - Yuli, Lupita", null, "cerrado")
 ];
 export const PASOS = {};
 LISTA.forEach(p => { p.fase = FASES.find(f => p.n >= f.rango[0] && p.n <= f.rango[1]); PASOS[p.n] = p; });

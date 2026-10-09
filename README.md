@@ -1,6 +1,6 @@
 # Tablero de Proyectos y OT
 
-Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
+Dashboard en React + Vite que sigue cada proyecto por las 41 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
 
 **Acceso con usuarios propios** (sin registro) y **bitácora**: cada acción —entrar, crear, editar, avanzar, deshacer, eliminar— queda registrada con quién la hizo y cuándo.
 
@@ -56,7 +56,7 @@ netlify dev                  # levanta el frontend Y las funciones juntas
 | `src/db.js` | Lectura y tiempo real (anon); las escrituras van a las funciones. |
 | `src/components/Login.jsx` | Pantalla de usuario y contraseña. |
 | `src/components/Bitacora.jsx` | Panel con el rastro de actividad. |
-| `src/flow.js` | Las 7 fases y los 38 pasos. Para cambiar el flujo, solo se edita este archivo. |
+| `src/flow.js` | Las 8 fases y los 41 pasos. Para cambiar el flujo, solo se edita este archivo. |
 | `src/reglas.js` | `avanzar`, `deshacer`, días en el paso, detenidos y filtros. |
 | `scripts/usuario.mjs` | Genera el hash de contraseñas y el `AUTH_SECRET`. |
 | `supabase/schema.sql` | Tablas, permisos y tiempo real. |

@@ -8,7 +8,8 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   const suma = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
   const cot = enFase("cotizacion");
   const eje = enFase("ejecucion");
-  const cob = enFase("cobro");
+  const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
+  const cobrado = items.filter(p => p.resultado === "cerrado"); // proyectos ya cobrados
   const det = act.filter(detenido);
 
   return (
@@ -32,6 +33,11 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
         <span className="k-l">Por facturar y cobrar</span>
         <span className="k-v">{money(suma(cob))}</span>
         <span className="k-s">{cob.length} {plural(cob.length, "proyecto", "proyectos")}</span>
+      </div>
+      <div className="kpi">
+        <span className="k-l">Cobrado</span>
+        <span className="k-v">{money(suma(cobrado))}</span>
+        <span className="k-s">{cobrado.length} {plural(cobrado.length, "proyecto cobrado", "proyectos cobrados")}</span>
       </div>
       <button
         type="button"

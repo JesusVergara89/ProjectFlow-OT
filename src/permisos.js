@@ -15,7 +15,7 @@ export const REPORTE_ASIGNABLES = [
   "mikeas", "emilia", "nestor", "isaac", "ailin", "guillermo", "roberto", "alan", "juan", "johan"
 ];
 
-// Pasos de reporte (numeración del flujo de 40 pasos).
+// Pasos de reporte (numeración del flujo de 41 pasos).
 export const PASO_ASIGNA_REPORTE = 31;  // Se asigna responsable de reporte
 export const PASO_ELABORA_REPORTE = 32; // Se elabora reporte técnico (lo hace el responsable asignado)
 export const PASO_ENTREGA_CALIDAD = 34; // Se entrega reporte a calidad
@@ -60,7 +60,8 @@ export const PERMISOS = {
   37: ["admin"],      // Se entrega al cliente
   38: ["yuli", "lupita"], // Se realiza factura
   39: ["yuli", "lupita"], // Se programa pago de factura
-  40: ["yuli", "lupita"]  // Se paga factura y cierre de OT
+  40: ["yuli", "lupita"], // Se paga la factura
+  41: ["yuli", "lupita"]  // Se suma el proyecto al total cobrado y cierre de OT
 };
 
 /* Usuarios que pueden trabajar el paso n en un proyecto dado.
@@ -80,12 +81,30 @@ export function usuariosPaso(n, proyecto) {
   return PERMISOS[n] || [];
 }
 
+/* German está en el equipo COMERCIAL para poder crear proyectos, pero como comercial
+   solo debe mover los proyectos que él mismo creó. Sus pasos de ingeniería (según el
+   área del proyecto) y de reporte siguen siendo globales: ahí NO entra como comercial. */
+function germanEntraComoComercial(n, proyecto) {
+  // Pasos de reporte: German actúa por su rol de ingeniería, no como comercial.
+  if (n === PASO_ASIGNA_REPORTE || n === PASO_ELABORA_REPORTE || n === PASO_ENTREGA_CALIDAD) return false;
+  // Paso técnico de un proyecto de su propia área (Ingeniería): rol de ingeniería.
+  if (PASOS_AREA.has(n) && areaDe(proyecto) === "ingenieria") return false;
+  // En cualquier otro paso donde esté permitido, es por ser del equipo COMERCIAL.
+  return true;
+}
+
 export function puedeConPaso(usuario, rol, n, proyecto) {
   const u = String(usuario || "").toLowerCase();
   if (rol === "admin" || u === "yuli") return true; // admin y yuli pueden con todo
   const permitidos = usuariosPaso(n, proyecto);
   if (!permitidos || !permitidos.length) return false;
-  return permitidos.includes(u);
+  if (!permitidos.includes(u)) return false;
+  // German solo mueve como comercial los proyectos que él creó.
+  if (u === "german" && germanEntraComoComercial(n, proyecto)) {
+    const creador = String(proyecto?.creadoPor ?? proyecto?.creado_por ?? "").toLowerCase();
+    return creador === "german";
+  }
+  return true;
 }
 
 export function etiquetaPermiso(n, proyecto) {

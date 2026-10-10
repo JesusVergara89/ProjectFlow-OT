@@ -130,3 +130,24 @@ export const sbInsertarBitacora = fila =>
 
 export const sbLeerBitacora = (limite = 300) =>
   sb(`bitacora?select=*&order=creado.desc&limit=${limite}`);
+
+// --- Todos los proyectos (para el barrido de alertas) ---
+export const sbLeerProyectos = async () =>
+  (await sb("proyectos?select=*&order=creado.asc")) || [];
+
+// --- Avisos de WhatsApp ya enviados (anti-spam) ---
+export const sbLeerAvisos = async () =>
+  (await sb("avisos_whatsapp?select=*")) || [];
+
+export const sbInsertarAviso = (proyecto_id, tipo) =>
+  sb("avisos_whatsapp", {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ proyecto_id, tipo, enviado_en: new Date().toISOString() })
+  });
+
+export const sbBorrarAviso = (proyecto_id, tipo) =>
+  sb(
+    `avisos_whatsapp?proyecto_id=eq.${encodeURIComponent(proyecto_id)}&tipo=eq.${encodeURIComponent(tipo)}`,
+    { method: "DELETE", headers: { prefer: "return=minimal" } }
+  );

@@ -14,8 +14,13 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   // En ejecución incluye tanto "Ejecución del servicio" como "Reporte y calidad".
   const eje = act.filter(p => ["ejecucion", "reporte"].includes(paso(p).fase.id));
   const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
-  const cobrado = items.filter(p => p.resultado === "cerrado"); // proyectos ya cobrados
+  const cerradosPagados = items.filter(p => p.resultado === "cerrado"); // cobro total (monto completo)
   const conAnticipo = act.filter(p => (+p.anticipo || 0) > 0); // proyectos con anticipo
+  // Cobrado = monto completo de los proyectos cerrados + anticipos de los que AÚN no cierran.
+  // Ese anticipo ya es dinero en la empresa, aunque el proyecto siga abierto. En los cerrados
+  // no se suma el anticipo aparte porque ya va incluido dentro de su monto completo.
+  const anticiposVivos = items.filter(p => p.resultado !== "cerrado" && (+p.anticipo || 0) > 0);
+  const totalCobrado = suma(cerradosPagados) + sumaAnticipo(anticiposVivos);
   const det = act.filter(detenido);
 
   return (
@@ -52,8 +57,11 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
       </div>
       <div className="kpi">
         <span className="k-l">Cobrado</span>
-        <span className="k-v">{money(suma(cobrado))}</span>
-        <span className="k-s">{cobrado.length} {plural(cobrado.length, "proyecto cobrado", "proyectos cobrados")}</span>
+        <span className="k-v">{money(totalCobrado)}</span>
+        <span className="k-s">
+          {cerradosPagados.length} {plural(cerradosPagados.length, "cerrado", "cerrados")}
+          {anticiposVivos.length > 0 && ` + ${money(sumaAnticipo(anticiposVivos))} en anticipos`}
+        </span>
       </div>
       <button
         type="button"

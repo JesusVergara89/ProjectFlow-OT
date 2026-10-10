@@ -2,7 +2,7 @@ import { COMERCIAL, areaDe, usuariosDeArea } from "./servicios.js";
 
 /* Pasos "técnicos" de campo/OT: quién los trabaja depende del ÁREA del proyecto
    (Ingeniería -> German, Planeación -> Leonardo, Comercial -> comercial). */
-export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 30]);
+export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 23, 24, 25, 27, 28, 30]);
 
 /* Equipo que maneja los pasos de reporte (asignar, elaborar, entregar a calidad):
    German y los muchachos de ingeniería. El admin siempre puede (ver puedeConPaso). */
@@ -42,7 +42,7 @@ export const PERMISOS = {
   19: ["leonardo"], // Se crea la OT
   20: ["leonardo"], // ¿Existen requisiciones?
   21: ["leonardo"], // Se envía a almacén y compras
-  22: ["leonardo"], // Se genera fecha de entrega
+  22: ["huber"], // Se genera fecha de entrega
   23: ["leonardo"], // Se realiza programación
   24: ["leonardo"], // ¿Se ocupan viáticos foráneos?
   25: ["leonardo"], // Se solicitan viáticos a administración

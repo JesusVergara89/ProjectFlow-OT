@@ -34,7 +34,7 @@ export const LISTA = [
   A(19, "Se crea la OT - Leonardo", 20),
   D(20, "¿Existen requisiciones? - Leonardo", 21, 23),
   A(21, "Se envía a almacén y compras - Leonardo", 22),
-  A(22, "Se genera fecha de entrega - Leonardo", 23),
+  A(22, "Se genera fecha de entrega - Huber", 23),
   A(23, "Se realiza programación - Leonardo", 24),
   D(24, "¿Se ocupan viáticos foráneos? - Leonardo", 25, 27),
   A(25, "Se solicitan viáticos a administración - Leonardo", 26),

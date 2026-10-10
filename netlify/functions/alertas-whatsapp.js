@@ -14,7 +14,10 @@
 // ============================================================
 
 import { json, sbLeerProyectos, sbLeerAvisos, sbInsertarAviso, sbBorrarAviso } from "./_lib/util.js";
-import { alerta, MOTIVO, dias, diasDesde, diasHabilesDesde, entroFase } from "../../src/reglas.js";
+import { evaluarAlerta, paso } from "../../src/reglas.js";
+
+// Cada cuántos días se REPITE el aviso si la fase sigue sin avanzar (tono alarmante).
+const DIAS_REPETIR = 7;
 
 // Fila de Supabase (snake_case) -> forma que esperan las reglas (camelCase).
 const aApp = r => ({
@@ -31,31 +34,25 @@ const aApp = r => ({
   historial: r.historial || []
 });
 
-// ¿Cuántos días lleva en la condición que disparó la alerta? (para el texto)
-function diasDeAlerta(p, tipo) {
-  switch (tipo) {
-    case "rosa":    return `${diasDesde(p.pasoDesde)} días`;
-    case "rojo":    return `${diasDesde(p.creado)} días`;
-    case "ambar":   return `${diasDesde(entroFase(p))} días`;
-    case "morado":  return `${diasHabilesDesde(entroFase(p))} días hábiles`;
-    case "naranja": return `${diasHabilesDesde(p.pasoDesde)} días hábiles`;
-    default:        return `${dias(p)} días`;
-  }
-}
+const dur = a => `${a.dias} día${a.dias === 1 ? "" : "s"}${a.habiles ? " hábil" + (a.dias === 1 ? "" : "es") : ""}`;
 
-// Mensaje final que recibe la persona por WhatsApp.
-function mensaje(p, tipo) {
-  const quien = p.responsableReporte || p.responsable || "el responsable";
-  const t = diasDeAlerta(p, tipo);
-  const cab = `*${p.nombre}* — ${p.cliente}`;
-  const cuerpo = {
-    rojo:    `lleva ${t} sin autorizar ni declinar (Cotización y negociación). ${quien} necesita darle salida.`,
-    rosa:    `Huber lleva ${t} en el paso 9 sin entregar la cotización de materiales/servicios.`,
-    ambar:   `lleva ${t} en planeación sin programar el servicio. Responsable: ${quien}.`,
-    morado:  `lleva ${t} sin entregar el reporte técnico. Responsable del reporte: ${quien}.`,
-    naranja: `lleva ${t} sin entregar la documentación al cliente. Responsable: ${quien}.`
-  }[tipo] || MOTIVO[tipo] || "requiere atención.";
-  return `⚠️ ${cab} ${cuerpo}`;
+// Mensaje de WhatsApp. reincidencia=true -> ya se había avisado y SIGUE detenido (más alarmante).
+function mensaje(p, a, reincidencia) {
+  const pa = paso(p);
+  const fase = pa.fase?.nombre || "";
+  if (reincidencia) {
+    return (
+      `🚨🚨 *SIGUE DETENIDO* 🚨🚨\n` +
+      `*${p.nombre}* — ${p.cliente}\n` +
+      `${a.quien} ${a.que} desde hace ${dur(a)} y la fase "${fase}" NO ha avanzado.\n` +
+      `Esto ya está muy fuera de tiempo. Hay que resolverlo HOY.`
+    );
+  }
+  return (
+    `⚠️ *${p.nombre}* — ${p.cliente}\n` +
+    `${a.quien} ${a.que} (lleva ${dur(a)}).\n` +
+    `Fase: ${fase} · paso ${pa.n}.`
+  );
 }
 
 const destinatarios = () => {
@@ -109,8 +106,8 @@ export default async function handler() {
 
   console.log(`[alertas] destinatarios=${dest.length} proyectos=${proyectos.length} avisos_previos=${avisos.length}`);
 
-  // Lo que YA se avisó: clave "id|tipo".
-  const yaAvisado = new Set(avisos.map(a => `${a.proyecto_id}|${a.tipo}`));
+  // Último aviso por "id|color": cuándo se mandó (para repetir cada semana).
+  const ultimoAviso = new Map(avisos.map(a => [`${a.proyecto_id}|${a.tipo}`, Date.parse(a.enviado_en)]));
   // Lo que está en alerta AHORA.
   const activos = new Set();
 
@@ -118,17 +115,21 @@ export default async function handler() {
 
   for (const r of proyectos) {
     const p = aApp(r);
-    const tipo = alerta(p); // null si no hay alerta
-    if (!tipo) continue;
-    const clave = `${p.id}|${tipo}`;
+    const a = evaluarAlerta(p); // null si no hay alerta
+    if (!a) continue;
+    const clave = `${p.id}|${a.color}`;
     activos.add(clave);
-    if (yaAvisado.has(clave)) {
-      console.log(`[alertas] "${p.nombre}" en alerta ${tipo}, pero YA se avisó antes (no repito).`);
-      continue; // ya se avisó esta misma alerta, no repetir
+
+    const previo = ultimoAviso.get(clave);
+    const reincidencia = previo != null;
+    // Si ya se avisó y no han pasado los días de repetición, no repetir todavía.
+    if (reincidencia && Date.now() - previo < DIAS_REPETIR * 864e5) {
+      console.log(`[alertas] "${p.nombre}" (${a.color}) ya avisado hace poco, aún no repito.`);
+      continue;
     }
 
-    const texto = mensaje(p, tipo);
-    console.log(`[alertas] "${p.nombre}" alerta=${tipo} -> enviando a ${dest.length} persona(s)`);
+    const texto = mensaje(p, a, reincidencia);
+    console.log(`[alertas] "${p.nombre}" ${a.color}${reincidencia ? " (REPETICIÓN)" : ""} -> enviando a ${dest.length}`);
     let algunoOk = false;
     for (const d of dest) {
       const ok = await enviarWhatsApp(d, texto);
@@ -138,7 +139,7 @@ export default async function handler() {
     }
     if (algunoOk) {
       try {
-        await sbInsertarAviso(p.id, tipo);
+        await sbInsertarAviso(p.id, a.color); // (re)sella la fecha para el próximo ciclo semanal
         enviados++;
       } catch (e) {
         console.error("Guardar aviso:", e.message);

@@ -44,6 +44,9 @@ En **Site settings > Environment variables** agrega (secreta, SIN prefijo `VITE_
 `WHATSAPP_DEST`
 ```json
 [
+  {"nombre":"Jesus","phone":"5214778476408","apikey":"8855227"}
+]
+[
   {"nombre":"Jesus","phone":"+5214441234567","apikey":"123456"},
   {"nombre":"Leonardo","phone":"+5214447654321","apikey":"234567"},
   {"nombre":"German","phone":"+5214449998888","apikey":"345678"},

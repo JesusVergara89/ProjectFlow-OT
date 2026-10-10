@@ -1,18 +1,19 @@
 import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
-import { paso, prioDe, PRIO, dias, detenido, diasTxt, alerta, motivoDe } from "../reglas.js";
+import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA } from "../reglas.js";
 import { nombreServicio } from "../servicios.js";
 
 function Tarjeta({ p, onAbrir }) {
   const pa = paso(p);
   const det = detenido(p);
-  const al = alerta(p);
+  const a = evaluarAlerta(p);
   const srv = nombreServicio(p.tipo);
   return (
     <button
       type="button"
-      className={"card" + (al ? " alerta-" + al : "")}
-      title={al ? motivoDe(p) : undefined}
+      className={"card" + (a ? " en-alerta" : "")}
+      style={a ? { borderColor: a.color, borderLeftWidth: 4, background: a.color + "22" } : undefined}
+      title={a ? a.motivo : undefined}
       data-proyecto={p.id}
       onClick={() => onAbrir(p.id)}
     >
@@ -37,11 +38,9 @@ export default function Tablero({ items, onAbrir }) {
   return (
     <>
     <div className="leyenda" aria-label="Significado de los colores">
-      <span><i className="pt pt-rojo" /> Comercial atrasado (levantamiento o cotización)</span>
-      <span><i className="pt pt-rosa" /> Huber atrasado (cotización o fecha de entrega)</span>
-      <span><i className="pt pt-ambar" /> Planeación atrasada (OT, viáticos, programación…)</span>
-      <span><i className="pt pt-naranja" /> Documentación / cierre / entrega atrasada</span>
-      <span><i className="pt pt-morado" /> Reporte técnico atrasado (+21 días hábiles)</span>
+      {LEYENDA.map(l => (
+        <span key={l.texto}><i className="pt" style={{ background: l.color }} /> {l.texto}</span>
+      ))}
     </div>
     <div className="board">
       {FASES.map((f, i) => {

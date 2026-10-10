@@ -117,19 +117,19 @@ export default async function handler() {
     const p = aApp(r);
     const a = evaluarAlerta(p); // null si no hay alerta
     if (!a) continue;
-    const clave = `${p.id}|${a.color}`;
+    const clave = `${p.id}|${a.key}`;
     activos.add(clave);
 
     const previo = ultimoAviso.get(clave);
     const reincidencia = previo != null;
     // Si ya se avisó y no han pasado los días de repetición, no repetir todavía.
     if (reincidencia && Date.now() - previo < DIAS_REPETIR * 864e5) {
-      console.log(`[alertas] "${p.nombre}" (${a.color}) ya avisado hace poco, aún no repito.`);
+      console.log(`[alertas] "${p.nombre}" (${a.key}) ya avisado hace poco, aún no repito.`);
       continue;
     }
 
     const texto = mensaje(p, a, reincidencia);
-    console.log(`[alertas] "${p.nombre}" ${a.color}${reincidencia ? " (REPETICIÓN)" : ""} -> enviando a ${dest.length}`);
+    console.log(`[alertas] "${p.nombre}" ${a.key}${reincidencia ? " (REPETICIÓN)" : ""} -> enviando a ${dest.length}`);
     let algunoOk = false;
     for (const d of dest) {
       const ok = await enviarWhatsApp(d, texto);
@@ -139,7 +139,7 @@ export default async function handler() {
     }
     if (algunoOk) {
       try {
-        await sbInsertarAviso(p.id, a.color); // (re)sella la fecha para el próximo ciclo semanal
+        await sbInsertarAviso(p.id, a.key); // (re)sella la fecha para el próximo ciclo semanal
         enviados++;
       } catch (e) {
         console.error("Guardar aviso:", e.message);

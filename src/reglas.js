@@ -50,91 +50,89 @@ export function entroFase(p) {
 }
  
 // ============================================================
-// LÍMITES DE TIEMPO Y ALERTAS
-// Los colores agrupan por tipo de atraso; el mensaje dice el detalle (quién/qué).
-//   rojo    = Comercial / levantamiento / cotización sin avanzar
-//   rosa    = Huber sin responder (cotización de materiales o fecha de entrega)
-//   ambar   = Planeación sin avanzar (OT, requisiciones, programación, viáticos, plan de calidad)
-//   naranja = Documentación / cierre / entrega de calidad sin avanzar
-//   morado  = Reporte técnico sin entregar
+// LÍMITES DE TIEMPO Y ALERTAS — cada regla tiene su PROPIO color.
+// Para cambiar un límite, color o mensaje, edita su entrada en REGLAS.
+//   pasos    : en qué pasos aplica. Si es un grupo, el tiempo se mide desde que ENTRÓ al grupo.
+//   dias     : límite. Si se pasa, se dispara la alerta.
+//   habiles  : true = cuenta solo días hábiles (lun–vie).
+//   color    : color de la tarjeta y del punto en la leyenda.
+//   etiqueta : texto en la leyenda.
+//   quien/que: arman el mensaje ("<quien> <que>").
+// Gana la PRIMERA regla cuyo rango incluya el paso actual y se pase de tiempo.
 // ============================================================
+export const REGLAS = [
+  { key: "levantamiento",    pasos: [5, 6, 7],                        dias: 3,  habiles: false, color: "#E5484D",
+    etiqueta: "Levantamiento +3 días (5–7)",                quien: "Leonardo y German", que: "no han terminado el levantamiento y la entrega a comercial" },
+  { key: "huber-cotiza",     pasos: [9],                              dias: 2,  habiles: false, color: "#D6409F",
+    etiqueta: "Huber +2 días cotizando materiales (9)",     quien: "Huber",    que: "no ha entregado la cotización de materiales/servicios" },
+  { key: "comercial",        pasos: [8, 9, 10, 11, 12, 13, 14, 15, 16], dias: 2, habiles: false, color: "#F76808",
+    etiqueta: "Comercial +2 días sin autorizar/declinar (8–16)", quien: "Comercial", que: "no ha autorizado ni declinado la cotización" },
+  { key: "crear-ot",         pasos: [17, 18, 19],                     dias: 1,  habiles: false, color: "#8E4EC6",
+    etiqueta: "Crear OT +1 día (17–19)",                    quien: "Leonardo", que: "no ha creado la OT" },
+  { key: "requisiciones",    pasos: [20, 21],                         dias: 1,  habiles: false, color: "#0588F0",
+    etiqueta: "Requisiciones / almacén +1 día (20–21)",     quien: "Leonardo", que: "no ha gestionado las requisiciones (envío a almacén y compras)" },
+  { key: "fecha-entrega",    pasos: [22],                             dias: 2,  habiles: false, color: "#E93D82",
+    etiqueta: "Huber +2 días fecha de entrega (22)",        quien: "Huber",    que: "no ha generado la fecha de entrega" },
+  { key: "programacion",     pasos: [23],                             dias: 2,  habiles: false, color: "#0D9488",
+    etiqueta: "Programación +2 días (23)",                  quien: "Leonardo", que: "no ha programado el servicio con el cliente" },
+  { key: "viaticos",         pasos: [24, 25],                         dias: 1,  habiles: false, color: "#0CA5E9",
+    etiqueta: "Viáticos +1 día (24–25)",                    quien: "Leonardo", que: "no ha resuelto ni solicitado los viáticos" },
+  { key: "autoriza-viaticos",pasos: [26],                             dias: 1,  habiles: false, color: "#3E63DD",
+    etiqueta: "Adriana +1 día autorizar viáticos (26)",     quien: "Adriana",  que: "no ha autorizado ni gestionado los viáticos" },
+  { key: "plan-calidad",     pasos: [27],                             dias: 1,  habiles: false, color: "#9333EA",
+    etiqueta: "Plan de calidad +1 día (27)",                quien: "Leonardo", que: "no ha creado el plan de calidad" },
+  { key: "documentacion",    pasos: [29],                             dias: 1,  habiles: true,  color: "#12A594",
+    etiqueta: "Documentación +1 día hábil (29)",            quien: "Calidad",  que: "no ha entregado ni revisado la documentación" },
+  { key: "cierre-parcial",   pasos: [30],                             dias: 1,  habiles: false, color: "#30A46C",
+    etiqueta: "Cierre parcial OT +1 día (30)",              quien: "Leonardo", que: "no ha hecho el cierre parcial de la OT" },
+  { key: "asigna-reporte",   pasos: [32],                             dias: 1,  habiles: false, color: "#C2410C",
+    etiqueta: "Asignar responsable reporte +1 día (32)",    quien: "German",   que: "no ha asignado responsable del reporte" },
+  { key: "reporte-tecnico",  pasos: [33],                             dias: 21, habiles: true,  color: "#6D28D9",
+    etiqueta: "Reporte técnico +21 días hábiles (33)",      quien: "el responsable del reporte", que: "no ha entregado el reporte técnico" },
+  { key: "reporte-a-calidad",pasos: [35],                             dias: 1,  habiles: false, color: "#EAB308",
+    etiqueta: "Entregar reporte a calidad +1 día (35)",     quien: "el responsable del reporte", que: "no ha entregado el reporte a calidad" },
+  { key: "revisa-reporte",   pasos: [36],                             dias: 1,  habiles: false, color: "#D97706",
+    etiqueta: "Revisar reporte +1 día (36)",                quien: "Calidad",  que: "no ha revisado el reporte técnico" },
+  { key: "entrega-cliente",  pasos: [38],                             dias: 1,  habiles: false, color: "#DB2777",
+    etiqueta: "Entregar al cliente +1 día (38)",            quien: "Calidad",  que: "no ha entregado el reporte al cliente" },
+];
+// Nota: el paso 28 (ejecución del servicio) NO se vigila a propósito: es muy cambiante.
 
-// Límites por FASE completa (se mide desde que el proyecto entró a la fase).
-export const LIM_FASE = {
-  alcance: 3,     // pasos 5–7: levantamiento y entrega a comercial (días calendario)
-  cotizacion: 2,  // pasos 8–16: hasta autorizar o declinar (días calendario)
-};
-
-// Límite especial del paso 9 (Huber cotiza materiales), se mide dentro del paso.
-export const LIM_HUBER9 = 2;
-
-// Límites por PASO (se miden desde que entró al paso). d = días calendario, h = días hábiles.
-export const LIM_PASO = {
-  17: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha creado la OT" },
-  18: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha validado los alcances para crear la OT" },
-  19: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha creado la OT" },
-  20: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha definido si existen requisiciones" },
-  21: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha enviado a almacén y compras" },
-  22: { d: 2, color: "rosa",    quien: "Huber",    que: "no ha generado la fecha de entrega" },
-  23: { d: 2, color: "ambar",   quien: "Leonardo", que: "no ha programado el servicio con el cliente" },
-  24: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha resuelto si se ocupan viáticos foráneos" },
-  25: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha solicitado los viáticos a administración" },
-  26: { d: 1, color: "ambar",   quien: "Adriana",  que: "no ha autorizado ni gestionado los viáticos" },
-  27: { d: 1, color: "ambar",   quien: "Leonardo", que: "no ha creado el plan de calidad" },
-  // 28 (ejecución del servicio) NO se vigila: es muy cambiante.
-  29: { h: 1, color: "naranja", quien: "Calidad",  que: "no ha entregado/revisado la documentación" },
-  30: { d: 1, color: "naranja", quien: "Leonardo", que: "no ha hecho el cierre parcial de la OT" },
-  32: { d: 1, color: "naranja", quien: "German",   que: "no ha asignado responsable del reporte" },
-  33: { h: 21, color: "morado", quien: "el responsable del reporte", que: "no ha entregado el reporte técnico" },
-  35: { d: 1, color: "naranja", quien: "el responsable del reporte", que: "no ha entregado el reporte a calidad" },
-  36: { d: 1, color: "naranja", quien: "Calidad",  que: "no ha revisado el reporte técnico" },
-  38: { d: 1, color: "naranja", quien: "Calidad",  que: "no ha entregado el reporte al cliente" },
-};
+// Para dibujar la leyenda del tablero.
+export const LEYENDA = REGLAS.map(r => ({ color: r.color, texto: r.etiqueta }));
 
 const frase = (lim, hab) => `Más de ${lim} día${lim === 1 ? "" : "s"}${hab ? " hábil" + (lim === 1 ? "" : "es") : ""}`;
 
-// Evalúa la alerta de un proyecto. Devuelve null, o un objeto:
-//   { color, quien, que, dias, lim, habiles, motivo }
+// Momento en que el proyecto entró al GRUPO de pasos de una regla
+// (la última vez que estuvo en un paso fuera del grupo).
+function entroGrupo(p, pasos) {
+  const h = p.historial || [];
+  for (let i = h.length - 1; i >= 0; i--) {
+    if (!pasos.includes(h[i].p)) return h[i].f;
+  }
+  return p.creado;
+}
+
+// Evalúa la alerta de un proyecto. Devuelve null, o:
+//   { key, color, etiqueta, quien, que, dias, lim, habiles, motivo }
 export function evaluarAlerta(p) {
   if (p.estado !== "activo") return null;
-  const n = p.paso;
-  const enFase = diasDesde(entroFase(p));
-  const enPaso = diasDesde(p.pasoDesde);
-  const enPasoHab = diasHabilesDesde(p.pasoDesde);
-
-  // Fase 5–7: levantamiento y entrega a comercial (máx. 3 días).
-  if (n >= 5 && n <= 7 && enFase > LIM_FASE.alcance) {
-    return hecho("rojo", "Leonardo y German", "no han terminado el levantamiento y la entrega a comercial", enFase, LIM_FASE.alcance, false);
-  }
-
-  // Fase 8–16: cotización y negociación (máx. 2 días hasta autorizar o declinar).
-  if (n >= 8 && n <= 16) {
-    // El paso 9 (Huber cotiza materiales) tiene su propio límite y mensaje.
-    if (n === 9 && enPaso > LIM_HUBER9) {
-      return hecho("rosa", "Huber", "no ha entregado la cotización de materiales/servicios", enPaso, LIM_HUBER9, false);
-    }
-    if (enFase > LIM_FASE.cotizacion) {
-      return hecho("rojo", "Comercial", "no ha autorizado ni declinado la cotización", enFase, LIM_FASE.cotizacion, false);
+  for (const r of REGLAS) {
+    if (!r.pasos.includes(p.paso)) continue;
+    const ini = entroGrupo(p, r.pasos);
+    const d = r.habiles ? diasHabilesDesde(ini) : diasDesde(ini);
+    if (d > r.dias) {
+      return {
+        key: r.key, color: r.color, etiqueta: r.etiqueta,
+        quien: r.quien, que: r.que, dias: d, lim: r.dias, habiles: r.habiles,
+        motivo: `${frase(r.dias, r.habiles)}: ${r.quien} ${r.que}`
+      };
     }
   }
-
-  // Pasos 17–38: límite por paso.
-  const c = LIM_PASO[n];
-  if (c) {
-    const hab = c.h != null;
-    const lim = hab ? c.h : c.d;
-    const d = hab ? enPasoHab : enPaso;
-    if (d > lim) return hecho(c.color, c.quien, c.que, d, lim, hab);
-  }
-
   return null;
 }
 
-function hecho(color, quien, que, dias, lim, habiles) {
-  return { color, quien, que, dias, lim, habiles, motivo: `${frase(lim, habiles)}: ${quien} ${que}` };
-}
-
-// Color de la tarjeta (compatibilidad): null | "rojo" | "rosa" | "ambar" | "naranja" | "morado".
+// Color (hex) de la tarjeta, o null.
 export const alerta = p => evaluarAlerta(p)?.color || null;
 // Texto del tooltip de la tarjeta.
 export const motivoDe = p => evaluarAlerta(p)?.motivo || "";

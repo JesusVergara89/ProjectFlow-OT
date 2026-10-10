@@ -10,6 +10,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   // Saldo por cobrar = monto menos el anticipo ya pagado (nunca negativo).
   const saldo = l => l.reduce((a, p) => a + Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)), 0);
   const cot = enFase("cotizacion");
+  const plan = enFase("planeacion");
   const eje = enFase("ejecucion");
   const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
   const cobrado = items.filter(p => p.resultado === "cerrado"); // proyectos ya cobrados
@@ -27,6 +28,11 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
         <span className="k-l">En cotización</span>
         <span className="k-v">{cot.length}</span>
         <span className="k-s">{money(suma(cot))}</span>
+      </div>
+      <div className="kpi">
+        <span className="k-l">Por planear</span>
+        <span className="k-v">{money(suma(plan))}</span>
+        <span className="k-s">{plan.length} {plural(plan.length, "proyecto", "proyectos")}</span>
       </div>
       <div className="kpi">
         <span className="k-l">En ejecución</span>

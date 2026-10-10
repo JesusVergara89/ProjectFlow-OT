@@ -101,11 +101,11 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
       <div className="paso-box">
         <div>
           <span className="pb-n">
-            Paso {pa.n} de 41 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
+            Paso {pa.n} de 42 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
           </span>
           <div className="pb-t">{pa.txt}</div>
         </div>
-        {(pa.n === 32 || pa.n === 34) && p.responsableReporte && (
+        {(pa.n === 33 || pa.n === 35) && p.responsableReporte && (
           <p className="sig">Responsable de reporte: <b>{p.responsableReporte}</b>.</p>
         )}
         {esPaso10 ? (

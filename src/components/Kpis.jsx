@@ -11,7 +11,8 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   const saldo = l => l.reduce((a, p) => a + Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)), 0);
   const cot = enFase("cotizacion");
   const plan = enFase("planeacion");
-  const eje = enFase("ejecucion");
+  // En ejecución incluye tanto "Ejecución del servicio" como "Reporte y calidad".
+  const eje = act.filter(p => ["ejecucion", "reporte"].includes(paso(p).fase.id));
   const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
   const cobrado = items.filter(p => p.resultado === "cerrado"); // proyectos ya cobrados
   const conAnticipo = act.filter(p => (+p.anticipo || 0) > 0); // proyectos con anticipo
@@ -27,17 +28,17 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
       <div className="kpi">
         <span className="k-l">En cotización</span>
         <span className="k-v">{cot.length}</span>
-        <span className="k-s">{money(suma(cot))}</span>
+        <span className="k-s">{money(saldo(cot))}</span>
       </div>
       <div className="kpi">
         <span className="k-l">Por planear</span>
-        <span className="k-v">{money(suma(plan))}</span>
+        <span className="k-v">{money(saldo(plan))}</span>
         <span className="k-s">{plan.length} {plural(plan.length, "proyecto", "proyectos")}</span>
       </div>
       <div className="kpi">
         <span className="k-l">En ejecución</span>
         <span className="k-v">{eje.length}</span>
-        <span className="k-s">{money(suma(eje))}</span>
+        <span className="k-s">{money(saldo(eje))}</span>
       </div>
       <div className="kpi">
         <span className="k-l">Por facturar y cobrar</span>

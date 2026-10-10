@@ -78,14 +78,16 @@ async function enviarWhatsApp(dest, texto) {
     `&apikey=${encodeURIComponent(dest.apikey)}`;
   try {
     const res = await fetch(url);
-    const txt = await res.text();
-    if (!res.ok) {
-      console.error(`CallMeBot ${dest.phone}: ${res.status} ${txt.slice(0, 120)}`);
-      return false;
-    }
-    return true;
+    const txt = (await res.text()) || "";
+    const limpio = txt.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); // quita HTML
+    // CallMeBot responde 200 aunque falle: el error va en el TEXTO.
+    // Señales de fallo típicas: APIKey inválida, número no autorizado, etc.
+    const falla = /error|invalid|apikey|you need|not allowed|didn'?t|must send|no autoriz/i.test(limpio);
+    const ok = res.ok && !falla;
+    console.log(`[callmebot] ${dest.nombre || dest.phone}: ${res.status} ${ok ? "OK" : "FALLÓ"} — ${limpio.slice(0, 160)}`);
+    return ok;
   } catch (e) {
-    console.error(`CallMeBot ${dest.phone}: ${e.message}`);
+    console.error(`[callmebot] ${dest.phone}: ${e.message}`);
     return false;
   }
 }
@@ -105,6 +107,8 @@ export default async function handler() {
     return json({ ok: false, error: e.message }, 502);
   }
 
+  console.log(`[alertas] destinatarios=${dest.length} proyectos=${proyectos.length} avisos_previos=${avisos.length}`);
+
   // Lo que YA se avisó: clave "id|tipo".
   const yaAvisado = new Set(avisos.map(a => `${a.proyecto_id}|${a.tipo}`));
   // Lo que está en alerta AHORA.
@@ -118,12 +122,17 @@ export default async function handler() {
     if (!tipo) continue;
     const clave = `${p.id}|${tipo}`;
     activos.add(clave);
-    if (yaAvisado.has(clave)) continue; // ya se avisó esta misma alerta, no repetir
+    if (yaAvisado.has(clave)) {
+      console.log(`[alertas] "${p.nombre}" en alerta ${tipo}, pero YA se avisó antes (no repito).`);
+      continue; // ya se avisó esta misma alerta, no repetir
+    }
 
     const texto = mensaje(p, tipo);
+    console.log(`[alertas] "${p.nombre}" alerta=${tipo} -> enviando a ${dest.length} persona(s)`);
     let algunoOk = false;
     for (const d of dest) {
       const ok = await enviarWhatsApp(d, texto);
+      console.log(`[alertas]   -> ${d.nombre || d.phone}: ${ok ? "OK" : "FALLÓ"}`);
       algunoOk = algunoOk || ok;
       await dormir(1500); // CallMeBot pide no mandar en ráfaga
     }
@@ -150,6 +159,7 @@ export default async function handler() {
     }
   }
 
+  console.log(`[alertas] RESUMEN: en_alerta=${activos.size} enviados=${enviados} destinatarios=${dest.length}`);
   return json({ ok: true, enviados, en_alerta: activos.size, destinatarios: dest.length });
 }
 

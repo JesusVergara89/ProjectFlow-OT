@@ -63,8 +63,8 @@ export function entroFase(p) {
 export const REGLAS = [
   { key: "levantamiento",    pasos: [5, 6, 7],                        dias: 3,  habiles: false, color: "#E5484D",
     etiqueta: "Levantamiento +3 días (5–7)",                quien: "Leonardo y German", que: "no han terminado el levantamiento y la entrega a comercial" },
-  { key: "huber-cotiza",     pasos: [9],                              dias: 2,  habiles: false, color: "#D6409F",
-    etiqueta: "Huber +2 días cotizando materiales (9)",     quien: "Huber",    que: "no ha entregado la cotización de materiales/servicios" },
+  { key: "huber-cotiza",     pasos: [9],                              dias: 1,  habiles: false, color: "#D6409F",
+    etiqueta: "Huber +1 días cotizando materiales (9)",     quien: "Huber",    que: "no ha entregado la cotización de materiales/servicios" },
   { key: "comercial",        pasos: [8, 9, 10, 11, 12, 13, 14, 15, 16], dias: 2, habiles: false, color: "#F76808",
     etiqueta: "Comercial +2 días sin autorizar/declinar (8–16)", quien: "Comercial", que: "no ha autorizado ni declinado la cotización" },
   { key: "crear-ot",         pasos: [17, 18, 19],                     dias: 1,  habiles: false, color: "#8E4EC6",

@@ -2,7 +2,7 @@ import { COMERCIAL, areaDe, usuariosDeArea } from "./servicios.js";
 
 /* Pasos "técnicos" de campo/OT: quién los trabaja depende del ÁREA del proyecto
    (Ingeniería -> German, Planeación -> Leonardo, Comercial -> comercial). */
-export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29]);
+export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 30]);
 
 /* Equipo que maneja los pasos de reporte (asignar, elaborar, entregar a calidad):
    German y los muchachos de ingeniería. El admin siempre puede (ver puedeConPaso). */
@@ -15,10 +15,10 @@ export const REPORTE_ASIGNABLES = [
   "mikeas", "emilia", "nestor", "isaac", "ailin", "guillermo", "roberto", "alan", "juan", "johan"
 ];
 
-// Pasos de reporte (numeración del flujo de 40 pasos).
-export const PASO_ASIGNA_REPORTE = 31;  // Se asigna responsable de reporte
-export const PASO_ELABORA_REPORTE = 32; // Se elabora reporte técnico (lo hace el responsable asignado)
-export const PASO_ENTREGA_CALIDAD = 34; // Se entrega reporte a calidad
+// Pasos de reporte (numeración del flujo de 42 pasos).
+export const PASO_ASIGNA_REPORTE = 32;  // Se asigna responsable de reporte
+export const PASO_ELABORA_REPORTE = 33; // Se elabora reporte técnico (lo hace el responsable asignado)
+export const PASO_ENTREGA_CALIDAD = 35; // Se entrega reporte a calidad
 
 export const PERMISOS = {
   1: COMERCIAL,
@@ -44,23 +44,25 @@ export const PERMISOS = {
   21: ["leonardo"], // Se envía a almacén y compras
   22: ["leonardo"], // Se genera fecha de entrega
   23: ["leonardo"], // Se realiza programación
-  24: ["leonardo"], // ¿Se ocupan viáticos y/o estudios?
-  25: ["leonardo"], // Se coordina depósito y/o realización
-  26: ["leonardo"], // Se crea plan de calidad
-  27: ["leonardo"], // Se ejecuta el servicio
-  28: ["admin"],    // Se entrega documentación
-  29: ["leonardo"], // Se realiza el cierre parcial de la OT
-  30: COMERCIAL,    // ¿Se ocupa reporte para facturar?
-  31: ["german"], // Se asigna responsable de reporte
-  32: REPORTE_EQUIPO, // Se elabora reporte técnico (se restringe al responsable asignado, ver usuariosPaso)
-  33: COMERCIAL,      // ¿Hay servicios adicionales?
-  34: REPORTE_EQUIPO, // Se entrega reporte a calidad
-  35: ["admin"],      // Se revisa reporte técnico
-  36: ["admin"],      // ¿Se cumple con los estándares de calidad?
-  37: ["admin"],      // Se entrega al cliente
-  38: ["yuli", "lupita"], // Se realiza factura
-  39: ["yuli", "lupita"], // Se programa pago de factura
-  40: ["yuli", "lupita"]  // Se paga factura y cierre de OT
+  24: ["leonardo"], // ¿Se ocupan viáticos foráneos?
+  25: ["leonardo"], // Se solicitan viáticos a administración
+  26: ["adriana"],  // Se autorizan y gestionan los viáticos (administración)
+  27: ["leonardo"], // Se crea plan de calidad
+  28: ["leonardo"], // Se ejecuta el servicio
+  29: ["admin"],    // Se entrega documentación
+  30: ["leonardo"], // Se realiza el cierre parcial de la OT
+  31: COMERCIAL,    // ¿Se ocupa reporte para facturar?
+  32: ["german"], // Se asigna responsable de reporte
+  33: REPORTE_EQUIPO, // Se elabora reporte técnico (se restringe al responsable asignado, ver usuariosPaso)
+  34: COMERCIAL,      // ¿Hay servicios adicionales?
+  35: REPORTE_EQUIPO, // Se entrega reporte a calidad
+  36: ["admin"],      // Se revisa reporte técnico
+  37: ["admin"],      // ¿Se cumple con los estándares de calidad?
+  38: ["admin"],      // Se entrega al cliente
+  39: ["yuli", "lupita"], // Se realiza factura
+  40: ["yuli", "lupita"], // Se programa pago de factura
+  41: ["yuli", "lupita"], // Se paga la factura
+  42: ["yuli", "lupita"]  // Se suma el proyecto al total cobrado y cierre de OT
 };
 
 /* Usuarios que pueden trabajar el paso n en un proyecto dado.
@@ -80,12 +82,30 @@ export function usuariosPaso(n, proyecto) {
   return PERMISOS[n] || [];
 }
 
+/* German está en el equipo COMERCIAL para poder crear proyectos, pero como comercial
+   solo debe mover los proyectos que él mismo creó. Sus pasos de ingeniería (según el
+   área del proyecto) y de reporte siguen siendo globales: ahí NO entra como comercial. */
+function germanEntraComoComercial(n, proyecto) {
+  // Pasos de reporte: German actúa por su rol de ingeniería, no como comercial.
+  if (n === PASO_ASIGNA_REPORTE || n === PASO_ELABORA_REPORTE || n === PASO_ENTREGA_CALIDAD) return false;
+  // Paso técnico de un proyecto de su propia área (Ingeniería): rol de ingeniería.
+  if (PASOS_AREA.has(n) && areaDe(proyecto) === "ingenieria") return false;
+  // En cualquier otro paso donde esté permitido, es por ser del equipo COMERCIAL.
+  return true;
+}
+
 export function puedeConPaso(usuario, rol, n, proyecto) {
   const u = String(usuario || "").toLowerCase();
   if (rol === "admin" || u === "yuli") return true; // admin y yuli pueden con todo
   const permitidos = usuariosPaso(n, proyecto);
   if (!permitidos || !permitidos.length) return false;
-  return permitidos.includes(u);
+  if (!permitidos.includes(u)) return false;
+  // German solo mueve como comercial los proyectos que él creó.
+  if (u === "german" && germanEntraComoComercial(n, proyecto)) {
+    const creador = String(proyecto?.creadoPor ?? proyecto?.creado_por ?? "").toLowerCase();
+    return creador === "german";
+  }
+  return true;
 }
 
 export function etiquetaPermiso(n, proyecto) {

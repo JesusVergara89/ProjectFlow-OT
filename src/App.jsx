@@ -143,7 +143,7 @@ function Tablas({ usuario, onSalir }) {
 
           <p className="sub">
             De la solicitud del cliente al pago de la factura:
-            38 pasos en 7 fases.
+            42 pasos en 8 fases.
           </p>
         </div>
 

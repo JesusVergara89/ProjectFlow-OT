@@ -14,6 +14,7 @@ const aDb = p => ({
   responsable_reporte: p.responsableReporte || "",
   prioridad: p.prioridad,
   monto: p.monto || 0,
+  anticipo: p.anticipo || 0,
   estado: p.estado,
   resultado: p.resultado ?? null,
   paso: p.paso,
@@ -24,7 +25,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -97,7 +98,7 @@ export default async function handler(req) {
   } else if (accion === "deshacer") {
     detalle = { paso_antes: previo ? previo.paso : null, paso_despues: p.paso };
   } else if (accion === "crear") {
-    detalle = { nombre: p.nombre, cliente: p.cliente, tipo: p.tipo || "", area: p.area || "", responsable: p.responsable || "", prioridad: p.prioridad, monto: p.monto || 0 };
+    detalle = { nombre: p.nombre, cliente: p.cliente, tipo: p.tipo || "", area: p.area || "", responsable: p.responsable || "", prioridad: p.prioridad, monto: p.monto || 0, anticipo: p.anticipo || 0 };
   } else {
     // editar: cambios campo por campo respecto a lo que había.
     const cambios = {};

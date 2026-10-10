@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
-import { fecha, hora } from "../format.js";
+import { fecha, hora, money } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
@@ -101,7 +101,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
       <div className="paso-box">
         <div>
           <span className="pb-n">
-            Paso {pa.n} de 40 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
+            Paso {pa.n} de 41 · lleva {diasTxt(dias(p))}{detenido(p) ? " · detenido" : ""}
           </span>
           <div className="pb-t">{pa.txt}</div>
         </div>
@@ -280,7 +280,23 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               valor={+p.monto || 0}
               onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.monto) onGuardar({ ...p, monto: n }); return n; }}
             />
+            <Campo
+              id="d-anticipo"
+              etiqueta="Anticipo (MXN)"
+              tipo="number"
+              min="0"
+              step="1000"
+              inputMode="numeric"
+              disabled={!puedoEditar}
+              valor={+p.anticipo || 0}
+              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n }); return n; }}
+            />
           </div>
+          {(+p.anticipo > 0) && (
+            <p className="sig">
+              Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
+            </p>
+          )}
         </div>
 
         <div className="d-sec">

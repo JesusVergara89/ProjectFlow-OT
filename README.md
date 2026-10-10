@@ -1,6 +1,6 @@
 # Tablero de Proyectos y OT
 
-Dashboard en React + Vite que sigue cada proyecto por las 38 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
+Dashboard en React + Vite que sigue cada proyecto por las 42 etapas del flujo: solicitud del cliente, viabilidad, levantamiento, alcances, cotización y negociación, OT, ejecución, reporte técnico y calidad, facturación y cobro. Los datos viven en Supabase y se sincronizan en tiempo real entre todas las pantallas abiertas.
 
 **Acceso con usuarios propios** (sin registro) y **bitácora**: cada acción —entrar, crear, editar, avanzar, deshacer, eliminar— queda registrada con quién la hizo y cuándo.
 
@@ -56,7 +56,7 @@ netlify dev                  # levanta el frontend Y las funciones juntas
 | `src/db.js` | Lectura y tiempo real (anon); las escrituras van a las funciones. |
 | `src/components/Login.jsx` | Pantalla de usuario y contraseña. |
 | `src/components/Bitacora.jsx` | Panel con el rastro de actividad. |
-| `src/flow.js` | Las 7 fases y los 38 pasos. Para cambiar el flujo, solo se edita este archivo. |
+| `src/flow.js` | Las 8 fases y los 42 pasos. Para cambiar el flujo, solo se edita este archivo. |
 | `src/reglas.js` | `avanzar`, `deshacer`, días en el paso, detenidos y filtros. |
 | `scripts/usuario.mjs` | Genera el hash de contraseñas y el `AUTH_SECRET`. |
 | `supabase/schema.sql` | Tablas, permisos y tiempo real. |
@@ -66,4 +66,4 @@ netlify dev                  # levanta el frontend Y las funciones juntas
 - **Agregar o quitar personas**: vuelve a generar `APP_USERS` con `scripts/usuario.mjs` y actualiza la variable en Netlify. No hace falta redesplegar el código, pero sí volver a desplegar para que tome la variable nueva (o usa "Clear cache and deploy").
 - **Cambiar una contraseña**: genera de nuevo esa entrada con el script y reemplázala en `APP_USERS`.
 - **Cuándo se marca un proyecto como detenido**: `umbral` de cada fase en `src/flow.js`, en días.
-- **Paso 25 → 27**: el flujo lleva de "Se coordina depósito y/o realización" directo a "Se ejecuta el servicio", saltando "Se crea plan de calidad" (26). Si el plan de calidad debe hacerse siempre, cambia `A(25, ..., 27)` a `A(25, ..., 26)` en `src/flow.js`.
+- **Viáticos y plan de calidad (pasos 24–27)**: en el paso 24 se decide si se ocupan viáticos foráneos. Si **sí**, Leonardo los solicita a administración (25) y Adriana los autoriza/gestiona (26, "viáticos asignados"); si **no**, se salta directo. En ambos casos el flujo pasa **siempre** por "Se crea plan de calidad" (27) antes de ejecutar el servicio (28). El plan de calidad ya no es opcional.

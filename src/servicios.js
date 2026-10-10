@@ -6,7 +6,7 @@
    Al crear el proyecto se elige el tipo; de ahí se deriva el área. */
 
 // Equipo comercial (antes vivía en permisos.js). Cámbialo aquí si entra o sale alguien.
-export const COMERCIAL = ["monse", "paola", "miriam", "cristina", "edgar"];
+export const COMERCIAL = ["monse", "paola", "miriam", "cristina", "edgar", "german"];
 
 export const AREAS = {
   ingenieria: { nombre: "Ingeniería", usuarios: ["german"] },

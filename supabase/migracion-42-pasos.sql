@@ -1,0 +1,39 @@
+-- ============================================================
+-- Migración: el flujo pasó de 41 a 42 pasos.
+-- Se insertó un paso nuevo en la fase de Planeación y OT:
+--   26  Se autorizan y gestionan los viáticos (viáticos asignados) - Adriana  (nuevo)
+-- y se corrigió la lógica de viáticos para que el plan de calidad SIEMPRE se cree.
+--
+-- Reubica los proyectos EN CURSO a la nueva numeración.
+-- CORRE ESTE ARCHIVO UNA SOLA VEZ, después de aplicar schema.sql
+-- (que ya amplía el rango de 'paso' a 1..42). Volver a correrlo
+-- movería los pasos otra vez: NO lo ejecutes dos veces.
+--
+-- Mapeo de la numeración vieja -> nueva (todos los pasos desde el 26 suben +1):
+--   viejo 25 (coordina depósito)          -> 25  (sin cambio; ahora es "solicita viáticos")
+--   viejo 26 (plan de calidad)            -> 27
+--   viejo 27 (ejecuta servicio)           -> 28
+--   viejo 28 (entrega documentación)      -> 29
+--   viejo 29 (cierre parcial OT)          -> 30
+--   viejo 30 (¿ocupa reporte?)            -> 31
+--   viejo 31 (asigna responsable)         -> 32
+--   viejo 32 (elabora reporte)            -> 33
+--   viejo 33 (¿servicios adicionales?)    -> 34
+--   viejo 34 (entrega a calidad)          -> 35
+--   viejo 35 (revisa reporte)             -> 36
+--   viejo 36 (¿cumple calidad?)           -> 37
+--   viejo 37 (entrega al cliente)         -> 38
+--   viejo 38 (factura)                    -> 39
+--   viejo 39 (programa pago)              -> 40
+--   viejo 40 (paga factura)               -> 41
+--   viejo 41 (suma cobrado y cierre)      -> 42
+-- (los pasos 1..25 no cambian; el nuevo 26 queda vacío de proyectos)
+-- ============================================================
+
+-- Un solo +1 a todo lo que esté en 26 o más alto. Va de mayor a menor no es
+-- necesario porque es una suma constante sobre un rango cerrado.
+update public.proyectos set paso = paso + 1 where paso >= 26;
+
+-- Nota: el campo 'historial' (jsonb) conserva los números viejos de cada
+-- avance. Es solo un registro visual del pasado; no afecta el flujo actual.
+-- Si quieres también recorrer el historial, pídelo y te paso el UPDATE de jsonb.

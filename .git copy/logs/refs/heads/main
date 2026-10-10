@@ -1,0 +1,26 @@
+0000000000000000000000000000000000000000 f9063586a2b03a008846427b8541629bfad044f8 Jesus Vergara <oprcalidad@ansycar.com> 1791234535 -0600	commit (initial): earten push
+f9063586a2b03a008846427b8541629bfad044f8 f9063586a2b03a008846427b8541629bfad044f8 Jesus Vergara <oprcalidad@ansycar.com> 1791234538 -0600	Branch: renamed refs/heads/main to refs/heads/main
+f9063586a2b03a008846427b8541629bfad044f8 0a90fce9f28f2ac979f2d2d60bc0957a3a947f21 Jesus Vergara <oprcalidad@ansycar.com> 1791236589 -0600	commit: new readme
+0a90fce9f28f2ac979f2d2d60bc0957a3a947f21 c288cf1892b1125f2feba55c1191f95d5aa92d56 Jesus Vergara <oprcalidad@ansycar.com> 1791236799 -0600	commit: changes in all comments
+c288cf1892b1125f2feba55c1191f95d5aa92d56 6b9a19cef7fdf964dae4c905a356e166e80edb8c Jesus Vergara <oprcalidad@ansycar.com> 1791305392 -0600	commit: new features
+6b9a19cef7fdf964dae4c905a356e166e80edb8c 34e84bfeb3ba497929f64713c7b8b57de5a168f6 Jesus Vergara <oprcalidad@ansycar.com> 1791310975 -0600	commit: adding new rules
+34e84bfeb3ba497929f64713c7b8b57de5a168f6 09d827d9dba690cc4a89b48e1a94432e773eb4f4 Jesus Vergara <oprcalidad@ansycar.com> 1791314110 -0600	commit: commandable to describe the number of the requisiciones und alcances
+09d827d9dba690cc4a89b48e1a94432e773eb4f4 7da75e6b80e3afbc0f357d00d86fd8bebca0b959 Jesus Vergara <oprcalidad@ansycar.com> 1791317495 -0600	commit: allow some people to trigger some functions
+7da75e6b80e3afbc0f357d00d86fd8bebca0b959 9d17f5f85e334a57dc8a105dddbf421b249b2f73 Jesus Vergara <oprcalidad@ansycar.com> 1791322185 -0600	commit: modifying woh is allow to change stages in the projects
+9d17f5f85e334a57dc8a105dddbf421b249b2f73 9db64715b83236e954d6a68343f1c0432f9ea41f Jesus Vergara <oprcalidad@ansycar.com> 1791324868 -0600	commit: changing who delete projects and other rules refering to deleting
+9db64715b83236e954d6a68343f1c0432f9ea41f 48ca5c18a7deb12c443c98b5303d9250c9b6ee22 Jesus Vergara <oprcalidad@ansycar.com> 1791325307 -0600	commit: editing README
+48ca5c18a7deb12c443c98b5303d9250c9b6ee22 b164aec346865beebc9c8e74065a8abd54c911e6 Jesus Vergara <oprcalidad@ansycar.com> 1791326455 -0600	commit: allowing two people to do everything
+b164aec346865beebc9c8e74065a8abd54c911e6 45656de0b3ece9d2e3fb6d02f2a3abf5372f5f77 Jesus Vergara <oprcalidad@ansycar.com> 1791409774 -0600	pull: Fast-forward
+45656de0b3ece9d2e3fb6d02f2a3abf5372f5f77 ec6a9456858e970804ea9a6e158526ec5846bb37 Jesus Vergara <oprcalidad@ansycar.com> 1791410571 -0600	commit: new rule to follow the flow of delivery documentation after ending a project
+ec6a9456858e970804ea9a6e158526ec5846bb37 c48dcb48d5fd823b7a2b148539e3defb73263e3d Jesus Vergara <oprcalidad@ansycar.com> 1791412561 -0600	commit: description who shuound do what in the work flow
+c48dcb48d5fd823b7a2b148539e3defb73263e3d cb50ca8531f19a46126edbaccc8af160f6765a30 Jesus Vergara <oprcalidad@ansycar.com> 1791469756 -0600	commit: highcase to Names
+cb50ca8531f19a46126edbaccc8af160f6765a30 024fd5615ddaf9d4680464f500eca303f78d40d8 Jesus Vergara <oprcalidad@ansycar.com> 1791474596 -0600	commit: adding type of projects and people who is ressponsable for
+024fd5615ddaf9d4680464f500eca303f78d40d8 bf95046e74f64d39d56adc4c50180dd2354a0a8c Jesus Vergara <oprcalidad@ansycar.com> 1791475959 -0600	commit: improving the apparience of the visual project card
+bf95046e74f64d39d56adc4c50180dd2354a0a8c f2eb785297cf0dfcc56ce93e49e3b747f08e8115 Jesus Vergara <oprcalidad@ansycar.com> 1791477031 -0600	commit: adding deliting permits only to creator and admin of thr projects
+f2eb785297cf0dfcc56ce93e49e3b747f08e8115 2f462b6a9c812c24dfb418554c03b6381ae2b393 Jesus Vergara <oprcalidad@ansycar.com> 1791498989 -0600	commit: adding engeniering people to make reports
+2f462b6a9c812c24dfb418554c03b6381ae2b393 58f21e1cbbf1844e059f1a39142b94170d10bf31 Jesus Vergara <oprcalidad@ansycar.com> 1791499056 -0600	commit: modifying flow
+58f21e1cbbf1844e059f1a39142b94170d10bf31 8c5645db989a4ea351830f5f107d577323d9d40c Jesus Vergara <oprcalidad@ansycar.com> 1791499429 -0600	commit: adding only german can assing who will make the report
+8c5645db989a4ea351830f5f107d577323d9d40c d756f6c043aca87f1a3326c9586a8877789ebfa8 Jesus Vergara <oprcalidad@ansycar.com> 1791499921 -0600	commit: reparing
+d756f6c043aca87f1a3326c9586a8877789ebfa8 38ecfc8be444c8d3cb553a386c684c1c9a35042f Jesus Vergara <oprcalidad@ansycar.com> 1791573487 -0600	commit: editing permitions for creation projects
+38ecfc8be444c8d3cb553a386c684c1c9a35042f 60c0cfac773f8ba8638285a99758164db0663e3f Jesus Vergara <oprcalidad@ansycar.com> 1791581513 -0600	commit: setting configuratins for payments and other stuff
+60c0cfac773f8ba8638285a99758164db0663e3f dfb52affc03ecd3a603b35f3fee564538157c943 Jesus Vergara <oprcalidad@ansycar.com> 1791581911 -0600	commit: adding anticipo to projects

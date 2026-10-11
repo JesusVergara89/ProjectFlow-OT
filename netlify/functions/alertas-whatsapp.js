@@ -45,7 +45,7 @@ function mensaje(p, a, reincidencia) {
       `🚨🚨 *SIGUE DETENIDO* 🚨🚨\n` +
       `*${p.nombre}* — ${p.cliente}\n` +
       `${a.quien} ${a.que} desde hace ${dur(a)} y la fase "${fase}" NO ha avanzado.\n` +
-      `Esto ya está muy fuera de tiempo. Hay que resolverlo HOY.`
+      `Esto ya está fuera de tiempo. Hay que resolverlo HOY.`
     );
   }
   return (

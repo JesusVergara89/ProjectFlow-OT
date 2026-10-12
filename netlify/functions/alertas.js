@@ -1,16 +1,21 @@
 // ============================================================
-// Alertas por WhatsApp (CallMeBot) — Netlify Scheduled Function.
+// Alertas por Telegram — Netlify Scheduled Function.
 // Corre 1 vez al día (ver "schedule" abajo), revisa todos los proyectos
-// y manda un WhatsApp a las personas configuradas cuando se dispara
-// cualquiera de las 5 alertas de tiempo que ya calcula src/reglas.js.
+// y manda un mensaje de Telegram a las personas/grupo configurados cuando
+// se dispara cualquiera de las alertas de tiempo que calcula src/reglas.js.
+//
+// A diferencia de CallMeBot, Telegram CONFIRMA la entrega real: su API
+// responde { ok: true } solo si el mensaje se entregó. Por eso solo se
+// "sella" el aviso (anti-spam) cuando de verdad salió.
 //
 // Variables de entorno (en Netlify, SIN prefijo VITE_, son secretas):
-//   WHATSAPP_DEST = JSON con las personas que reciben los avisos, p.ej.:
+//   TELEGRAM_BOT_TOKEN = token del bot que te da @BotFather, p. ej. "123456:ABC-DEF..."
+//   TELEGRAM_DEST = JSON con los destinos (chat_id de cada persona o del grupo):
 //     [
-//       {"nombre":"Jesus","phone":"+521444XXXXXXX","apikey":"123456"},
-//       {"nombre":"Leonardo","phone":"+521444XXXXXXX","apikey":"234567"}
+//       {"nombre":"Jesus","chat_id":"123456789"},
+//       {"nombre":"Equipo","chat_id":"-1001234567890"}
 //     ]
-//   (phone en formato internacional; apikey lo da CallMeBot a cada número).
+//   (chat_id lo obtienes escribiéndole al bot y leyendo getUpdates; ver TELEGRAM-SETUP.md)
 // ============================================================
 
 import { json, sbLeerProyectos, sbLeerAvisos, sbInsertarAviso, sbBorrarAviso } from "./_lib/util.js";
@@ -18,6 +23,8 @@ import { evaluarAlerta, paso } from "../../src/reglas.js";
 
 // Cada cuántos días se REPITE el aviso si la fase sigue sin avanzar (tono alarmante).
 const DIAS_REPETIR = 7;
+
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 
 // Fila de Supabase (snake_case) -> forma que esperan las reglas (camelCase).
 const aApp = r => ({
@@ -36,29 +43,32 @@ const aApp = r => ({
 
 const dur = a => `${a.dias} día${a.dias === 1 ? "" : "s"}${a.habiles ? " hábil" + (a.dias === 1 ? "" : "es") : ""}`;
 
-// Mensaje de WhatsApp. reincidencia=true -> ya se había avisado y SIGUE detenido (más alarmante).
+// Escapa lo que va dentro de HTML de Telegram (parse_mode=HTML).
+const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Mensaje. reincidencia=true -> ya se había avisado y SIGUE detenido (más alarmante).
 function mensaje(p, a, reincidencia) {
   const pa = paso(p);
   const fase = pa.fase?.nombre || "";
   if (reincidencia) {
     return (
-      `🚨🚨 *SIGUE DETENIDO* 🚨🚨\n` +
-      `*${p.nombre}* — ${p.cliente}\n` +
-      `${a.quien} ${a.que} desde hace ${dur(a)} y la fase "${fase}" NO ha avanzado.\n` +
+      `🚨🚨 <b>SIGUE DETENIDO</b> 🚨🚨\n` +
+      `<b>${esc(p.nombre)}</b> — ${esc(p.cliente)}\n` +
+      `${esc(a.quien)} ${esc(a.que)} desde hace ${dur(a)} y la fase "${esc(fase)}" NO ha avanzado.\n` +
       `Esto ya está fuera de tiempo. Hay que resolverlo HOY.`
     );
   }
   return (
-    `⚠️ *${p.nombre}* — ${p.cliente}\n` +
-    `${a.quien} ${a.que} (lleva ${dur(a)}).\n` +
-    `Fase: ${fase} · paso ${pa.n}.`
+    `⚠️ <b>${esc(p.nombre)}</b> — ${esc(p.cliente)}\n` +
+    `${esc(a.quien)} ${esc(a.que)} (lleva ${dur(a)}).\n` +
+    `Fase: ${esc(fase)} · paso ${pa.n}.`
   );
 }
 
 const destinatarios = () => {
   try {
-    const arr = JSON.parse(process.env.WHATSAPP_DEST || "[]");
-    return Array.isArray(arr) ? arr.filter(d => d.phone && d.apikey) : [];
+    const arr = JSON.parse(process.env.TELEGRAM_DEST || "[]");
+    return Array.isArray(arr) ? arr.filter(d => d.chat_id) : [];
   } catch {
     return [];
   }
@@ -66,33 +76,37 @@ const destinatarios = () => {
 
 const dormir = ms => new Promise(r => setTimeout(r, ms));
 
-// Envío por CallMeBot (un GET por persona). Devuelve true si Meta/CallMeBot lo aceptó.
-async function enviarWhatsApp(dest, texto) {
-  const url =
-    "https://api.callmebot.com/whatsapp.php" +
-    `?phone=${encodeURIComponent(dest.phone)}` +
-    `&text=${encodeURIComponent(texto)}` +
-    `&apikey=${encodeURIComponent(dest.apikey)}`;
+// Envío por Telegram. Devuelve true solo si Telegram CONFIRMA la entrega (ok:true).
+async function enviarTelegram(dest, texto) {
   try {
-    const res = await fetch(url);
-    const txt = (await res.text()) || "";
-    const limpio = txt.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); // quita HTML
-    // CallMeBot responde 200 aunque falle: el error va en el TEXTO.
-    // Señales de fallo típicas: APIKey inválida, número no autorizado, etc.
-    const falla = /error|invalid|apikey|you need|not allowed|didn'?t|must send|no autoriz/i.test(limpio);
-    const ok = res.ok && !falla;
-    console.log(`[callmebot] ${dest.nombre || dest.phone}: ${res.status} ${ok ? "OK" : "FALLÓ"} — ${limpio.slice(0, 160)}`);
+    const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: dest.chat_id,
+        text: texto,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    const ok = res.ok && data.ok === true;
+    console.log(`[telegram] ${dest.nombre || dest.chat_id}: ${ok ? "OK" : "FALLÓ"}${ok ? "" : " — " + (data.description || res.status)}`);
     return ok;
   } catch (e) {
-    console.error(`[callmebot] ${dest.phone}: ${e.message}`);
+    console.error(`[telegram] ${dest.chat_id}: ${e.message}`);
     return false;
   }
 }
 
 export default async function handler() {
+  if (!TOKEN) {
+    console.error("TELEGRAM_BOT_TOKEN vacío: no hay bot para enviar.");
+    return json({ ok: false, error: "Falta TELEGRAM_BOT_TOKEN" }, 200);
+  }
   const dest = destinatarios();
   if (!dest.length) {
-    console.error("WHATSAPP_DEST vacío o inválido: no hay a quién avisar.");
+    console.error("TELEGRAM_DEST vacío o inválido: no hay a quién avisar.");
     return json({ ok: false, error: "Sin destinatarios configurados" }, 200);
   }
 
@@ -132,10 +146,10 @@ export default async function handler() {
     console.log(`[alertas] "${p.nombre}" ${a.key}${reincidencia ? " (REPETICIÓN)" : ""} -> enviando a ${dest.length}`);
     let algunoOk = false;
     for (const d of dest) {
-      const ok = await enviarWhatsApp(d, texto);
-      console.log(`[alertas]   -> ${d.nombre || d.phone}: ${ok ? "OK" : "FALLÓ"}`);
+      const ok = await enviarTelegram(d, texto);
+      console.log(`[alertas]   -> ${d.nombre || d.chat_id}: ${ok ? "OK" : "FALLÓ"}`);
       algunoOk = algunoOk || ok;
-      await dormir(1500); // CallMeBot pide no mandar en ráfaga
+      await dormir(300);
     }
     if (algunoOk) {
       try {

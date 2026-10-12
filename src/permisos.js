@@ -77,7 +77,13 @@ export function usuariosPaso(n, proyecto) {
   }
   if (PASOS_AREA.has(n)) {
     const area = areaDe(proyecto);
-    if (area) return usuariosDeArea(area);
+    const base = area ? usuariosDeArea(area) : [];
+    // Planeación (17–27) y Ejecución (28–30) las lleva Leonardo en TODOS los
+    // proyectos, sin importar el área (p. ej. las termografías de German).
+    if (n >= 17 && n <= 30) {
+      return base.includes("leonardo") ? base : [...base, "leonardo"];
+    }
+    if (area) return base;
   }
   return PERMISOS[n] || [];
 }

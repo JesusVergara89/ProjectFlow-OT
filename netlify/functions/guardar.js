@@ -92,6 +92,7 @@ export default async function handler(req) {
         paso_despues: p.paso,
         decision: historial[i].d || null,
         nota: historial[i].n || null,
+        imagen: historial[i].img || null,
         estado: p.estado
       };
     }

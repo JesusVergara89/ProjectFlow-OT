@@ -5,6 +5,86 @@ import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } f
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
 import { sesion } from "../auth.js";
+import { subirImagen } from "../db.js";
+
+/** Lee un archivo como data URL (base64). */
+function leerArchivo(file) {
+  return new Promise((ok, mal) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(fr.result);
+    fr.onerror = () => mal(new Error("No se pudo leer el archivo."));
+    fr.readAsDataURL(file);
+  });
+}
+
+// Objetivo de peso: comprime lo más posible manteniéndola legible (son capturas).
+const LADO_MAX = 1280;          // ancho/alto máximo en px: suficiente para leer un screenshot
+const OBJETIVO_BYTES = 160 * 1024; // meta de ~160 KB por imagen
+
+// Peso aproximado (en bytes) de una data URL base64.
+const pesaBytes = url => Math.round((url.length - url.indexOf(",") - 1) * 0.75);
+
+/**
+ * Comprime la imagen con canvas ANTES de subirla: reduce resolución, prefiere
+ * WebP (comprime mucho mejor las capturas con texto) y baja la calidad hasta
+ * acercarse a la meta de peso. Si el navegador no puede decodificar el formato
+ * (p. ej. HEIC de iPhone en Chrome), sube el original tal cual.
+ */
+async function procesarImagen(file) {
+  const dataUrl = await leerArchivo(file);
+
+  let img;
+  try {
+    img = await new Promise((ok, mal) => {
+      const im = new Image();
+      im.onload = () => ok(im);
+      im.onerror = () => mal(new Error("sin-canvas"));
+      im.src = dataUrl;
+    });
+  } catch {
+    return { base64: dataUrl, tipo: file.type || "image/jpeg" }; // formato no decodificable
+  }
+
+  // ¿El navegador sabe exportar WebP? Si no, cae a JPEG.
+  const prueba = document.createElement("canvas");
+  prueba.width = prueba.height = 1;
+  const formato = prueba.toDataURL("image/webp").startsWith("data:image/webp")
+    ? "image/webp"
+    : "image/jpeg";
+
+  const render = (lado, q) => {
+    let w = img.width, h = img.height;
+    if (w > lado || h > lado) {
+      const r = Math.min(lado / w, lado / h);
+      w = Math.round(w * r);
+      h = Math.round(h * r);
+    }
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff";            // fondo blanco por si la captura es PNG con transparencia
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL(formato, q);
+  };
+
+  // Baja primero la calidad; si aún no alcanza la meta, baja también el tamaño.
+  let salida = null;
+  for (const lado of [LADO_MAX, 1024, 800]) {
+    for (const q of [0.6, 0.5, 0.4, 0.3]) {
+      salida = render(lado, q);
+      if (pesaBytes(salida) <= OBJETIVO_BYTES) break;
+    }
+    if (salida && pesaBytes(salida) <= OBJETIVO_BYTES) break;
+  }
+
+  // Nunca subas algo más pesado que el original.
+  if (!salida || salida.length >= dataUrl.length) {
+    return { base64: dataUrl, tipo: file.type || "image/jpeg" };
+  }
+  return { base64: salida, tipo: formato };
+}
 
 /** Campo de texto que guarda al salir del campo (no en cada tecla). */
 function Campo({ id, etiqueta, valor, onGuardar, tipo = "text", completo, ...resto }) {
@@ -57,8 +137,9 @@ export function Lateral({ onCerrar, children }) {
 export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const [nota, setNota] = useState("");
   const [borrar, setBorrar] = useState(false);
-  const [alc, setAlc] = useState("");
-  const [req, setReq] = useState("");
+  const [img, setImg] = useState(null);        // { url, path } de la evidencia subida
+  const [subiendo, setSubiendo] = useState(false);
+  const [errImg, setErrImg] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [respRep, setRespRep] = useState(p.responsableReporte || "");
   const pa = paso(p);
@@ -67,7 +148,26 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const hasta = cerrado && p.resultado === "cerrado" ? FASES.length : fi;
   const historial = p.historial || [];
 
-  const mover = (fn, accion) => { setNota(""); setBorrar(false); setAlc(""); setReq(""); setEnviado(false); onGuardar(fn(p), accion); };
+  const mover = (fn, accion) => { setNota(""); setBorrar(false); setImg(null); setErrImg(""); setSubiendo(false); setEnviado(false); onGuardar(fn(p), accion); };
+
+  const onImagen = async e => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite volver a elegir el mismo archivo
+    if (!file) return;
+    const esImagen = /^image\//.test(file.type) || /\.(jpe?g|png|gif|webp|heic|heif|bmp|tiff?|avif|svg)$/i.test(file.name);
+    if (!esImagen) { setErrImg("Elige un archivo de imagen."); return; }
+    setErrImg("");
+    setSubiendo(true);
+    try {
+      const { base64, tipo } = await procesarImagen(file);
+      const r = await subirImagen({ proyectoId: p.id, tipo, base64 });
+      setImg({ url: r.url, path: r.path });
+    } catch (err) {
+      setErrImg(err?.message || "No se pudo subir la imagen.");
+    } finally {
+      setSubiendo(false);
+    }
+  };
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
   // Solo el admin y quien creó el proyecto pueden editar sus datos o eliminarlo.
@@ -76,8 +176,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
     (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
   const puedoEliminar = puedoEditar;
   const esPaso10 = !cerrado && pa.n === 10;
-  const paso10Valido = alc.trim() && req.trim() && enviado;
-  const notaPaso10 = `Se enviaron por correo los alcances N.° ${alc.trim()} y las requisiciones N.° ${req.trim()}.`;
+  const paso10Valido = !!img && enviado && !subiendo;
+  const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
   const esPasoAsigna = !cerrado && pa.n === PASO_ASIGNA_REPORTE;
   const asignaValido = !!respRep;
   const cambiar = (clave, normalizar) => v => {
@@ -111,16 +211,19 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         {esPaso10 ? (
           <div className="campos">
             <div className="campo full">
-              <label htmlFor="d-alc">Número(s) de alcances</label>
-              <input id="d-alc" type="text" maxLength={120} placeholder="Ej. 1024, 1025" value={alc} onChange={e => setAlc(e.target.value)} />
-            </div>
-            <div className="campo full">
-              <label htmlFor="d-req">Número(s) de requisiciones</label>
-              <input id="d-req" type="text" maxLength={120} placeholder="Ej. R-501, R-502" value={req} onChange={e => setReq(e.target.value)} />
+              <label htmlFor="d-img">Imagen del correo con los alcances</label>
+              <input id="d-img" type="file" accept="image/*" disabled={!puedo || subiendo} onChange={onImagen} />
+              {subiendo && <p className="sig">Subiendo imagen…</p>}
+              {errImg && <p className="sig" style={{ color: "var(--crit)" }}>{errImg}</p>}
+              {img && (
+                <a className="evid" href={img.url} target="_blank" rel="noreferrer">
+                  <img src={img.url} alt="Evidencia del correo" />
+                </a>
+              )}
             </div>
             <label className="chk full">
               <input type="checkbox" checked={enviado} onChange={e => setEnviado(e.target.checked)} />
-              <span>Confirmo que se enviaron por correo los alcances y requisiciones a comercial.</span>
+              <span>Confirmo que se enviaron por correo los alcances a comercial.</span>
             </label>
           </div>
         ) : esPasoAsigna ? (
@@ -175,7 +278,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
             </p>
             {esPaso10 && !paso10Valido && (
               <p className="sig" style={{ color: "var(--warn)" }}>
-                Captura los números de alcances y requisiciones y confirma el envío por correo para poder avanzar.
+                Sube la imagen del correo y confirma el envío para poder avanzar.
               </p>
             )}
             {esPasoAsigna && !asignaValido && (
@@ -191,7 +294,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido)}
                 onClick={() =>
                   esPaso10
-                    ? mover(q => avanzar(q, null, notaPaso10), "avanzar")
+                    ? mover(q => avanzar(q, null, notaPaso10, { img: img.url }), "avanzar")
                     : esPasoAsigna
                       ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")
                       : mover(q => avanzar(q, null, nota.trim()), "avanzar")
@@ -312,6 +415,11 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                   </span>
                   {(e.nombre || e.u) && <p className="h-n">por {e.nombre || e.u}</p>}
                   {e.n && <p className="h-n">{e.n}</p>}
+                  {e.img && (
+                    <a className="evid" href={e.img} target="_blank" rel="noreferrer">
+                      <img src={e.img} alt="Evidencia del correo" />
+                    </a>
+                  )}
                 </div>
               </li>
             ))}

@@ -138,13 +138,14 @@ export const alerta = p => evaluarAlerta(p)?.color || null;
 export const motivoDe = p => evaluarAlerta(p)?.motivo || "";
  
 /** Completa el paso actual (con "si"/"no" si es una decisión) y devuelve el proyecto actualizado. */
-export function avanzar(p, eleccion, nota) {
+export function avanzar(p, eleccion, nota, extra) {
   const q = structuredClone(p);
   const pa = paso(q);
   const ahora = new Date().toISOString();
   const e = { p: q.paso, f: ahora };
   if (eleccion) e.d = eleccion;
   if (nota) e.n = nota;
+  if (extra && typeof extra === "object") Object.assign(e, extra); // p. ej. { img: url }
   q.historial = [...(q.historial || []), e];
   if (pa.tipo === "accion" && pa.fin) {
     q.estado = "cerrado";

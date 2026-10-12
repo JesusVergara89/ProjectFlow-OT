@@ -50,6 +50,11 @@ export async function borrar(id, nombre) {
   await api("borrar", { id, nombre });
 }
 
+// Sube una imagen (evidencia) al Storage por el servidor y devuelve { url, path }.
+export async function subirImagen({ proyectoId, tipo, base64 }) {
+  return api("subir", { proyectoId, tipo, base64 });
+}
+
 export function suscribir(alCambiar) {
   const canal = supabase
     .channel("proyectos-cambios")

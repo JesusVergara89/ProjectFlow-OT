@@ -198,6 +198,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .h-f{font:400 12px/1.4 var(--f-mono);color:var(--muted)}
 .h-t b{font:500 12px var(--f-mono);color:var(--accent)}
 .h-n{margin-top:2px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.evid{display:inline-block;margin-top:6px;border:1px solid var(--line);border-radius:8px;overflow:hidden;line-height:0}
+.evid img{display:block;max-width:220px;max-height:160px;width:auto;height:auto;object-fit:cover}
 .fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .borrar{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--crit);border-radius:8px;background:var(--crit-soft);color:var(--crit)}
 .error{min-height:1.2em;color:var(--crit);font-weight:600}

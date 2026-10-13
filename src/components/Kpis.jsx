@@ -7,20 +7,23 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   const enFase = id => act.filter(p => paso(p).fase.id === id);
   const suma = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
   const sumaAnticipo = l => l.reduce((a, p) => a + (+p.anticipo || 0), 0);
-  // Saldo por cobrar = monto menos el anticipo ya pagado (nunca negativo).
-  const saldo = l => l.reduce((a, p) => a + Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)), 0);
+  // Saldo por cobrar: 0 si está pagado por adelantado; si no, monto menos el anticipo (nunca negativo).
+  const saldoDe = p => (p.pagado ? 0 : Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)));
+  const saldo = l => l.reduce((a, p) => a + saldoDe(p), 0);
   const cot = enFase("cotizacion");
   const plan = enFase("planeacion");
   // En ejecución incluye tanto "Ejecución del servicio" como "Reporte y calidad".
   const eje = act.filter(p => ["ejecucion", "reporte"].includes(paso(p).fase.id));
   const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
   const cerradosPagados = items.filter(p => p.resultado === "cerrado"); // cobro total (monto completo)
-  const conAnticipo = act.filter(p => (+p.anticipo || 0) > 0); // proyectos con anticipo
-  // Cobrado = monto completo de los proyectos cerrados + anticipos de los que AÚN no cierran.
-  // Ese anticipo ya es dinero en la empresa, aunque el proyecto siga abierto. En los cerrados
-  // no se suma el anticipo aparte porque ya va incluido dentro de su monto completo.
-  const anticiposVivos = items.filter(p => p.resultado !== "cerrado" && (+p.anticipo || 0) > 0);
-  const totalCobrado = suma(cerradosPagados) + sumaAnticipo(anticiposVivos);
+  // Pagados por adelantado que AÚN no cierran: su monto completo ya está en la empresa.
+  const prepagadosVivos = items.filter(p => p.resultado !== "cerrado" && p.pagado);
+  // Anticipos parciales (no cerrados y no pagados por adelantado).
+  const anticiposVivos = items.filter(p => p.resultado !== "cerrado" && !p.pagado && (+p.anticipo || 0) > 0);
+  const conAnticipo = anticiposVivos; // proyectos con anticipo parcial
+  // Cobrado = monto de cerrados + monto de los prepagados vivos + anticipos de los demás.
+  // No se cuenta doble: un cerrado o un prepagado aporta su monto una sola vez.
+  const totalCobrado = suma(cerradosPagados) + suma(prepagadosVivos) + sumaAnticipo(anticiposVivos);
   const det = act.filter(detenido);
 
   return (
@@ -60,6 +63,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
         <span className="k-v">{money(totalCobrado)}</span>
         <span className="k-s">
           {cerradosPagados.length} {plural(cerradosPagados.length, "cerrado", "cerrados")}
+          {prepagadosVivos.length > 0 && ` + ${money(suma(prepagadosVivos))} prepagados`}
           {anticiposVivos.length > 0 && ` + ${money(sumaAnticipo(anticiposVivos))} en anticipos`}
         </span>
       </div>

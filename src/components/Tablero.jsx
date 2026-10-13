@@ -26,6 +26,7 @@ function Tarjeta({ p, onAbrir }) {
       <span className="c-paso"><b>{pa.n}</b><span>{pa.txt}</span></span>
       <span className="c-pie">
         <span className={`prio prio-${prioDe(p)}`}>{PRIO[prioDe(p)]}</span>
+        {p.pagado && <span className="tag pagado" title="Pagado por adelantado">Pagado</span>}
         <span className="c-monto">{+p.monto ? money(p.monto) : ""}</span>
         <span className={"dias" + (det ? " warn" : "")} title="Tiempo en este paso">{diasTxt(dias(p))}</span>
       </span>

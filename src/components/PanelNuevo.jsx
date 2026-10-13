@@ -4,7 +4,7 @@ import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
 import { money } from "../format.js";
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
-  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "" });
+  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
   const srv = servicioDe(f.tipo);
@@ -25,6 +25,7 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
       prioridad: f.prioridad,
       monto: Math.max(0, +f.monto || 0),
       anticipo: Math.max(0, +f.anticipo || 0),
+      pagado: !!f.pagado,
       estado: "activo",
       paso: 1,
       creado: ahora,
@@ -85,10 +86,14 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
           <div className="campo">
             <label htmlFor="n-anticipo">Anticipo (MXN)</label>
             <input id="n-anticipo" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.anticipo} onChange={set("anticipo")} />
-            {(+f.anticipo > 0) && (
+            {(+f.anticipo > 0) && !f.pagado && (
               <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
             )}
           </div>
+          <label className="chk full">
+            <input type="checkbox" checked={f.pagado} onChange={e => setF(prev => ({ ...prev, pagado: e.target.checked }))} />
+            <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+          </label>
         </div>
         <datalist id="dl-cli">{clientes.map(c => <option key={c} value={c} />)}</datalist>
         <datalist id="dl-resp">{responsables.map(r => <option key={r} value={r} />)}</datalist>

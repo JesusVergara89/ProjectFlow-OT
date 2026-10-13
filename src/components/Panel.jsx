@@ -394,8 +394,19 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               valor={+p.anticipo || 0}
               onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n }); return n; }}
             />
+            <label className="chk full">
+              <input
+                type="checkbox"
+                checked={!!p.pagado}
+                disabled={!puedoEditar}
+                onChange={e => onGuardar({ ...p, pagado: e.target.checked })}
+              />
+              <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+            </label>
           </div>
-          {(+p.anticipo > 0) && (
+          {p.pagado ? (
+            <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>
+          ) : (+p.anticipo > 0) && (
             <p className="sig">
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
             </p>

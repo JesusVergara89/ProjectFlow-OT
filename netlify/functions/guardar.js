@@ -15,6 +15,7 @@ const aDb = p => ({
   prioridad: p.prioridad,
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
+  pagado: Boolean(p.pagado),
   estado: p.estado,
   resultado: p.resultado ?? null,
   paso: p.paso,
@@ -25,7 +26,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);

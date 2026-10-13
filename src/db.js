@@ -20,6 +20,7 @@ const aApp = r => ({
   prioridad: r.prioridad,
   monto: Number(r.monto) || 0,
   anticipo: Number(r.anticipo) || 0,
+  pagado: Boolean(r.pagado),
   estado: r.estado,
   resultado: r.resultado || undefined,
   paso: r.paso,

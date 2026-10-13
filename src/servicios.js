@@ -11,14 +11,30 @@ export const COMERCIAL = ["monse", "paola", "miriam", "cristina", "edgar", "germ
 // Personal que puede ir a los servicios (responsable del servicio y apoyo).
 // Mismo listado para ambos desplegables. Cámbialo aquí si entra o sale alguien.
 export const PERSONAL_SERVICIO = [
-  "Alfredo Ramírez",
-  "Mauricio Hernández",
-  "Isaac Godoy",
-  "Guillermo de la Cruz",
-  "Johan Robles",
-  "Ricardo Suaste",
-  "César Chang",
-  "Emilia García"
+"Leo",
+  "Alfredo",
+  "Felix",
+  "Ricardo",
+  "Mauricio",
+  "Omar",
+  "Adrian",
+  "Alexander",
+  "Manuel",
+  "Cesar",
+  "Luis",
+  "Kir",
+  "Anahí",
+  "Noel",
+  "Isaac",
+  "Guillermo",
+  "Roberto",
+  "Emilia",
+  "Miqueas",
+  "Alan",
+  "Juan Pablo",
+  "Nestor",
+  "Ailin",
+  "Mitchelle"
 ];
 
 export const AREAS = {

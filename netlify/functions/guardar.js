@@ -17,6 +17,7 @@ const aDb = p => ({
   anticipo: p.anticipo || 0,
   pagado: Boolean(p.pagado),
   cobro_mes: p.cobroMes || null,
+  ot: p.ot || "",
   fecha_servicio: p.fechaServicio || null,
   fecha_servicio_fin: p.fechaServicioFin || null,
   responsable_servicio: p.responsableServicio || "",
@@ -31,7 +32,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "ot", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -90,6 +91,19 @@ export default async function handler(req) {
   const esYuliOAdmin = sesion.rol === "admin" || String(sesion.usuario || "").toLowerCase() === "yuli";
   if (!esYuliOAdmin) {
     p.pagado = accion === "crear" ? false : Boolean(previo?.pagado);
+  }
+
+  // La programación del servicio (fechas, responsable, apoyo) solo la cambia Leonardo o el admin.
+  const esLeonardoOAdmin = sesion.rol === "admin" || String(sesion.usuario || "").toLowerCase() === "leonardo";
+  if (!esLeonardoOAdmin) {
+    if (accion === "crear") {
+      p.fechaServicio = null; p.fechaServicioFin = null; p.responsableServicio = ""; p.apoyo = [];
+    } else {
+      p.fechaServicio = previo?.fecha_servicio || null;
+      p.fechaServicioFin = previo?.fecha_servicio_fin || null;
+      p.responsableServicio = previo?.responsable_servicio || "";
+      p.apoyo = Array.isArray(previo?.apoyo) ? previo.apoyo : [];
+    }
   }
 
   const historial = Array.isArray(p.historial) ? [...p.historial] : [];

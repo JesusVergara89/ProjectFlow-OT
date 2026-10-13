@@ -187,7 +187,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const asignaValido = !!respRep;
   const esPaso23 = !cerrado && pa.n === 23;
   const paso23Valido = !!p.fechaServicio && !!p.responsableServicio;
-  const puedeProgramar = puedoEditar || puedo;
+  // OT (orden de trabajo): formato AA-### según el año en curso (2026 = 26-###).
+  const anioYY = String(new Date().getFullYear()).slice(2);
+  const otRegex = new RegExp(`^${anioYY}-\\d{1,4}$`);
+  const esPaso19 = !cerrado && pa.n === 19;
+  const otValida = otRegex.test((p.ot || "").trim());
+  // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
+  const puedeProgramar = yo.rol === "admin" || String(yo.usuario || "").toLowerCase() === "leonardo";
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -233,6 +239,21 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               <input type="checkbox" checked={enviado} onChange={e => setEnviado(e.target.checked)} />
               <span>Confirmo que se enviaron por correo los alcances a comercial.</span>
             </label>
+          </div>
+        ) : esPaso19 ? (
+          <div className="campos">
+            <div className="campo full">
+              <label htmlFor="d-ot-paso">Número de OT (orden de trabajo)</label>
+              <input
+                id="d-ot-paso"
+                type="text"
+                maxLength={10}
+                placeholder={`${anioYY}-xxx`}
+                value={p.ot || ""}
+                disabled={!puedo}
+                onChange={e => onGuardar({ ...p, ot: e.target.value.trim() })}
+              />
+            </div>
           </div>
         ) : esPasoAsigna ? (
           <div className="campos">
@@ -299,12 +320,17 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 Programa la fecha del servicio y el responsable (abajo, en «Programación del servicio») para poder avanzar.
               </p>
             )}
+            {esPaso19 && !otValida && (
+              <p className="sig" style={{ color: "var(--warn)" }}>
+                Escribe la OT con el formato {anioYY}-xxx (p. ej. {anioYY}-001) para poder crear la OT y avanzar.
+              </p>
+            )}
             <div className="fila">
               <button
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido)}
+                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido) || (esPaso19 && !otValida)}
                 onClick={() =>
                   esPaso10
                     ? mover(q => avanzar(q, null, notaPaso10, { img: img.url }), "avanzar")
@@ -312,7 +338,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                       ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")
                       : esPaso23
                         ? mover(q => avanzar(q, null, `Servicio programado para ${p.fechaServicio} · responsable ${p.responsableServicio}.`), "avanzar")
-                        : mover(q => avanzar(q, null, nota.trim()), "avanzar")
+                        : esPaso19
+                          ? mover(q => avanzar(q, null, `OT creada: ${p.ot}.`), "avanzar")
+                          : mover(q => avanzar(q, null, nota.trim()), "avanzar")
                 }
               >
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}
@@ -357,6 +385,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           )}
           <div className="campos">
             <Campo id="d-nombre" etiqueta="Proyecto" valor={p.nombre} completo disabled={!puedoEditar} onGuardar={cambiar("nombre", v => v.trim() || p.nombre)} />
+            <Campo id="d-ot" etiqueta={`OT (${anioYY}-xxx)`} valor={p.ot || ""} disabled={!puedoEditar} onGuardar={cambiar("ot", v => v.trim())} />
             <Campo id="d-cliente" etiqueta="Cliente" valor={p.cliente} disabled={!puedoEditar} onGuardar={cambiar("cliente", v => v.trim() || p.cliente)} />
             <div className="campo full">
               <label htmlFor="d-tipo">Tipo de servicio</label>

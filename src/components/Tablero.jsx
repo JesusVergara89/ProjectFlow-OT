@@ -20,6 +20,7 @@ function Tarjeta({ p, onAbrir }) {
       {srv && <span className="c-tipo">{srv}</span>}
       <span className="c-top">
         <span className="c-nombre">{p.nombre}</span>
+        {p.ot && <span className="tag ot">{p.ot}</span>}
         {p.ejemplo && <span className="tag">Ejemplo</span>}
       </span>
       <span className="c-cli">{p.cliente}{p.responsable ? ` · ${p.responsable}` : ""}</span>

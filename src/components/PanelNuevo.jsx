@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
 import { money } from "../format.js";
+import { sesion } from "../auth.js";
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
   const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
   const srv = servicioDe(f.tipo);
+  const yo = sesion() || {};
+  // Solo Yuli (y el admin) pueden marcar "pagado por adelantado".
+  const puedeMarcarPagado = yo.rol === "admin" || String(yo.usuario || "").toLowerCase() === "yuli";
 
   function enviar(e) {
     e.preventDefault();
@@ -90,10 +94,12 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
               <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
             )}
           </div>
-          <label className="chk full">
-            <input type="checkbox" checked={f.pagado} onChange={e => setF(prev => ({ ...prev, pagado: e.target.checked }))} />
-            <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
-          </label>
+          {puedeMarcarPagado && (
+            <label className="chk full">
+              <input type="checkbox" checked={f.pagado} onChange={e => setF(prev => ({ ...prev, pagado: e.target.checked }))} />
+              <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+            </label>
+          )}
         </div>
         <datalist id="dl-cli">{clientes.map(c => <option key={c} value={c} />)}</datalist>
         <datalist id="dl-resp">{responsables.map(r => <option key={r} value={r} />)}</datalist>

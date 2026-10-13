@@ -175,6 +175,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
     yo.rol === "admin" ||
     (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
   const puedoEliminar = puedoEditar;
+  // Solo Yuli (y el admin) pueden marcar "pagado por adelantado".
+  const puedeMarcarPagado = yo.rol === "admin" || String(yo.usuario || "").toLowerCase() === "yuli";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -394,15 +396,16 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               valor={+p.anticipo || 0}
               onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n }); return n; }}
             />
-            <label className="chk full">
-              <input
-                type="checkbox"
-                checked={!!p.pagado}
-                disabled={!puedoEditar}
-                onChange={e => onGuardar({ ...p, pagado: e.target.checked })}
-              />
-              <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
-            </label>
+            {puedeMarcarPagado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.pagado}
+                  onChange={e => onGuardar({ ...p, pagado: e.target.checked })}
+                />
+                <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+              </label>
+            )}
           </div>
           {p.pagado ? (
             <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>

@@ -80,6 +80,13 @@ export default async function handler(req) {
     }
   }
 
+  // "Pagado por adelantado" solo lo puede marcar/quitar Yuli o el admin.
+  // Si cualquier otro intenta cambiarlo, se ignora (se conserva el valor previo / false al crear).
+  const esYuliOAdmin = sesion.rol === "admin" || String(sesion.usuario || "").toLowerCase() === "yuli";
+  if (!esYuliOAdmin) {
+    p.pagado = accion === "crear" ? false : Boolean(previo?.pagado);
+  }
+
   const historial = Array.isArray(p.historial) ? [...p.historial] : [];
   let detalle = {};
 

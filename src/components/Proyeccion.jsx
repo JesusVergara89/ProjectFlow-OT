@@ -42,6 +42,7 @@ const mesDe = p => {
 
 export default function Proyeccion({ items, onAbrir }) {
   const [numMeses, setNumMeses] = useState(4); // mes en curso + 3
+  const [mesSel, setMesSel] = useState(null);  // columna de mes seleccionada para ver el detalle
 
   // Solo proyectos vivos o cerrados-pagados; fuera los descartados.
   const base = items.filter(p => p.resultado !== "no-viable" && p.resultado !== "archivado");
@@ -82,6 +83,12 @@ export default function Proyeccion({ items, onAbrir }) {
   const totalColumna = colKey => base.reduce((a, p) => a + (columnaDe(p) === colKey ? (+p.monto || 0) : 0), 0);
   const granTotal = sumaMonto(base);
 
+  const toggleMes = colKey => setMesSel(m => (m === colKey ? null : colKey));
+  const colSel = mesSel ? columnas.find(c => c.key === mesSel) : null;
+  const proyectosSel = colSel
+    ? base.filter(p => columnaDe(p) === mesSel).sort((a, b) => (+b.monto || 0) - (+a.monto || 0))
+    : [];
+
   return (
     <div className="proy">
       {/* Matriz: etapas (filas) × meses (columnas) */}
@@ -95,7 +102,13 @@ export default function Proyeccion({ items, onAbrir }) {
             <thead>
               <tr>
                 <th>Etapa</th>
-                {columnas.map(c => <th key={c.key} className="num" title={c.titulo}>{c.etiqueta}</th>)}
+                {columnas.map(c => (
+                  <th key={c.key} className={"num mes-th" + (mesSel === c.key ? " sel" : "")}
+                      title={"Ver proyectos de " + c.titulo}
+                      onClick={() => toggleMes(c.key)}>
+                    {c.etiqueta}
+                  </th>
+                ))}
                 <th className="num">Total</th>
               </tr>
             </thead>
@@ -105,7 +118,12 @@ export default function Proyeccion({ items, onAbrir }) {
                   <td>{g.titulo}</td>
                   {columnas.map(c => {
                     const v = montoEnCelda(g.id, c.key);
-                    return <td key={c.key} className="num">{v ? money(v) : "—"}</td>;
+                    return (
+                      <td key={c.key} className={"num mes-td" + (mesSel === c.key ? " sel" : "")}
+                          onClick={() => toggleMes(c.key)}>
+                        {v ? money(v) : "—"}
+                      </td>
+                    );
                   })}
                   <td className="num"><b>{money(sumaMonto(porGrupo[g.id]))}</b></td>
                 </tr>
@@ -114,7 +132,12 @@ export default function Proyeccion({ items, onAbrir }) {
             <tfoot>
               <tr className="proy-sum">
                 <td>Total por mes</td>
-                {columnas.map(c => <td key={c.key} className="num">{money(totalColumna(c.key))}</td>)}
+                {columnas.map(c => (
+                  <td key={c.key} className={"num mes-td" + (mesSel === c.key ? " sel" : "")}
+                      onClick={() => toggleMes(c.key)}>
+                    {money(totalColumna(c.key))}
+                  </td>
+                ))}
                 <td className="num">{money(granTotal)}</td>
               </tr>
             </tfoot>
@@ -126,6 +149,42 @@ export default function Proyeccion({ items, onAbrir }) {
             <button type="button" className="btn ghost" onClick={() => setNumMeses(n => Math.max(4, n - 3))}>− Menos</button>
           )}
         </div>
+
+        {colSel && (
+          <div className="proy-detalle-mes">
+            <header className="proy-h">
+              <h3>Proyectos en {colSel.titulo}</h3>
+              <span className="proy-total">{money(totalColumna(mesSel))}</span>
+              <span className="proy-cnt">{proyectosSel.length} {plural(proyectosSel.length, "proyecto", "proyectos")}</span>
+              <button type="button" className="btn ghost" style={{ marginLeft: "auto" }} onClick={() => setMesSel(null)}>Cerrar</button>
+            </header>
+            {proyectosSel.length ? (
+              <table className="proy-tabla">
+                <thead>
+                  <tr>
+                    <th>Proyecto</th>
+                    <th>Cliente</th>
+                    <th>Etapa</th>
+                    <th className="num">Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proyectosSel.map(p => (
+                    <tr key={p.id} onClick={() => onAbrir(p.id)} tabIndex={0}
+                        onKeyDown={e => { if (e.key === "Enter") onAbrir(p.id); }}>
+                      <td>{p.nombre}{p.pagado ? <span className="tag pagado">Pagado</span> : null}</td>
+                      <td>{p.cliente}</td>
+                      <td>{grupoDe(p.paso || 1).titulo}</td>
+                      <td className="num">{+p.monto ? money(p.monto) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="vacio">Sin proyectos en este mes.</p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Detalle por etapa */}

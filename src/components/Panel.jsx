@@ -460,6 +460,12 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                   onGuardar({ ...p, fechaServicio: ini, fechaServicioFin: fin });
                 }}
               />
+              {p.fechaServicio && puedeProgramar && (
+                <button type="button" className="btn ghost danger-t" style={{ marginTop: 4, alignSelf: "flex-start" }}
+                  onClick={() => onGuardar({ ...p, fechaServicio: "", fechaServicioFin: "" })}>
+                  Quitar fecha
+                </button>
+              )}
             </div>
             <div className="campo">
               <label htmlFor="d-fecha-serv-fin">Hasta (si dura varios días)</label>
@@ -471,6 +477,12 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 disabled={!puedeProgramar || !p.fechaServicio}
                 onChange={e => onGuardar({ ...p, fechaServicioFin: e.target.value })}
               />
+              {p.fechaServicioFin && puedeProgramar && (
+                <button type="button" className="btn ghost danger-t" style={{ marginTop: 4, alignSelf: "flex-start" }}
+                  onClick={() => onGuardar({ ...p, fechaServicioFin: "" })}>
+                  Quitar fin
+                </button>
+              )}
             </div>
             <div className="campo full">
               <label htmlFor="d-resp-serv">Responsable del servicio</label>

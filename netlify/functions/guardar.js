@@ -16,6 +16,7 @@ const aDb = p => ({
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
   pagado: Boolean(p.pagado),
+  cobro_mes: p.cobroMes || null,
   estado: p.estado,
   resultado: p.resultado ?? null,
   paso: p.paso,

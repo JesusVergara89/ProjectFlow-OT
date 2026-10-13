@@ -3,9 +3,12 @@ import { Lateral } from "./Panel.jsx";
 import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
 import { money } from "../format.js";
 import { sesion } from "../auth.js";
+import { mesesDesdeHoy, nombreMes } from "../meses.js";
+
+const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
-  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false });
+  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false, cobroMes: "" });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
   const srv = servicioDe(f.tipo);
@@ -30,6 +33,7 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
       monto: Math.max(0, +f.monto || 0),
       anticipo: Math.max(0, +f.anticipo || 0),
       pagado: !!f.pagado,
+      cobroMes: +f.cobroMes || null,
       estado: "activo",
       paso: 1,
       creado: ahora,
@@ -100,6 +104,13 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
               <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
             </label>
           )}
+          <div className="campo full">
+            <label htmlFor="n-mes">Tentativo de facturar/cobrar en el mes</label>
+            <select id="n-mes" value={f.cobroMes} onChange={set("cobroMes")}>
+              <option value="">Sin proyectar</option>
+              {OPCIONES_MES.map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+            </select>
+          </div>
         </div>
         <datalist id="dl-cli">{clientes.map(c => <option key={c} value={c} />)}</datalist>
         <datalist id="dl-resp">{responsables.map(r => <option key={r} value={r} />)}</datalist>

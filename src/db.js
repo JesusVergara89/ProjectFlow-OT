@@ -21,6 +21,7 @@ const aApp = r => ({
   monto: Number(r.monto) || 0,
   anticipo: Number(r.anticipo) || 0,
   pagado: Boolean(r.pagado),
+  cobroMes: Number(r.cobro_mes) || null,
   estado: r.estado,
   resultado: r.resultado || undefined,
   paso: r.paso,

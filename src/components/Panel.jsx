@@ -6,6 +6,9 @@ import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES 
 import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
 import { sesion } from "../auth.js";
 import { subirImagen } from "../db.js";
+import { mesesDesdeHoy, nombreMes } from "../meses.js";
+
+const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
 /** Lee un archivo como data URL (base64). */
 function leerArchivo(file) {
@@ -406,6 +409,19 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
               </label>
             )}
+            <div className="campo full">
+              <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
+              <select
+                id="d-mes"
+                value={p.cobroMes || ""}
+                disabled={!puedoEditar}
+                onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
+              >
+                <option value="">Sin proyectar</option>
+                {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
+                  .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+              </select>
+            </div>
           </div>
           {p.pagado ? (
             <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>

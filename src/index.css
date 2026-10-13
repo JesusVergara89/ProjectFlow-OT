@@ -205,6 +205,28 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .borrar{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--crit);border-radius:8px;background:var(--crit-soft);color:var(--crit)}
 .error{min-height:1.2em;color:var(--crit);font-weight:600}
 
+/* Proyección (reporte financiero por etapa) */
+.proy{display:flex;flex-direction:column;gap:24px}
+.proy-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.proy-grupo{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--surface)}
+.proy-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.proy-h h2{font-size:16px;margin:0}
+.proy-total{font:600 15px var(--f-mono);color:var(--accent)}
+.proy-cnt{color:var(--muted);font-size:13px;margin-left:auto}
+.proy-tabla{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+.proy-tabla th,.proy-tabla td{text-align:left;padding:7px 10px;border-top:1px solid var(--line)}
+.proy-tabla th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.proy-tabla .num{text-align:right;font-family:var(--f-mono);white-space:nowrap}
+.proy-tabla tbody tr{cursor:pointer}
+.proy-tabla tbody tr:hover{background:var(--surface2)}
+.proy-tabla .tag.pagado{margin-left:6px}
+.proy-tabla tfoot .proy-sum td{border-top:2px solid var(--line);font-weight:700;background:var(--surface2)}
+.proy-tabla tfoot .proy-sum .num{color:var(--accent);font-size:15px}
+.proy-scroll{overflow-x:auto}
+.proy-matriz{min-width:560px}
+.proy-matriz th:first-child,.proy-matriz td:first-child{position:sticky;left:0;background:var(--surface)}
+.proy-matriz tfoot .proy-sum td:first-child{background:var(--surface2)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 .login{max-width:420px;margin:12vh auto 0;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:14px}

@@ -61,12 +61,16 @@ export function entroFase(p) {
 // Gana la PRIMERA regla cuyo rango incluya el paso actual y se pase de tiempo.
 // ============================================================
 export const REGLAS = [
-  { key: "levantamiento",    pasos: [5, 6, 7],                        dias: 3,  habiles: false, color: "#E5484D",
-    etiqueta: "Levantamiento +3 días (5–7)",                quien: "Leonardo y German", que: "no han terminado el levantamiento y la entrega a comercial" },
+  { key: "solicitud",        pasos: [1, 2, 3, 4],                     dias: 1,  habiles: false, color: "#B45309",
+    etiqueta: "Solicitud y viabilidad +1 día (1–4)",       quien: "Comercial", que: "no ha avanzado la solicitud y viabilidad" },
+  // Los 3 días del levantamiento se cuentan DESDE que se marca hecho el levantamiento
+  // (paso 6 completado → el proyecto entra al paso 7, «Se realizan alcances»).
+  { key: "levantamiento",    pasos: [7],                              dias: 3,  habiles: false, color: "#E5484D",
+    etiqueta: "Alcances +3 días tras levantamiento (7)",    quien: "Leonardo y German", que: "no han realizado los alcances tras el levantamiento" },
   { key: "huber-cotiza",     pasos: [9],                              dias: 1,  habiles: false, color: "#D6409F",
     etiqueta: "Huber +1 días cotizando materiales (9)",     quien: "Huber",    que: "no ha entregado la cotización de materiales/servicios" },
-  { key: "comercial",        pasos: [8, 9, 10, 11, 12, 13, 14, 15, 16], dias: 2, habiles: false, color: "#F76808",
-    etiqueta: "Comercial +2 días sin autorizar/declinar (8–16)", quien: "Comercial", que: "no ha autorizado ni declinado la cotización" },
+  { key: "comercial",        pasos: [8, 9, 10, 11, 12, 13, 14, 15, 16], dias: 1, habiles: false, color: "#F76808",
+    etiqueta: "Cotización y negociación +1 día (8–16)", quien: "Comercial", que: "no ha autorizado ni declinado la cotización" },
   { key: "crear-ot",         pasos: [17, 18, 19],                     dias: 1,  habiles: false, color: "#8E4EC6",
     etiqueta: "Crear OT +1 día (17–19)",                    quien: "Leonardo", que: "no ha creado la OT" },
   { key: "requisiciones",    pasos: [20, 21],                         dias: 1,  habiles: false, color: "#0588F0",

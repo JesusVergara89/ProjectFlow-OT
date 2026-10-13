@@ -7,6 +7,7 @@ import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
 import Lista from "./components/Lista.jsx";
 import Flujo from "./components/Flujo.jsx";
+import Proyeccion from "./components/Proyeccion.jsx";
 import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
@@ -15,8 +16,10 @@ import Bitacora from "./components/Bitacora.jsx";
 const VISTAS = [
   ["tablero", "Tablero"],
   ["lista", "Lista"],
-  ["flujo", "Flujo"]
+  ["flujo", "Flujo"],
+  ["proyeccion", "Proyección"]
 ];
+const IDS_VISTA = VISTAS.map(v => v[0]);
 
 const leer = (k, def) => {
   try {
@@ -39,7 +42,7 @@ function Tablas({ usuario, onSalir }) {
   const [verBitacora, setVerBitacora] = useState(false);
 
   const [vista, setVista] = useState(() =>
-    ["tablero", "lista", "flujo"].includes(leer("vista"))
+    IDS_VISTA.includes(leer("vista"))
       ? leer("vista")
       : "tablero"
   );
@@ -253,7 +256,7 @@ function Tablas({ usuario, onSalir }) {
           <p className="vacio-g">
             Cargando proyectos…
           </p>
-        ) : !items.length && vista !== "flujo" ? (
+        ) : !items.length && vista !== "flujo" && vista !== "proyeccion" ? (
 
           <div className="vacio-g">
 
@@ -301,11 +304,18 @@ function Tablas({ usuario, onSalir }) {
             }
           />
 
-        ) : (
+        ) : vista === "flujo" ? (
 
           <Flujo
             items={items}
             onVerPaso={verPaso}
+          />
+
+        ) : (
+
+          <Proyeccion
+            items={items}
+            onAbrir={id => setPanel({ tipo: "detalle", id })}
           />
 
         )}

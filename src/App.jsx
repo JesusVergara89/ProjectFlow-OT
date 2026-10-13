@@ -8,6 +8,7 @@ import Tablero from "./components/Tablero.jsx";
 import Lista from "./components/Lista.jsx";
 import Flujo from "./components/Flujo.jsx";
 import Proyeccion from "./components/Proyeccion.jsx";
+import Calendario from "./components/Calendario.jsx";
 import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
@@ -17,7 +18,8 @@ const VISTAS = [
   ["tablero", "Tablero"],
   ["lista", "Lista"],
   ["flujo", "Flujo"],
-  ["proyeccion", "Proyección"]
+  ["proyeccion", "Proyección"],
+  ["calendario", "Calendario"]
 ];
 const IDS_VISTA = VISTAS.map(v => v[0]);
 
@@ -256,7 +258,7 @@ function Tablas({ usuario, onSalir }) {
           <p className="vacio-g">
             Cargando proyectos…
           </p>
-        ) : !items.length && vista !== "flujo" && vista !== "proyeccion" ? (
+        ) : !items.length && vista !== "flujo" && vista !== "proyeccion" && vista !== "calendario" ? (
 
           <div className="vacio-g">
 
@@ -311,9 +313,16 @@ function Tablas({ usuario, onSalir }) {
             onVerPaso={verPaso}
           />
 
-        ) : (
+        ) : vista === "proyeccion" ? (
 
           <Proyeccion
+            items={items}
+            onAbrir={id => setPanel({ tipo: "detalle", id })}
+          />
+
+        ) : (
+
+          <Calendario
             items={items}
             onAbrir={id => setPanel({ tipo: "detalle", id })}
           />

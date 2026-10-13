@@ -3,7 +3,7 @@ import { FASES, PASOS } from "../flow.js";
 import { fecha, hora, money } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
-import { SERVICIOS, AREAS, servicioDe, nombreArea } from "../servicios.js";
+import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
 import { sesion } from "../auth.js";
 import { subirImagen } from "../db.js";
 import { mesesDesdeHoy, nombreMes } from "../meses.js";
@@ -185,6 +185,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
   const esPasoAsigna = !cerrado && pa.n === PASO_ASIGNA_REPORTE;
   const asignaValido = !!respRep;
+  const esPaso23 = !cerrado && pa.n === 23;
+  const paso23Valido = !!p.fechaServicio && !!p.responsableServicio;
+  const puedeProgramar = puedoEditar || puedo;
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -291,18 +294,25 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 Elige al responsable de hacer el reporte para poder avanzar.
               </p>
             )}
+            {esPaso23 && !paso23Valido && (
+              <p className="sig" style={{ color: "var(--warn)" }}>
+                Programa la fecha del servicio y el responsable (abajo, en «Programación del servicio») para poder avanzar.
+              </p>
+            )}
             <div className="fila">
               <button
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido)}
+                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido)}
                 onClick={() =>
                   esPaso10
                     ? mover(q => avanzar(q, null, notaPaso10, { img: img.url }), "avanzar")
                     : esPasoAsigna
                       ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")
-                      : mover(q => avanzar(q, null, nota.trim()), "avanzar")
+                      : esPaso23
+                        ? mover(q => avanzar(q, null, `Servicio programado para ${p.fechaServicio} · responsable ${p.responsableServicio}.`), "avanzar")
+                        : mover(q => avanzar(q, null, nota.trim()), "avanzar")
                 }
               >
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}
@@ -430,6 +440,69 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
             </p>
           )}
+        </div>
+
+        <div className="d-sec">
+          <h3>Programación del servicio</h3>
+          <p className="sig">Se configura al llegar al paso 23 («Se realiza programación»). Define la fecha y quién va.</p>
+          <div className="campos">
+            <div className="campo full">
+              <label htmlFor="d-fecha-serv">Fecha del servicio</label>
+              <input
+                id="d-fecha-serv"
+                type="date"
+                value={p.fechaServicio || ""}
+                disabled={!puedeProgramar}
+                onChange={e => onGuardar({ ...p, fechaServicio: e.target.value })}
+              />
+            </div>
+            <div className="campo full">
+              <label htmlFor="d-resp-serv">Responsable del servicio</label>
+              <select
+                id="d-resp-serv"
+                value={p.responsableServicio || ""}
+                disabled={!puedeProgramar}
+                onChange={e => {
+                  const r = e.target.value;
+                  // El responsable no debe estar también como apoyo.
+                  const apoyo = (p.apoyo || []).filter(n => n !== r);
+                  onGuardar({ ...p, responsableServicio: r, apoyo });
+                }}
+              >
+                <option value="">Selecciona responsable del servicio…</option>
+                {PERSONAL_SERVICIO.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div className="campo full">
+              <label>Personal de apoyo</label>
+              <div className="apoyo-lista">
+                {PERSONAL_SERVICIO.map(n => {
+                  const esResp = p.responsableServicio === n;
+                  const sel = (p.apoyo || []).includes(n);
+                  return (
+                    <label key={n} className={"chk" + (esResp ? " apoyo-dim" : "")}>
+                      <input
+                        type="checkbox"
+                        checked={sel}
+                        disabled={esResp || !puedeProgramar}
+                        onChange={e => {
+                          const base = new Set(p.apoyo || []);
+                          if (e.target.checked) base.add(n); else base.delete(n);
+                          onGuardar({ ...p, apoyo: [...base] });
+                        }}
+                      />
+                      <span>{n}{esResp ? " (responsable)" : ""}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {(p.responsableServicio || (p.apoyo || []).length > 0) && (
+                <p className="sig">
+                  {1 * (p.responsableServicio ? 1 : 0) + (p.apoyo || []).filter(n => n !== p.responsableServicio).length} personas en el servicio.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="d-sec">

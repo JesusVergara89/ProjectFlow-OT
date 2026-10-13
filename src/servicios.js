@@ -8,6 +8,19 @@
 // Equipo comercial (antes vivía en permisos.js). Cámbialo aquí si entra o sale alguien.
 export const COMERCIAL = ["monse", "paola", "miriam", "cristina", "edgar", "german"];
 
+// Personal que puede ir a los servicios (responsable del servicio y apoyo).
+// Mismo listado para ambos desplegables. Cámbialo aquí si entra o sale alguien.
+export const PERSONAL_SERVICIO = [
+  "Alfredo Ramírez",
+  "Mauricio Hernández",
+  "Isaac Godoy",
+  "Guillermo de la Cruz",
+  "Johan Robles",
+  "Ricardo Suaste",
+  "César Chang",
+  "Emilia García"
+];
+
 export const AREAS = {
   ingenieria: { nombre: "Ingeniería", usuarios: ["german"] },
   planeacion: { nombre: "Planeación", usuarios: ["leonardo"] },

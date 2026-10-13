@@ -226,6 +226,38 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .proy-matriz{min-width:560px}
 .proy-matriz th:first-child,.proy-matriz td:first-child{position:sticky;left:0;background:var(--surface)}
 .proy-matriz tfoot .proy-sum td:first-child{background:var(--surface2)}
+.mes-th,.mes-td{cursor:pointer}
+.mes-th:hover,.mes-td:hover{background:var(--accent-soft)}
+.mes-th.sel,.mes-td.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.proy-detalle-mes{margin-top:14px;border-top:2px solid var(--accent);padding-top:10px}
+
+/* Programación del servicio */
+.apoyo-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px}
+.apoyo-dim{opacity:.6}
+
+/* Calendario */
+.cal{display:flex;flex-direction:column;gap:10px}
+.cal-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.cal-titulo{font-size:18px;margin:0;min-width:160px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.cal-cab{border-bottom:0}
+.cal-dow{background:var(--surface2);padding:6px 8px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:center}
+.cal-celda{background:var(--surface);min-height:96px;padding:4px 5px;display:flex;flex-direction:column;gap:3px}
+.cal-celda.vacia{background:var(--bg)}
+.cal-celda.hoy{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal-dia{font:600 12px var(--f-mono);color:var(--muted)}
+.cal-celda.hoy .cal-dia{color:var(--accent)}
+.cal-servicios{display:flex;flex-direction:column;gap:3px}
+.cal-ev{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:3px 6px;border:0;border-radius:5px;background:var(--accent-soft);color:var(--fg);cursor:pointer;width:100%}
+.cal-ev:hover{outline:1px solid var(--accent)}
+.cal-ev b{font-size:12px;line-height:1.2;overflow-wrap:anywhere}
+.cal-ev-cli{font-size:11px;line-height:1.2;overflow-wrap:anywhere}
+.cal-ev-srv{font-size:11px;line-height:1.2;color:var(--accent);overflow-wrap:anywhere}
+.cal-ev-sub{font-size:11px;color:var(--muted)}
+@media (max-width:640px){
+  .cal-celda{min-height:70px}
+  .cal-ev b{font-size:11px}
+}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 

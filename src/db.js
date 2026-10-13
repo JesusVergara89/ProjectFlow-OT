@@ -23,6 +23,7 @@ const aApp = r => ({
   pagado: Boolean(r.pagado),
   cobroMes: Number(r.cobro_mes) || null,
   fechaServicio: r.fecha_servicio || "",
+  fechaServicioFin: r.fecha_servicio_fin || "",
   responsableServicio: r.responsable_servicio || "",
   apoyo: Array.isArray(r.apoyo) ? r.apoyo : [],
   estado: r.estado,

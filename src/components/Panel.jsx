@@ -446,14 +446,30 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           <h3>Programación del servicio</h3>
           <p className="sig">Se configura al llegar al paso 23 («Se realiza programación»). Define la fecha y quién va.</p>
           <div className="campos">
-            <div className="campo full">
-              <label htmlFor="d-fecha-serv">Fecha del servicio</label>
+            <div className="campo">
+              <label htmlFor="d-fecha-serv">Fecha del servicio (inicio)</label>
               <input
                 id="d-fecha-serv"
                 type="date"
                 value={p.fechaServicio || ""}
                 disabled={!puedeProgramar}
-                onChange={e => onGuardar({ ...p, fechaServicio: e.target.value })}
+                onChange={e => {
+                  const ini = e.target.value;
+                  // Si el fin queda antes del inicio, lo igualamos.
+                  const fin = p.fechaServicioFin && p.fechaServicioFin < ini ? ini : p.fechaServicioFin;
+                  onGuardar({ ...p, fechaServicio: ini, fechaServicioFin: fin });
+                }}
+              />
+            </div>
+            <div className="campo">
+              <label htmlFor="d-fecha-serv-fin">Hasta (si dura varios días)</label>
+              <input
+                id="d-fecha-serv-fin"
+                type="date"
+                value={p.fechaServicioFin || ""}
+                min={p.fechaServicio || undefined}
+                disabled={!puedeProgramar || !p.fechaServicio}
+                onChange={e => onGuardar({ ...p, fechaServicioFin: e.target.value })}
               />
             </div>
             <div className="campo full">

@@ -18,9 +18,21 @@ export default function Calendario({ items, onAbrir }) {
   const [m, setM] = useState(hoy.getMonth()); // 0–11
 
   // Proyectos con fecha de servicio, agrupados por día (clave "AAAA-MM-DD").
+  // Si el servicio dura varios días (fechaServicioFin), aparece en todos los días del rango.
   const porDia = {};
   items.filter(p => p.fechaServicio).forEach(p => {
-    (porDia[p.fechaServicio] = porDia[p.fechaServicio] || []).push(p);
+    const ini = p.fechaServicio;
+    const fin = p.fechaServicioFin && p.fechaServicioFin >= ini ? p.fechaServicioFin : ini;
+    const [ay, am, ad] = ini.split("-").map(Number);
+    const [by, bm, bd] = fin.split("-").map(Number);
+    const cur = new Date(ay, am - 1, ad);
+    const hasta = new Date(by, bm - 1, bd);
+    let guard = 0;
+    while (cur <= hasta && guard++ < 400) {
+      const k = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+      (porDia[k] = porDia[k] || []).push(p);
+      cur.setDate(cur.getDate() + 1);
+    }
   });
 
   const primero = new Date(y, m, 1);
@@ -37,9 +49,11 @@ export default function Calendario({ items, onAbrir }) {
   const next = () => (m === 11 ? (setM(0), setY(y + 1)) : setM(m + 1));
   const irHoy = () => { setY(hoy.getFullYear()); setM(hoy.getMonth()); };
 
-  const totalMes = Object.keys(porDia)
-    .filter(k => k.startsWith(`${y}-${String(m + 1).padStart(2, "0")}`))
-    .reduce((a, k) => a + porDia[k].length, 0);
+  // Servicios distintos con algún día en este mes (no cuenta doble los de varios días).
+  const pref = `${y}-${String(m + 1).padStart(2, "0")}`;
+  const idsMes = new Set();
+  Object.keys(porDia).filter(k => k.startsWith(pref)).forEach(k => porDia[k].forEach(p => idsMes.add(p.id)));
+  const totalMes = idsMes.size;
 
   return (
     <div className="cal">

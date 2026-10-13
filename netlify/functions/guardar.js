@@ -18,6 +18,7 @@ const aDb = p => ({
   pagado: Boolean(p.pagado),
   cobro_mes: p.cobroMes || null,
   fecha_servicio: p.fechaServicio || null,
+  fecha_servicio_fin: p.fechaServicioFin || null,
   responsable_servicio: p.responsableServicio || "",
   apoyo: Array.isArray(p.apoyo) ? p.apoyo : [],
   estado: p.estado,

@@ -102,7 +102,7 @@ function germanEntraComoComercial(n, proyecto) {
 
 export function puedeConPaso(usuario, rol, n, proyecto) {
   const u = String(usuario || "").toLowerCase();
-  if (rol === "admin" || u === "yuli") return true; // admin y yuli pueden con todo
+  if (rol === "admin" || u === "yuli" || u === "leonardo") return true; // admin y yuli pueden con todo
   const permitidos = usuariosPaso(n, proyecto);
   if (!permitidos || !permitidos.length) return false;
   if (!permitidos.includes(u)) return false;

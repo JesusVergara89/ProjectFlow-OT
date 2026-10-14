@@ -182,6 +182,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
   const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
   const esPaso10 = !cerrado && pa.n === 10;
+  // ¿Hubo requisición? (última decisión del paso 8). Si fue "No", el paso 10 no pide adjunto.
+  const reqRequisicion = (() => {
+    const h = p.historial || [];
+    for (let i = h.length - 1; i >= 0; i--) if (h[i].p === 8) return h[i].d !== "no";
+    return true; // por defecto (ruta con requisición)
+  })();
+  const esPaso10Adjunto = esPaso10 && reqRequisicion; // solo con requisición pide imagen + check
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
   const esPasoAsigna = !cerrado && pa.n === PASO_ASIGNA_REPORTE;
@@ -223,7 +230,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         {(pa.n === 33 || pa.n === 35) && p.responsableReporte && (
           <p className="sig">Responsable de reporte: <b>{p.responsableReporte}</b>.</p>
         )}
-        {esPaso10 ? (
+        {esPaso10Adjunto ? (
           <div className="campos">
             <div className="campo full">
               <label htmlFor="d-img">Imagen del correo con los alcances</label>
@@ -306,7 +313,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 ? `Al completarlo, el proyecto se cierra como «${RES[pa.fin]}».`
                 : `Siguiente: paso ${pa.next} · ${PASOS[pa.next].txt}`}
             </p>
-            {esPaso10 && !paso10Valido && (
+            {esPaso10Adjunto && !paso10Valido && (
               <p className="sig" style={{ color: "var(--warn)" }}>
                 Sube la imagen del correo y confirma el envío para poder avanzar.
               </p>
@@ -331,9 +338,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido) || (esPaso19 && !otValida)}
+                disabled={!puedo || (esPaso10Adjunto && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido) || (esPaso19 && !otValida)}
                 onClick={() =>
-                  esPaso10
+                  esPaso10Adjunto
                     ? mover(q => avanzar(q, null, notaPaso10, { img: img.url }), "avanzar")
                     : esPasoAsigna
                       ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")

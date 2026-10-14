@@ -41,7 +41,8 @@ export default function Filtros({ filtros, setFiltro, vista, responsables }) {
           <select id="f-estado" value={filtros.estado} onChange={e => setFiltro({ estado: e.target.value })}>
             <option value="activos">Activos</option>
             <option value="cerrados">Cerrados</option>
-            <option value="todos">Todos</option>
+            <option value="todos">Todos (sin archivar)</option>
+            <option value="archivados">Archivados</option>
           </select>
         </span>
       )}

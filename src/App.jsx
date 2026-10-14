@@ -99,14 +99,16 @@ function Tablas({ usuario, onSalir }) {
   );
 
   const visibles = useMemo(() => {
-    const base = items.filter(p =>
-      vista === "lista"
-        ? filtros.estado === "todos" ||
-          (filtros.estado === "activos"
-            ? p.estado === "activo"
-            : p.estado === "cerrado")
-        : p.estado === "activo"
-    );
+    const base = items.filter(p => {
+      if (vista === "lista") {
+        if (filtros.estado === "archivados") return p.archivado;
+        if (p.archivado) return false;
+        if (filtros.estado === "todos") return true;
+        return filtros.estado === "activos" ? p.estado === "activo" : p.estado === "cerrado";
+      }
+      // Tablero y demás vistas: solo activos y no archivados.
+      return p.estado === "activo" && !p.archivado;
+    });
 
     return filtrar(base, filtros);
   }, [items, filtros, vista]);

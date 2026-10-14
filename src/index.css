@@ -116,6 +116,8 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 .tag.dec{border-color:transparent;background:var(--accent-soft);color:var(--accent);vertical-align:1px}
 .tag.pagado{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
 .tag.ot{border-color:transparent;background:var(--surface2);color:var(--fg)}
+.board-top{overflow-x:auto;overflow-y:hidden}
+.board-top>div{height:1px}
 .vacio{padding:14px 12px;border:1px dashed var(--line);border-radius:6px;color:var(--muted);font-size:13px}
 .vacio-g{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:28px 20px;border:1px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted)}
 .vacio-g h2{font:600 22px var(--f-display);color:var(--fg)}

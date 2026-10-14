@@ -2,8 +2,9 @@ import { money, plural } from "../format.js";
 import { paso, detenido } from "../reglas.js";
 
 export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
-  const act = items.filter(p => p.estado === "activo");
-  const cerrados = items.length - act.length;
+  const vivos = items.filter(p => !p.archivado); // los archivados no cuentan en ningún KPI
+  const act = vivos.filter(p => p.estado === "activo");
+  const cerrados = vivos.length - act.length;
   const enFase = id => act.filter(p => paso(p).fase.id === id);
   const suma = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
   const sumaAnticipo = l => l.reduce((a, p) => a + (+p.anticipo || 0), 0);
@@ -15,11 +16,11 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos }) {
   // En ejecución incluye tanto "Ejecución del servicio" como "Reporte y calidad".
   const eje = act.filter(p => ["ejecucion", "reporte"].includes(paso(p).fase.id));
   const cob = act.filter(p => ["facturacion", "cobro"].includes(paso(p).fase.id));
-  const cerradosPagados = items.filter(p => p.resultado === "cerrado"); // cobro total (monto completo)
+  const cerradosPagados = vivos.filter(p => p.resultado === "cerrado"); // cobro total (monto completo)
   // Pagados por adelantado que AÚN no cierran: su monto completo ya está en la empresa.
-  const prepagadosVivos = items.filter(p => p.resultado !== "cerrado" && p.pagado);
+  const prepagadosVivos = vivos.filter(p => p.resultado !== "cerrado" && p.pagado);
   // Anticipos parciales (no cerrados y no pagados por adelantado).
-  const anticiposVivos = items.filter(p => p.resultado !== "cerrado" && !p.pagado && (+p.anticipo || 0) > 0);
+  const anticiposVivos = vivos.filter(p => p.resultado !== "cerrado" && !p.pagado && (+p.anticipo || 0) > 0);
   const conAnticipo = anticiposVivos; // proyectos con anticipo parcial
   // Cobrado = monto de cerrados + monto de los prepagados vivos + anticipos de los demás.
   // No se cuenta doble: un cerrado o un prepagado aporta su monto una sola vez.

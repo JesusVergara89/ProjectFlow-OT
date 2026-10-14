@@ -44,8 +44,8 @@ export default function Proyeccion({ items, onAbrir }) {
   const [numMeses, setNumMeses] = useState(4); // mes en curso + 3
   const [mesSel, setMesSel] = useState(null);  // columna de mes seleccionada para ver el detalle
 
-  // Solo proyectos vivos o cerrados-pagados; fuera los descartados.
-  const base = items.filter(p => p.resultado !== "no-viable" && p.resultado !== "archivado");
+  // Solo proyectos vivos o cerrados-pagados; fuera los descartados y los archivados.
+  const base = items.filter(p => !p.archivado && p.resultado !== "no-viable" && p.resultado !== "archivado");
 
   const cols = mesesDesdeHoy(numMeses);
   const primero = cols[0];

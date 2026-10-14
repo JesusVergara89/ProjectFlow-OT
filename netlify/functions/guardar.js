@@ -18,6 +18,7 @@ const aDb = p => ({
   pagado: Boolean(p.pagado),
   cobro_mes: p.cobroMes || null,
   ot: p.ot || "",
+  archivado: Boolean(p.archivado),
   fecha_servicio: p.fechaServicio || null,
   fecha_servicio_fin: p.fechaServicioFin || null,
   responsable_servicio: p.responsableServicio || "",
@@ -32,7 +33,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "ot", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "ot", "archivado", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -65,7 +66,7 @@ export default async function handler(req) {
   // Editar datos del proyecto: solo el admin y quien lo creó.
   if (accion === "editar" && previo) {
     const creador = String(previo.creado_por || "").toLowerCase();
-    const esAdmin = sesion.rol === "admin";
+    const esAdmin = sesion.rol === "admin" || String(sesion.usuario || "").toLowerCase() === "leonardo";
     const esCreador = creador && creador === String(sesion.usuario || "").toLowerCase();
     if (!esAdmin && !esCreador) {
       return json(
@@ -88,7 +89,8 @@ export default async function handler(req) {
 
   // "Pagado por adelantado" solo lo puede marcar/quitar Yuli o el admin.
   // Si cualquier otro intenta cambiarlo, se ignora (se conserva el valor previo / false al crear).
-  const esYuliOAdmin = sesion.rol === "admin" || String(sesion.usuario || "").toLowerCase() === "yuli";
+  const usuarioLower = String(sesion.usuario || "").toLowerCase();
+  const esYuliOAdmin = sesion.rol === "admin" || usuarioLower === "yuli" || usuarioLower === "leonardo";
   if (!esYuliOAdmin) {
     p.pagado = accion === "crear" ? false : Boolean(previo?.pagado);
   }

@@ -1,8 +1,8 @@
 /* Flujo de proyectos: 42 pasos en 8 fases. "umbral" = días en un paso antes de marcarlo como detenido. */
 export const FASES = [
   { id: "solicitud",   nombre: "Solicitud y viabilidad",     rango: [1, 4],   umbral: 2 },
-  { id: "alcance",     nombre: "Levantamiento y alcances",   rango: [5, 7],   umbral: 5 },
-  { id: "cotizacion",  nombre: "Cotización y negociación",   rango: [8, 16],  umbral: 7 },
+  { id: "alcance",     nombre: "Levantamiento y alcances",   rango: [5, 10],  umbral: 5 },
+  { id: "cotizacion",  nombre: "Cotización y negociación",   rango: [11, 16], umbral: 7 },
   { id: "planeacion",  nombre: "Planeación y OT",            rango: [17, 27], umbral: 5 },
   { id: "ejecucion",   nombre: "Ejecución del servicio",     rango: [28, 30], umbral: 15 },
   { id: "reporte",     nombre: "Reporte y calidad",          rango: [31, 38], umbral: 5 },

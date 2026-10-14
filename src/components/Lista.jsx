@@ -10,6 +10,7 @@ const valor = {
 };
 
 function EstadoPill({ p }) {
+  if (p.archivado) return <span className="pill neutro">Archivado</span>;
   if (p.estado === "cerrado") {
     return <span className={"pill " + (p.resultado === "cerrado" ? "ok" : "neutro")}>{RES[p.resultado] || "Cerrado"}</span>;
   }
@@ -69,7 +70,7 @@ export default function Lista({ items, orden, onOrden, onAbrir }) {
                   >
                     {p.nombre}
                   </button>
-                  <span className="t-sub">{p.cliente}{nombreServicio(p.tipo) ? " · " + nombreServicio(p.tipo) : ""}{p.ejemplo ? " · ejemplo" : ""}</span>
+                  <span className="t-sub">{p.ot ? p.ot + " · " : ""}{p.cliente}{nombreServicio(p.tipo) ? " · " + nombreServicio(p.tipo) : ""}{p.ejemplo ? " · ejemplo" : ""}</span>
                 </td>
                 <td>{p.responsable || "—"}</td>
                 <td><span className="t-paso"><b>{pa.n}</b><span>{pa.txt}</span></span></td>

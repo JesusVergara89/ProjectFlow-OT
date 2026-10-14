@@ -20,7 +20,7 @@ export default function Calendario({ items, onAbrir }) {
   // Proyectos con fecha de servicio, agrupados por día (clave "AAAA-MM-DD").
   // Si el servicio dura varios días (fechaServicioFin), aparece en todos los días del rango.
   const porDia = {};
-  items.filter(p => p.fechaServicio).forEach(p => {
+  items.filter(p => p.fechaServicio && !p.archivado).forEach(p => {
     const ini = p.fechaServicio;
     const fin = p.fechaServicioFin && p.fechaServicioFin >= ini ? p.fechaServicioFin : ini;
     const [ay, am, ad] = ini.split("-").map(Number);

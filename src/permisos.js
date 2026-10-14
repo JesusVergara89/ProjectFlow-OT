@@ -77,7 +77,9 @@ export function usuariosPaso(n, proyecto) {
   }
   if (PASOS_AREA.has(n)) {
     const area = areaDe(proyecto);
-    const base = area ? usuariosDeArea(area) : [];
+    let base = area ? usuariosDeArea(area) : [];
+    // Ingeniería también puede trabajar lo de Planeación (pero Planeación NO lo de Ingeniería).
+    if (area === "planeacion") base = [...new Set([...base, ...usuariosDeArea("ingenieria")])];
     // Planeación (17–27) y Ejecución (28–30) las lleva Leonardo en TODOS los
     // proyectos, sin importar el área (p. ej. las termografías de German).
     if (n >= 17 && n <= 30) {
@@ -94,15 +96,15 @@ export function usuariosPaso(n, proyecto) {
 function germanEntraComoComercial(n, proyecto) {
   // Pasos de reporte: German actúa por su rol de ingeniería, no como comercial.
   if (n === PASO_ASIGNA_REPORTE || n === PASO_ELABORA_REPORTE || n === PASO_ENTREGA_CALIDAD) return false;
-  // Paso técnico de un proyecto de su propia área (Ingeniería): rol de ingeniería.
-  if (PASOS_AREA.has(n) && areaDe(proyecto) === "ingenieria") return false;
+  // Paso técnico de Ingeniería, o de Planeación (que Ingeniería también cubre): rol de ingeniería.
+  if (PASOS_AREA.has(n) && (areaDe(proyecto) === "ingenieria" || areaDe(proyecto) === "planeacion")) return false;
   // En cualquier otro paso donde esté permitido, es por ser del equipo COMERCIAL.
   return true;
 }
 
 export function puedeConPaso(usuario, rol, n, proyecto) {
   const u = String(usuario || "").toLowerCase();
-  if (rol === "admin" || u === "yuli" || u === "leonardo") return true; // admin y yuli pueden con todo
+  if (rol === "admin" || u === "yuli" || u === "leonardo") return true; // admin, yuli y leonardo pueden con todo
   const permitidos = usuariosPaso(n, proyecto);
   if (!permitidos || !permitidos.length) return false;
   if (!permitidos.includes(u)) return false;

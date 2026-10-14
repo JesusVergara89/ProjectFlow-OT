@@ -174,12 +174,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
   // Solo el admin y quien creó el proyecto pueden editar sus datos o eliminarlo.
-  const puedoEditar =
-    yo.rol === "admin" ||
-    (p.creadoPor && p.creadoPor.toLowerCase() === String(yo.usuario || "").toLowerCase());
+  const usuarioLower = String(yo.usuario || "").toLowerCase();
+  // Leonardo tiene poder total (como admin).
+  const esPoderTotal = yo.rol === "admin" || usuarioLower === "leonardo";
+  const puedoEditar = esPoderTotal || (p.creadoPor && p.creadoPor.toLowerCase() === usuarioLower);
   const puedoEliminar = puedoEditar;
-  // Solo Yuli (y el admin) pueden marcar "pagado por adelantado".
-  const puedeMarcarPagado = yo.rol === "admin" || String(yo.usuario || "").toLowerCase() === "yuli";
+  // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
+  const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -193,7 +194,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const esPaso19 = !cerrado && pa.n === 19;
   const otValida = otRegex.test((p.ot || "").trim());
   // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
-  const puedeProgramar = yo.rol === "admin" || String(yo.usuario || "").toLowerCase() === "leonardo";
+  const puedeProgramar = esPoderTotal;
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -359,7 +360,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
     <Lateral onCerrar={onCerrar}>
       <div className="d-head">
         <div>
-          <p className="eyebrow">{p.ejemplo ? "Ejemplo · " : ""}{p.cliente}</p>
+          <p className="eyebrow">{p.archivado ? "Archivado · " : ""}{p.ejemplo ? "Ejemplo · " : ""}{p.cliente}{p.ot ? " · " + p.ot : ""}</p>
           <h2 id="d-titulo">{p.nombre}</h2>
         </div>
         <button type="button" className="btn icon" data-foco aria-label="Cerrar detalle" onClick={onCerrar}>✕</button>
@@ -600,6 +601,11 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           </div>
         ) : (
           <div className="fila">
+            {p.archivado ? (
+              <button type="button" className="btn" onClick={() => onGuardar({ ...p, archivado: false })}>Reactivar proyecto</button>
+            ) : (
+              <button type="button" className="btn ghost" onClick={() => onGuardar({ ...p, archivado: true })}>Archivar proyecto</button>
+            )}
             <button type="button" className="btn ghost danger-t" onClick={() => setBorrar(true)}>Eliminar proyecto</button>
           </div>
         ))}

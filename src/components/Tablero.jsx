@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
 import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA } from "../reglas.js";
@@ -37,6 +38,24 @@ function Tarjeta({ p, onAbrir }) {
 
 export default function Tablero({ items, onAbrir }) {
   const masAntiguoPrimero = (a, b) => Date.parse(a.pasoDesde) - Date.parse(b.pasoDesde);
+
+  // Barra de scroll horizontal también ARRIBA, sincronizada con la del tablero.
+  const topRef = useRef(null);
+  const boardRef = useRef(null);
+  const [ancho, setAncho] = useState(0);
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const medir = () => setAncho(el.scrollWidth);
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    window.addEventListener("resize", medir);
+    return () => { ro.disconnect(); window.removeEventListener("resize", medir); };
+  }, [items]);
+  const syncDesdeTop = () => { if (boardRef.current && topRef.current) boardRef.current.scrollLeft = topRef.current.scrollLeft; };
+  const syncDesdeBoard = () => { if (boardRef.current && topRef.current) topRef.current.scrollLeft = boardRef.current.scrollLeft; };
+
   return (
     <>
     <div className="leyenda" aria-label="Significado de los colores">
@@ -44,7 +63,10 @@ export default function Tablero({ items, onAbrir }) {
         <span key={l.texto}><i className="pt" style={{ background: l.color }} /> {l.texto}</span>
       ))}
     </div>
-    <div className="board">
+    <div className="board-top" ref={topRef} onScroll={syncDesdeTop} aria-hidden="true">
+      <div style={{ width: ancho }} />
+    </div>
+    <div className="board" ref={boardRef} onScroll={syncDesdeBoard}>
       {FASES.map((f, i) => {
         const col = items.filter(p => paso(p).fase === f).sort(masAntiguoPrimero);
         const monto = col.reduce((a, p) => a + (+p.monto || 0), 0);

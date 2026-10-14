@@ -18,11 +18,13 @@ function Tarjeta({ p, onAbrir }) {
       data-proyecto={p.id}
       onClick={() => onAbrir(p.id)}
     >
-      {srv && <span className="c-tipo">{srv}</span>}
-      <span className="c-top">
-        <span className="c-nombre">{p.nombre}</span>
+      <span className="c-tags">
+        {srv && <span className="c-tipo">{srv}</span>}
         {p.ot && <span className="tag ot">{p.ot}</span>}
         {p.ejemplo && <span className="tag">Ejemplo</span>}
+      </span>
+      <span className="c-top">
+        <span className="c-nombre">{p.nombre}</span>
       </span>
       <span className="c-cli">{p.cliente}{p.responsable ? ` · ${p.responsable}` : ""}</span>
       <span className="c-paso"><b>{pa.n}</b><span>{pa.txt}</span></span>

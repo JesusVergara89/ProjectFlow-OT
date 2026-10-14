@@ -53,6 +53,9 @@ export const SERVICIOS = [
   { id: "diagramas-unifilares",       nombre: "Diagramas unifilares",         area: "ingenieria" },
   { id: "mtto-subestaciones",         nombre: "Mantenimiento a subestaciones", area: "planeacion" },
   { id: "tierras-fisicas",            nombre: "Tierras físicas",              area: "planeacion" },
+  { id: "servicios-correctivos",      nombre: "Servicios correctivos",        area: "planeacion" },
+  { id: "suministros",                nombre: "Suministros",                  area: "planeacion" },
+  { id: "alcances-adicionales",       nombre: "Alcances adicionales",         area: "planeacion" },
   { id: "cursos",                     nombre: "Cursos",                       area: "comercial" }
 ];
 

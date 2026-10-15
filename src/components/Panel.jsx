@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
-import { fecha, hora, money, repartirMonto } from "../format.js";
+import { fecha, hora, money } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
@@ -182,13 +182,6 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
   const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
   const esPaso10 = !cerrado && pa.n === 10;
-  // ¿Hubo requisición? (última decisión del paso 8). Si fue "No", el paso 10 no pide adjunto.
-  const reqRequisicion = (() => {
-    const h = p.historial || [];
-    for (let i = h.length - 1; i >= 0; i--) if (h[i].p === 8) return h[i].d !== "no";
-    return true; // por defecto (ruta con requisición)
-  })();
-  const esPaso10Adjunto = esPaso10 && reqRequisicion; // solo con requisición pide imagen + check
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
   const esPasoAsigna = !cerrado && pa.n === PASO_ASIGNA_REPORTE;
@@ -230,7 +223,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         {(pa.n === 33 || pa.n === 35) && p.responsableReporte && (
           <p className="sig">Responsable de reporte: <b>{p.responsableReporte}</b>.</p>
         )}
-        {esPaso10Adjunto ? (
+        {esPaso10 ? (
           <div className="campos">
             <div className="campo full">
               <label htmlFor="d-img">Imagen del correo con los alcances</label>
@@ -313,7 +306,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 ? `Al completarlo, el proyecto se cierra como «${RES[pa.fin]}».`
                 : `Siguiente: paso ${pa.next} · ${PASOS[pa.next].txt}`}
             </p>
-            {esPaso10Adjunto && !paso10Valido && (
+            {esPaso10 && !paso10Valido && (
               <p className="sig" style={{ color: "var(--warn)" }}>
                 Sube la imagen del correo y confirma el envío para poder avanzar.
               </p>
@@ -338,9 +331,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 type="button"
                 id="d-completar"
                 className="btn primary"
-                disabled={!puedo || (esPaso10Adjunto && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido) || (esPaso19 && !otValida)}
+                disabled={!puedo || (esPaso10 && !paso10Valido) || (esPasoAsigna && !asignaValido) || (esPaso23 && !paso23Valido) || (esPaso19 && !otValida)}
                 onClick={() =>
-                  esPaso10Adjunto
+                  esPaso10
                     ? mover(q => avanzar(q, null, notaPaso10, { img: img.url }), "avanzar")
                     : esPasoAsigna
                       ? mover(q => avanzar({ ...q, responsableReporte: respRep }, null, `Responsable de reporte asignado: ${respRep}.`), "avanzar")
@@ -456,95 +449,19 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
               </label>
             )}
-            {!p.diferido && (
-              <div className="campo full">
-                <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
-                <select
-                  id="d-mes"
-                  value={p.cobroMes || ""}
-                  disabled={!puedoEditar}
-                  onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
-                >
-                  <option value="">Sin proyectar</option>
-                  {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
-                    .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
-                </select>
-              </div>
-            )}
-            <label className="chk full">
-              <input
-                type="checkbox"
-                checked={!!p.diferido}
+            <div className="campo full">
+              <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
+              <select
+                id="d-mes"
+                value={p.cobroMes || ""}
                 disabled={!puedoEditar}
-                onChange={e => {
-                  const on = e.target.checked;
-                  if (on) {
-                    const n = Math.max(2, p.pagosNum || (p.pagosMeses || []).length || 2);
-                    const meses = [...(p.pagosMeses || [])].slice(0, n);
-                    while (meses.length < n) meses.push(null);
-                    onGuardar({ ...p, diferido: true, pagosNum: n, pagosMeses: meses, cobroMes: null });
-                  } else {
-                    onGuardar({ ...p, diferido: false });
-                  }
-                }}
-              />
-              <span>Pagos diferidos (dividir el cobro en varios pagos, cada uno en un mes distinto).</span>
-            </label>
-            {p.diferido && (() => {
-              const n = Math.max(1, p.pagosNum || (p.pagosMeses || []).length || 1);
-              const partes = repartirMonto(+p.monto || 0, n);
-              const setNum = v => {
-                const k = Math.max(1, Math.min(24, Math.floor(+v || 0)));
-                const meses = [...(p.pagosMeses || [])].slice(0, k);
-                while (meses.length < k) meses.push(null);
-                onGuardar({ ...p, pagosNum: k, pagosMeses: meses });
-                return k;
-              };
-              const setMes = (i, ym) => {
-                const meses = [...(p.pagosMeses || [])];
-                while (meses.length < n) meses.push(null);
-                meses[i] = +ym || null;
-                onGuardar({ ...p, pagosMeses: meses });
-              };
-              return (
-                <div className="campo full">
-                  <Campo
-                    id="d-pagos-num"
-                    etiqueta="Número de pagos (en cuántos se divide el monto)"
-                    tipo="number"
-                    min="1"
-                    max="24"
-                    step="1"
-                    inputMode="numeric"
-                    disabled={!puedoEditar}
-                    valor={n}
-                    onGuardar={setNum}
-                  />
-                  <p className="sig">
-                    {money(+p.monto || 0)} ÷ {n} = {money(partes[0])} por pago
-                    {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
-                  </p>
-                  {Array.from({ length: n }).map((_, i) => {
-                    const val = (p.pagosMeses || [])[i] || "";
-                    const opciones = val && !OPCIONES_MES.includes(+val) ? [+val, ...OPCIONES_MES] : OPCIONES_MES;
-                    return (
-                      <div className="campo" key={i} style={{ marginTop: 6 }}>
-                        <label htmlFor={`d-pago-${i}`}>Pago {i + 1} · {money(partes[i])} · mes</label>
-                        <select
-                          id={`d-pago-${i}`}
-                          value={val}
-                          disabled={!puedoEditar}
-                          onChange={e => setMes(i, e.target.value)}
-                        >
-                          <option value="">Sin proyectar</option>
-                          {opciones.map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
-                        </select>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
+              >
+                <option value="">Sin proyectar</option>
+                {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
+                  .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+              </select>
+            </div>
           </div>
           {p.pagado ? (
             <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>

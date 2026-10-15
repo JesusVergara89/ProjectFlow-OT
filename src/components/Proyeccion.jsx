@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { money, plural } from "../format.js";
+import { money, plural, repartirMonto } from "../format.js";
 import { nombreServicio } from "../servicios.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 
@@ -33,11 +33,24 @@ const grupoDe = paso => {
   return GRUPOS.find(g => n >= g.min && n <= g.max) || GRUPOS[GRUPOS.length - 1];
 };
 
-// Mes en que cae el dinero del proyecto (AAAAMM) o null.
+// Mes en que cae el dinero del proyecto (AAAAMM) o null (cobro en un solo pago).
 const mesDe = p => {
   if (p.cobroMes) return p.cobroMes;
   if (p.pagado || p.resultado === "cerrado") return mesActual();
   return null;
+};
+
+// Pagos (cobros) de un proyecto: lista de { mes, monto }.
+// - Normal: un solo cobro con el monto completo en su mes tentativo.
+// - Diferido: el monto se divide en partes iguales y una cae en cada mes elegido.
+const cobrosDe = p => {
+  const monto = +p.monto || 0;
+  const meses = Array.isArray(p.pagosMeses) ? p.pagosMeses.filter(Boolean) : [];
+  if (p.diferido && meses.length) {
+    const partes = repartirMonto(monto, meses.length);
+    return meses.map((mes, i) => ({ mes: +mes || null, monto: partes[i] }));
+  }
+  return [{ mes: mesDe(p), monto }];
 };
 
 export default function Proyeccion({ items, onAbrir }) {
@@ -51,24 +64,26 @@ export default function Proyeccion({ items, onAbrir }) {
   const primero = cols[0];
   const ultimo = cols[cols.length - 1];
 
-  // Columna de un proyecto: un AAAAMM de la ventana, "post" (más adelante) o "sin".
-  const columnaDe = p => {
-    const mp = mesDe(p);
+  // Columna (colKey) donde cae un mes AAAAMM: un mes de la ventana, "post" o "sin".
+  const columnaMes = mp => {
     if (!mp) return "sin";
     if (mp <= primero) return primero;     // vencido o del mes en curso
-    if (mp >= ultimo && mp !== ultimo) return "post";
+    if (mp > ultimo) return "post";
     return cols.includes(mp) ? mp : "post";
   };
 
   const sumaMonto = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
+  // Monto de un proyecto que cae en una columna (suma los pagos que caen ahí).
+  const montoEnCol = (p, colKey) =>
+    cobrosDe(p).reduce((a, c) => a + (columnaMes(c.mes) === colKey ? c.monto : 0), 0);
 
   // Agrupa por etapa y, dentro, por columna de mes.
   const porGrupo = {};
   GRUPOS.forEach(g => { porGrupo[g.id] = []; });
   base.forEach(p => { porGrupo[grupoDe(p.paso || 1).id].push(p); });
 
-  const hayPost = base.some(p => columnaDe(p) === "post");
-  const haySin = base.some(p => columnaDe(p) === "sin");
+  const hayPost = base.some(p => cobrosDe(p).some(c => columnaMes(c.mes) === "post"));
+  const haySin = base.some(p => cobrosDe(p).some(c => columnaMes(c.mes) === "sin"));
 
   // Columnas de la matriz: meses + (posterior) + (sin fecha).
   const columnas = [
@@ -78,15 +93,15 @@ export default function Proyeccion({ items, onAbrir }) {
   ];
 
   const montoEnCelda = (grupoId, colKey) =>
-    porGrupo[grupoId].reduce((a, p) => a + (columnaDe(p) === colKey ? (+p.monto || 0) : 0), 0);
+    porGrupo[grupoId].reduce((a, p) => a + montoEnCol(p, colKey), 0);
 
-  const totalColumna = colKey => base.reduce((a, p) => a + (columnaDe(p) === colKey ? (+p.monto || 0) : 0), 0);
+  const totalColumna = colKey => base.reduce((a, p) => a + montoEnCol(p, colKey), 0);
   const granTotal = sumaMonto(base);
 
   const toggleMes = colKey => setMesSel(m => (m === colKey ? null : colKey));
   const colSel = mesSel ? columnas.find(c => c.key === mesSel) : null;
   const proyectosSel = colSel
-    ? base.filter(p => columnaDe(p) === mesSel).sort((a, b) => (+b.monto || 0) - (+a.monto || 0))
+    ? base.filter(p => montoEnCol(p, mesSel) > 0).sort((a, b) => montoEnCol(b, mesSel) - montoEnCol(a, mesSel))
     : [];
 
   return (
@@ -172,10 +187,15 @@ export default function Proyeccion({ items, onAbrir }) {
                   {proyectosSel.map(p => (
                     <tr key={p.id} onClick={() => onAbrir(p.id)} tabIndex={0}
                         onKeyDown={e => { if (e.key === "Enter") onAbrir(p.id); }}>
-                      <td>{p.nombre}{p.pagado ? <span className="tag pagado">Pagado</span> : null}</td>
+                      <td>
+                        {p.nombre}
+                        {p.pagado ? <span className="tag pagado">Pagado</span> : null}
+                        {p.diferido && (p.pagosMeses || []).filter(Boolean).length > 1
+                          ? <span className="tag">1 de {(p.pagosMeses || []).filter(Boolean).length} pagos</span> : null}
+                      </td>
                       <td>{p.cliente}</td>
                       <td>{grupoDe(p.paso || 1).titulo}</td>
-                      <td className="num">{+p.monto ? money(p.monto) : "—"}</td>
+                      <td className="num">{montoEnCol(p, mesSel) ? money(montoEnCol(p, mesSel)) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -215,7 +235,11 @@ export default function Proyeccion({ items, onAbrir }) {
                       <td>{p.nombre}{p.pagado ? <span className="tag pagado">Pagado</span> : null}</td>
                       <td>{p.cliente}</td>
                       <td>{nombreServicio(p.tipo) || "—"}</td>
-                      <td>{nombreMes(mesDe(p))}</td>
+                      <td>
+                        {p.diferido && (p.pagosMeses || []).filter(Boolean).length
+                          ? (p.pagosMeses || []).filter(Boolean).map(nombreMes).join(" · ")
+                          : nombreMes(mesDe(p))}
+                      </td>
                       <td className="num">{+p.monto ? money(p.monto) : "—"}</td>
                     </tr>
                   ))}

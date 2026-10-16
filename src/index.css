@@ -412,7 +412,7 @@ tr.alerta-rosa td{
 .btn:disabled:hover{ border-color:var(--accent); }
 /* ===== Página de Gráficas (Analítica) ===== */
 .analitica { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
-.an-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.an-card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; min-width:0; overflow:hidden; }
 .an-card.an-kpis { grid-column:1/-1; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
 .an-h { display:flex; align-items:baseline; gap:10px; margin:0 0 14px; }
 .an-h h2 { font-family:var(--f-display); font-size:1.05rem; margin:0; }
@@ -424,7 +424,7 @@ tr.alerta-rosa td{
 
 /* Barras horizontales */
 .an-barras { display:flex; flex-direction:column; gap:8px; }
-.an-fila { display:grid; grid-template-columns:140px 1fr auto; align-items:center; gap:10px; }
+.an-fila { display:grid; grid-template-columns:minmax(70px,130px) minmax(0,1fr) auto; align-items:center; gap:10px; }
 .an-fila.clic { cursor:pointer; }
 .an-fila.clic:hover .an-barra { filter:brightness(1.08); }
 .an-et { font-size:.82rem; color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -433,9 +433,9 @@ tr.alerta-rosa td{
 .an-val { font-family:var(--f-mono); font-size:.8rem; color:var(--muted); white-space:nowrap; }
 
 /* Barras verticales */
-.an-cols { display:flex; align-items:flex-end; gap:8px; height:calc(var(--an-h,150px) + 46px); padding-top:4px; }
-.an-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-.an-colval { font-family:var(--f-mono); font-size:.68rem; color:var(--muted); white-space:nowrap; }
+.an-cols { display:flex; align-items:flex-end; gap:6px; height:calc(var(--an-h,150px) + 46px); padding-top:4px; }
+.an-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+.an-colval { font-family:var(--f-mono); font-size:.66rem; color:var(--muted); white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
 .an-colbar-wrap { width:100%; height:var(--an-h,150px); display:flex; align-items:flex-end; }
 .an-colbar { width:100%; border-radius:6px 6px 0 0; min-height:2px; transition:height .3s ease; }
 .an-colet { font-size:.72rem; color:var(--muted); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }

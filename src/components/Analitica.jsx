@@ -72,7 +72,7 @@ function BarrasV({ datos, formato = v => v }) {
   return (
     <div className="an-cols" style={{ "--an-h": "150px" }}>
       {datos.map((d, i) => (
-        <div className="an-col" key={i} title={(d.titulo || d.etiqueta) + ": " + formato(d.valor)}>
+        <div className="an-col" key={i} title={d.titulo ? d.titulo + ": " + (d.valorTxt ?? formato(d.valor)) : d.etiqueta + ": " + (d.valorTxt ?? formato(d.valor))}>
           <span className="an-colval">{d.valor ? formato(d.valor) : ""}</span>
           <div className="an-colbar-wrap">
             <div className="an-colbar" style={{ height: (d.valor / max * 100) + "%", background: d.color || "var(--accent)" }} />
@@ -140,7 +140,7 @@ export default function Analitica({ items, onAbrir }) {
   };
   const totalMes = colKey => base.reduce((a, p) =>
     a + cobrosDe(p).reduce((s, c) => s + (colMes(c.mes) === colKey ? c.monto : 0), 0), 0);
-  const porMes = cols.map(ym => ({ etiqueta: nombreMesCorto(ym), titulo: nombreMes(ym), valor: totalMes(ym), color: "var(--accent)" }));
+  const porMes = cols.map(ym => { const v = totalMes(ym); return { etiqueta: nombreMesCorto(ym), titulo: nombreMes(ym), valor: v, valorTxt: money(v), color: "var(--accent)" }; });
 
   // ---- Proyectos activos por fase (conteo) ----
   const porFase = FASES.map((f, i) => ({
@@ -176,6 +176,13 @@ export default function Analitica({ items, onAbrir }) {
 
   const money0 = v => money(v);
   const num = v => String(v);
+  // Monto abreviado para ejes angostos: $2.2M, $152k, $0.
+  const montoCorto = v => {
+    const n = +v || 0;
+    if (n >= 1e6) return "$" + (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1e3) return "$" + Math.round(n / 1e3) + "k";
+    return "$" + n;
+  };
 
   return (
     <div className="analitica">
@@ -208,7 +215,7 @@ export default function Analitica({ items, onAbrir }) {
       {/* Cobros proyectados por mes */}
       <section className="an-card">
         <header className="an-h"><h2>Cobros proyectados por mes</h2><span className="an-sub">próximos 6 meses</span></header>
-        <BarrasV datos={porMes} formato={money0} />
+        <BarrasV datos={porMes} formato={montoCorto} />
       </section>
 
       {/* Proyectos activos por fase */}

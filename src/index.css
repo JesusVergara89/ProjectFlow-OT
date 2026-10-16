@@ -77,8 +77,9 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 @media (max-width:560px){.kpis > :last-child{grid-column:1 / -1}}
 
 .controles{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-block:20px 14px}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
-.tab{padding:8px 16px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;font-weight:600;color:var(--muted)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);min-width:0;max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;font-weight:600;color:var(--muted);white-space:nowrap;flex:0 0 auto}
 .tab:hover{color:var(--fg)}
 .tab[aria-current="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}

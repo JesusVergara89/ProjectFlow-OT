@@ -20,6 +20,7 @@ import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js
     PROYECCIÓN / CON CERTIDUMBRE . 1–16 (antes de autorizar)
 */
 const GRUPOS = [
+  { id: "cobrado",    titulo: "Cobrado",                                      min: null, max: null },
   { id: "facturado",  titulo: "Facturado",                                    min: 39, max: 42 },
   { id: "ejecutado",  titulo: "Ejecutado no facturado",                       min: 30, max: 38 },
   { id: "proceso",    titulo: "En proceso",                                   min: 23, max: 29 },
@@ -27,10 +28,15 @@ const GRUPOS = [
   { id: "proyeccion", titulo: "Proyección / con certidumbre de autorización", min: 1,  max: 16 }
 ];
 
-const grupoDe = paso => {
-  const n = +paso || 1;
-  if (n >= 39) return GRUPOS[0];
-  return GRUPOS.find(g => n >= g.min && n <= g.max) || GRUPOS[GRUPOS.length - 1];
+// Ya cobrado: pagado por adelantado o proyecto cerrado (el dinero ya entró).
+const esCobrado = p => !!p.pagado || p.resultado === "cerrado";
+
+// Etapa de un proyecto: "Cobrado" si ya entró el dinero; si no, por el paso.
+const grupoDe = p => {
+  if (esCobrado(p)) return GRUPOS[0];
+  const n = +(p && p.paso) || 1;
+  if (n >= 39) return GRUPOS[1];
+  return GRUPOS.find(g => g.min != null && n >= g.min && n <= g.max) || GRUPOS[GRUPOS.length - 1];
 };
 
 // Mes en que cae el dinero del proyecto (AAAAMM) o null (cobro en un solo pago).
@@ -80,7 +86,7 @@ export default function Proyeccion({ items, onAbrir }) {
   // Agrupa por etapa y, dentro, por columna de mes.
   const porGrupo = {};
   GRUPOS.forEach(g => { porGrupo[g.id] = []; });
-  base.forEach(p => { porGrupo[grupoDe(p.paso || 1).id].push(p); });
+  base.forEach(p => { porGrupo[grupoDe(p).id].push(p); });
 
   const hayPost = base.some(p => cobrosDe(p).some(c => columnaMes(c.mes) === "post"));
   const haySin = base.some(p => cobrosDe(p).some(c => columnaMes(c.mes) === "sin"));
@@ -194,7 +200,7 @@ export default function Proyeccion({ items, onAbrir }) {
                           ? <span className="tag">1 de {(p.pagosMeses || []).filter(Boolean).length} pagos</span> : null}
                       </td>
                       <td>{p.cliente}</td>
-                      <td>{grupoDe(p.paso || 1).titulo}</td>
+                      <td>{grupoDe(p).titulo}</td>
                       <td className="num">{montoEnCol(p, mesSel) ? money(montoEnCol(p, mesSel)) : "—"}</td>
                     </tr>
                   ))}

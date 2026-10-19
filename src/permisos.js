@@ -43,10 +43,10 @@ export const PERMISOS = {
   20: ["leonardo"], // ¿Existen requisiciones?
   21: ["leonardo"], // Se envía a almacén y compras
   22: ["huber"], // Se genera fecha de entrega
-  23: ["leonardo"], // Se realiza programación
-  24: ["leonardo"], // ¿Se ocupan viáticos foráneos?
-  25: ["leonardo"], // Se solicitan viáticos a administración
-  26: ["adriana"],  // Se autorizan y gestionan los viáticos (administración)
+  23: ["leonardo", "yuli"], // Se realiza programación
+  24: ["leonardo", "yuli"], // ¿Se ocupan viáticos foráneos?
+  25: ["leonardo", "yuli"], // Se solicitan viáticos a administración
+  26: ["adriana", "yuli"],  // Se autorizan y gestionan los viáticos (administración)
   27: ["leonardo"], // Se crea plan de calidad
   28: ["leonardo"], // Se ejecuta el servicio
   29: ["admin"],    // Se entrega documentación

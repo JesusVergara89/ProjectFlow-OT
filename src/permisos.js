@@ -12,7 +12,7 @@ export const REPORTE_EQUIPO = [
 
 /* A quién puede German asignar como responsable de hacer el reporte. */
 export const REPORTE_ASIGNABLES = [
-  "mikeas", "emilia", "nestor", "isaac", "ailin", "guillermo", "roberto", "alan", "juan", "johan"
+  "mikeas", "emilia", "nestor", "isaac", "ailin", "guillermo", "roberto", "alan", "juan", "johan","german"
 ];
 
 // Pasos de reporte (numeración del flujo de 42 pasos).

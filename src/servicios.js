@@ -39,7 +39,7 @@ export const PERSONAL_SERVICIO = [
 
 export const AREAS = {
   ingenieria: { nombre: "Ingeniería", usuarios: ["german", "yuli"] },
-  planeacion: { nombre: "Planeación", usuarios: ["leonardo"] },
+  planeacion: { nombre: "Planeación", usuarios: ["leonardo", "yuli"] },
   comercial:  { nombre: "Comercial",  usuarios: COMERCIAL }
 };
 

@@ -72,8 +72,8 @@ export const PERMISOS = {
 export function usuariosPaso(n, proyecto) {
   if (n === PASO_ASIGNA_REPORTE || n === PASO_ENTREGA_CALIDAD) return REPORTE_EQUIPO;
   if (n === PASO_ELABORA_REPORTE) {
-    const r = String(proyecto?.responsableReporte || "").toLowerCase();
-    return r ? [r] : REPORTE_EQUIPO;
+  const r = String(proyecto?.responsableReporte || "").toLowerCase();
+  return r ? [...new Set([r, "german"])] : REPORTE_EQUIPO;
   }
   if (PASOS_AREA.has(n)) {
     const area = areaDe(proyecto);

@@ -549,3 +549,12 @@ tr.alerta-rosa td{
 .an-leyenda { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
 .an-leg { font-size:.82rem; color:var(--fg); display:inline-flex; align-items:center; gap:6px; }
 .an-leg i { width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+.login-creditos {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0.7;
+}
+.login-creditos p { margin: 0.2rem 0; }
+.login-creditos a { color: inherit; text-decoration: underline; }

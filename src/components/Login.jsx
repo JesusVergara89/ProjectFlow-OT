@@ -49,6 +49,18 @@ export default function Login({ onEntrar }) {
         </button>
       </form>
       {estado.error && <p className="error" role="alert">{estado.error}</p>}
+
+      <footer className="login-creditos">
+        <p>Desarrollado por Jesus Manuel Vergara.</p>
+        <p>ERP adaptable a empresas medianas con flujos lineales.</p>
+        <a
+          href="https://github.com/JesusVergara89/ProjectFlow-OT"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Repositorio en GitHub
+        </a>
+      </footer>
     </div>
   );
 }

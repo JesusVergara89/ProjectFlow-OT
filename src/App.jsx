@@ -349,23 +349,11 @@ function Tablas({ usuario, onSalir }) {
 }
 
 export default function App() {
-  const [usuario, setUsuario] = useState(() => leerSesion());
+  const usuarioPruebas = {
+    usuario: "pruebas",
+    nombre: "Usuario de pruebas",
+    rol: "usuario",
+  };
 
-  useEffect(() => {
-    const alExpirar = () => setUsuario(null);
-    window.addEventListener("tpo:sesion-expirada", alExpirar);
-    return () => window.removeEventListener("tpo:sesion-expirada", alExpirar);
-  }, []);
-
-  if (!usuario) return <Login onEntrar={setUsuario} />;
-
-  return (
-    <Tablas
-      usuario={usuario}
-      onSalir={() => {
-        salir();
-        setUsuario(null);
-      }}
-    />
-  );
+  return <Tablas usuario={usuarioPruebas} onSalir={() => {}} />;
 }

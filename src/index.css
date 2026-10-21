@@ -289,8 +289,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Foto de perfil del usuario (botón redondo con foto o iniciales) */
 .avatar-usuario {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 50px;
+  height: 50px;
   flex: 0 0 auto;
   padding: 0;
   border: 0;
@@ -302,8 +302,8 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 }
 .avatar-usuario img,
 .avatar-iniciales {
-  width: 30px;
-  height: 30px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -343,13 +343,13 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   top: -20px;
   right: 4px;
   z-index: 30;
-  width: 56px;
-  height: 56px;
+  width: 120px;
+  height: 120px;
 }
 .avatar-usuario.grande img,
 .avatar-usuario.grande .avatar-iniciales {
-  width: 56px;
-  height: 56px;
+  width: 100px;
+  height: 100px;
   box-shadow: 0 0 0 3px var(--surface), 0 6px 18px rgba(0,0,0,.28);
 }
 .avatar-usuario.grande .avatar-iniciales { font-size: 20px; }
@@ -362,9 +362,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   bottom: 0;
 }
 @media (max-width: 640px) {
-  .avatar-usuario.grande { top: -14px; right: 0; width: 46px; height: 46px; }
+  .avatar-usuario.grande { top: -14px; right: 0; width: 120px; height: 120px; }
   .avatar-usuario.grande img,
-  .avatar-usuario.grande .avatar-iniciales { width: 46px; height: 46px; }
+  .avatar-usuario.grande .avatar-iniciales { width: 120px; height: 120px; }
 }
 .avatar-usuario.cargando { cursor: progress; }
 .avatar-usuario[disabled] { cursor: progress; }
@@ -573,14 +573,14 @@ tr.alerta-rosa td{
 
 .usuario-bitacora .avatar-usuario {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 50px;
+  height: 50px;
 }
 
 .usuario-bitacora .avatar-usuario img,
 .usuario-bitacora .avatar-iniciales {
-  width: 30px;
-  height: 30px;
+  width: 50px;
+  height: 50px;
 }
 
 @media (max-width: 640px) {

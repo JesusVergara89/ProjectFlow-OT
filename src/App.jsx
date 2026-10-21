@@ -14,6 +14,7 @@ import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
 import Bitacora from "./components/Bitacora.jsx";
+import AvatarUsuario from "./components/AvatarUsuario.jsx";
 
 const VISTAS = [
   ["tablero", "Tablero"],
@@ -147,6 +148,7 @@ function Tablas({ usuario, onSalir }) {
     <div className="wrap">
 
       <header className="top">
+        <AvatarUsuario usuario={usuario} grande />
         <div>
           <h1>Tablero de Proyectos y OT</h1>
 

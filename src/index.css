@@ -45,7 +45,7 @@ h1,h2{text-wrap:balance}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 .wrap{max-width:1440px;margin-inline:auto;padding-inline:16px;padding-block:20px 40px}
-.top{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.top{position:relative;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
 .top h1{font:700 28px/1.1 var(--f-display);letter-spacing:-.005em}
 .top .sub{color:var(--muted);margin-top:4px}
 
@@ -276,11 +276,113 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Usuario en sesión */
 .top-acciones { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .usuario-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font: 500 13px/1 "Barlow", system-ui, sans-serif;
-  padding: 6px 10px;
+  padding: 4px 12px 4px 4px;
   border-radius: 999px;
   background: rgba(127,127,127,.14);
   white-space: nowrap;
+}
+
+/* Foto de perfil del usuario (botón redondo con foto o iniciales) */
+.avatar-usuario {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  overflow: visible;
+  line-height: 0;
+}
+.avatar-usuario img,
+.avatar-iniciales {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 1px rgba(127,127,127,.25);
+}
+.avatar-iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font: 700 12px/1 var(--f-display);
+  letter-spacing: .02em;
+}
+.avatar-camara {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 9px;
+  line-height: 15px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+  opacity: 0;
+  transition: opacity .12s;
+}
+.avatar-usuario:hover .avatar-camara,
+.avatar-usuario:focus-visible .avatar-camara,
+.avatar-usuario.cargando .avatar-camara { opacity: 1; }
+
+/* Variante grande, flotando en la esquina superior derecha del encabezado */
+.avatar-usuario.grande {
+  position: absolute;
+  top: -20px;
+  right: 4px;
+  z-index: 30;
+  width: 56px;
+  height: 56px;
+}
+.avatar-usuario.grande img,
+.avatar-usuario.grande .avatar-iniciales {
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 0 0 3px var(--surface), 0 6px 18px rgba(0,0,0,.28);
+}
+.avatar-usuario.grande .avatar-iniciales { font-size: 20px; }
+.avatar-usuario.grande .avatar-camara {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 11px;
+  right: 0;
+  bottom: 0;
+}
+@media (max-width: 640px) {
+  .avatar-usuario.grande { top: -14px; right: 0; width: 46px; height: 46px; }
+  .avatar-usuario.grande img,
+  .avatar-usuario.grande .avatar-iniciales { width: 46px; height: 46px; }
+}
+.avatar-usuario.cargando { cursor: progress; }
+.avatar-usuario[disabled] { cursor: progress; }
+.avatar-error {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--crit, #B3321F);
+  color: #fff;
+  font: 500 11px/1.3 var(--f-body);
+  white-space: normal;
+  width: max-content;
+  max-width: 220px;
+  text-align: left;
+  box-shadow: var(--shadow);
 }
 
 /* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */

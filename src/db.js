@@ -66,6 +66,34 @@ export async function subirImagen({ proyectoId, tipo, base64 }) {
   return api("subir", { proyectoId, tipo, base64 });
 }
 
+// --- Foto de perfil por usuario ---
+// Lee el avatar de un usuario (lectura pública con la llave anon).
+export async function leerAvatar(usuario) {
+  if (!configurado || !usuario) return null;
+  const { data, error } = await supabase
+    .from("perfiles_usuario")
+    .select("avatar_url")
+    .eq("usuario", String(usuario).toLowerCase())
+    .maybeSingle();
+  if (error) return null;
+  return data?.avatar_url || null;
+}
+
+// Guarda (sube + persiste) la foto del usuario de la sesión. Devuelve { url }.
+export async function guardarAvatar({ base64, tipo }) {
+  return api("perfil", { base64, tipo });
+}
+
+// Avisa cuando cambie cualquier perfil (p. ej. otro usuario cambia su foto).
+export function suscribirPerfiles(alCambiar) {
+  if (!configurado) return () => {};
+  const canal = supabase
+    .channel("perfiles-cambios")
+    .on("postgres_changes", { event: "*", schema: "public", table: "perfiles_usuario" }, alCambiar)
+    .subscribe();
+  return () => supabase.removeChannel(canal);
+}
+
 export function suscribir(alCambiar) {
   const canal = supabase
     .channel("proyectos-cambios")

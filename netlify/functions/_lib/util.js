@@ -121,6 +121,14 @@ export const sbBorrarProyecto = id =>
     headers: { prefer: "return=minimal" }
   });
 
+// --- Foto de perfil por usuario (upsert por la llave primaria "usuario") ---
+export const sbUpsertPerfil = (usuario, avatar_url) =>
+  sb("perfiles_usuario", {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ usuario, avatar_url, actualizado: new Date().toISOString() })
+  });
+
 export const sbInsertarBitacora = fila =>
   sb("bitacora", {
     method: "POST",

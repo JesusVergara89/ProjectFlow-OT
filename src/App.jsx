@@ -22,9 +22,9 @@ const VISTAS = [
   ["flujo", "Flujo"],
   ["proyeccion", "Proyección"],
   ["graficas", "Gráficas"],
-  ["calendario", "Calendario"]
+  ["calendario", "Calendario"],
 ];
-const IDS_VISTA = VISTAS.map(v => v[0]);
+const IDS_VISTA = VISTAS.map((v) => v[0]);
 
 const leer = (k, def) => {
   try {
@@ -47,9 +47,7 @@ function Tablas({ usuario, onSalir }) {
   const [verBitacora, setVerBitacora] = useState(false);
 
   const [vista, setVista] = useState(() =>
-    IDS_VISTA.includes(leer("vista"))
-      ? leer("vista")
-      : "tablero"
+    IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
   );
 
   const [filtros, setFiltros] = useState({
@@ -59,20 +57,20 @@ function Tablas({ usuario, onSalir }) {
     prio: "",
     estado: "activos",
     paso: null,
-    detenidos: false
+    detenidos: false,
   });
 
   const [orden, setOrden] = useState({
     k: "dias",
-    dir: -1
+    dir: -1,
   });
 
   const [panel, setPanel] = useState(null);
 
-  const setFiltro = cambio =>
-    setFiltros(f => ({
+  const setFiltro = (cambio) =>
+    setFiltros((f) => ({
       ...f,
-      ...cambio
+      ...cambio,
     }));
 
   const cerrarPanel = useMemo(() => () => setPanel(null), []);
@@ -83,31 +81,29 @@ function Tablas({ usuario, onSalir }) {
 
   const responsables = useMemo(
     () =>
-      [...new Set(
-        items
-          .map(p => p.responsable)
-          .filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b, "es")),
-    [items]
+      [...new Set(items.map((p) => p.responsable).filter(Boolean))].sort(
+        (a, b) => a.localeCompare(b, "es"),
+      ),
+    [items],
   );
 
   const clientes = useMemo(
     () =>
-      [...new Set(
-        items
-          .map(p => p.cliente)
-          .filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b, "es")),
-    [items]
+      [...new Set(items.map((p) => p.cliente).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, "es"),
+      ),
+    [items],
   );
 
   const visibles = useMemo(() => {
-    const base = items.filter(p => {
+    const base = items.filter((p) => {
       if (vista === "lista") {
         if (filtros.estado === "archivados") return p.archivado;
         if (p.archivado) return false;
         if (filtros.estado === "todos") return true;
-        return filtros.estado === "activos" ? p.estado === "activo" : p.estado === "cerrado";
+        return filtros.estado === "activos"
+          ? p.estado === "activo"
+          : p.estado === "cerrado";
       }
       // Tablero y demás vistas: solo activos y no archivados.
       return p.estado === "activo" && !p.archivado;
@@ -116,21 +112,21 @@ function Tablas({ usuario, onSalir }) {
     return filtrar(base, filtros);
   }, [items, filtros, vista]);
 
-  const alOrdenar = k =>
-    setOrden(o =>
+  const alOrdenar = (k) =>
+    setOrden((o) =>
       o.k === k
         ? { k, dir: -o.dir }
         : {
             k,
-            dir: k === "nombre" || k === "paso" ? 1 : -1
-          }
+            dir: k === "nombre" || k === "paso" ? 1 : -1,
+          },
     );
 
-  const verPaso = n => {
-    setFiltros(f => ({
+  const verPaso = (n) => {
+    setFiltros((f) => ({
       ...f,
       paso: n,
-      estado: "activos"
+      estado: "activos",
     }));
 
     setVista("lista");
@@ -138,34 +134,34 @@ function Tablas({ usuario, onSalir }) {
   };
 
   const proyectoAbierto =
-    panel?.tipo === "detalle"
-      ? items.find(p => p.id === panel.id)
-      : null;
+    panel?.tipo === "detalle" ? items.find((p) => p.id === panel.id) : null;
 
-  const hayEjemplos = items.some(p => p.ejemplo);
+  const hayEjemplos = items.some((p) => p.ejemplo);
 
   return (
     <div className="wrap">
-
       <header className="top">
-        <AvatarUsuario usuario={usuario} grande />
-        <div>
+        <div className="top-titulo">
           <h1>Tablero de Proyectos y OT</h1>
 
           <p className="sub">
-            De la solicitud del cliente al pago de la factura:
-            42 pasos en 8 fases.
+            De la solicitud del cliente al pago de la factura: 42 pasos en 8
+            fases.
           </p>
         </div>
 
         <div className="top-acciones">
-          <button
-            type="button"
-            className="btn"
-            onClick={() => setVerBitacora(true)}
-          >
-            Bitácora
-          </button>
+          <div className="usuario-bitacora">
+            <AvatarUsuario usuario={usuario} />
+
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setVerBitacora(true)}
+            >
+              Bitácora
+            </button>
+          </div>
           <button
             type="button"
             className="btn primary"
@@ -173,24 +169,24 @@ function Tablas({ usuario, onSalir }) {
           >
             Nuevo proyecto
           </button>
-          <span className="usuario-chip" title={"Rol: " + (usuario?.rol || "usuario")}>
+          <span
+            className="usuario-chip"
+            title={"Rol: " + (usuario?.rol || "usuario")}
+          >
             {usuario?.nombre || usuario?.usuario}
           </span>
-          <button type="button" className="btn ghost" onClick={onSalir}>Salir</button>
+          <button type="button" className="btn ghost" onClick={onSalir}>
+            Salir
+          </button>
         </div>
       </header>
 
       <div id="avisos">
-
         {error && (
           <div className="aviso crit">
             <span>{error}</span>
 
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setError("")}
-            >
+            <button type="button" className="btn" onClick={() => setError("")}>
               Entendido
             </button>
           </div>
@@ -198,9 +194,9 @@ function Tablas({ usuario, onSalir }) {
 
         {hayEjemplos && (
           <div className="aviso">
-
             <span>
-              Estos proyectos son de ejemplo para que veas cómo se mueve el flujo.
+              Estos proyectos son de ejemplo para que veas cómo se mueve el
+              flujo.
             </span>
 
             <button
@@ -208,16 +204,14 @@ function Tablas({ usuario, onSalir }) {
               className="btn"
               onClick={() =>
                 items
-                  .filter(p => p.ejemplo)
-                  .forEach(p => quitar(p.id, p.nombre))
+                  .filter((p) => p.ejemplo)
+                  .forEach((p) => quitar(p.id, p.nombre))
               }
             >
               Quitar ejemplos
             </button>
-
           </div>
         )}
-
       </div>
 
       <Kpis
@@ -225,17 +219,13 @@ function Tablas({ usuario, onSalir }) {
         soloDetenidos={filtros.detenidos}
         onToggleDetenidos={() =>
           setFiltro({
-            detenidos: !filtros.detenidos
+            detenidos: !filtros.detenidos,
           })
         }
       />
 
       <div className="controles">
-
-        <nav
-          className="tabs"
-          aria-label="Vista"
-        >
+        <nav className="tabs" aria-label="Vista">
           {VISTAS.map(([id, texto]) => (
             <button
               key={id}
@@ -255,25 +245,23 @@ function Tablas({ usuario, onSalir }) {
           vista={vista}
           responsables={responsables}
         />
-
       </div>
 
       <main id="vista">
-
         {!listo ? (
-          <p className="vacio-g">
-            Cargando proyectos…
-          </p>
-        ) : !items.length && vista !== "flujo" && vista !== "proyeccion" && vista !== "graficas" && vista !== "calendario" ? (
-
+          <p className="vacio-g">Cargando proyectos…</p>
+        ) : !items.length &&
+          vista !== "flujo" &&
+          vista !== "proyeccion" &&
+          vista !== "graficas" &&
+          vista !== "calendario" ? (
           <div className="vacio-g">
-
             <h2>Aún no hay proyectos</h2>
 
             <p>
-              Registra la primera solicitud de un cliente.
-              Cada proyecto empieza en el paso 1 y avanza por
-              las 7 fases según las decisiones que tomes en cada paso.
+              Registra la primera solicitud de un cliente. Cada proyecto empieza
+              en el paso 1 y avanza por las 7 fases según las decisiones que
+              tomes en cada paso.
             </p>
 
             <button
@@ -283,62 +271,47 @@ function Tablas({ usuario, onSalir }) {
             >
               Nuevo proyecto
             </button>
-
           </div>
-
         ) : vista === "tablero" ? (
-
           <Tablero
             items={visibles}
-            onAbrir={id =>
+            onAbrir={(id) =>
               setPanel({
                 tipo: "detalle",
-                id
+                id,
               })
             }
           />
-
         ) : vista === "lista" ? (
-
           <Lista
             items={visibles}
             orden={orden}
             onOrden={alOrdenar}
-            onAbrir={id =>
+            onAbrir={(id) =>
               setPanel({
                 tipo: "detalle",
-                id
+                id,
               })
             }
           />
-
         ) : vista === "flujo" ? (
-
-          <Flujo
-            items={items}
-            onVerPaso={verPaso}
-          />
-
+          <Flujo items={items} onVerPaso={verPaso} />
         ) : vista === "proyeccion" ? (
-
           <Proyeccion
             items={items}
-            onAbrir={id => setPanel({ tipo: "detalle", id })}
+            onAbrir={(id) => setPanel({ tipo: "detalle", id })}
           />
-
         ) : vista === "graficas" ? (
-
-          <Analitica items={items} onAbrir={id => setPanel({ tipo: "detalle", id })} />
-
+          <Analitica
+            items={items}
+            onAbrir={(id) => setPanel({ tipo: "detalle", id })}
+          />
         ) : (
-
           <Calendario
             items={items}
-            onAbrir={id => setPanel({ tipo: "detalle", id })}
+            onAbrir={(id) => setPanel({ tipo: "detalle", id })}
           />
-
         )}
-
       </main>
 
       {proyectoAbierto && (
@@ -346,7 +319,7 @@ function Tablas({ usuario, onSalir }) {
           key={proyectoAbierto.id}
           p={proyectoAbierto}
           onGuardar={guardar}
-          onEliminar={id => {
+          onEliminar={(id) => {
             setPanel(null);
             quitar(id, proyectoAbierto.nombre);
           }}
@@ -359,19 +332,18 @@ function Tablas({ usuario, onSalir }) {
           clientes={clientes}
           responsables={responsables}
           onCerrar={cerrarPanel}
-          onCrear={p => {
+          onCrear={(p) => {
             guardar(p, "crear");
 
             setPanel({
               tipo: "detalle",
-              id: p.id
+              id: p.id,
             });
           }}
         />
       )}
 
       {verBitacora && <Bitacora onCerrar={() => setVerBitacora(false)} />}
-
     </div>
   );
 }

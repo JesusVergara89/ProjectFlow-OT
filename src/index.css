@@ -558,3 +558,33 @@ tr.alerta-rosa td{
 }
 .login-creditos p { margin: 0.2rem 0; }
 .login-creditos a { color: inherit; text-decoration: underline; }
+
+.top-titulo {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.usuario-bitacora {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.usuario-bitacora .avatar-usuario {
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+
+.usuario-bitacora .avatar-usuario img,
+.usuario-bitacora .avatar-iniciales {
+  width: 30px;
+  height: 30px;
+}
+
+@media (max-width: 640px) {
+  .top-titulo {
+    flex-basis: 100%;
+  }
+}

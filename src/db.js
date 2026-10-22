@@ -98,10 +98,13 @@ export async function guardarAvatar({ base64, tipo }) {
 }
 
 // Avisa cuando cambie cualquier perfil (p. ej. otro usuario cambia su foto).
+// Nombre de canal ÚNICO por suscripción: varios componentes (encabezado,
+// bitácora) escuchan a la vez y Supabase no permite reusar el mismo canal.
 export function suscribirPerfiles(alCambiar) {
   if (!configurado) return () => {};
+  const nombre = "perfiles-cambios-" + Math.random().toString(36).slice(2);
   const canal = supabase
-    .channel("perfiles-cambios")
+    .channel(nombre)
     .on("postgres_changes", { event: "*", schema: "public", table: "perfiles_usuario" }, alCambiar)
     .subscribe();
   return () => supabase.removeChannel(canal);

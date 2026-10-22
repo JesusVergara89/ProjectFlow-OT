@@ -184,7 +184,11 @@ export function filtrar(lista, f) {
       (!q || norm(`${p.nombre} ${p.cliente} ${p.responsable || ""} ${p.ot || ""}`).includes(q)) &&
       (!f.resp || p.responsable === f.resp) &&
       (!f.area || p.area === f.area) &&
+      (!f.tipo || p.tipo === f.tipo) &&
+      (!f.cliente || p.cliente === f.cliente) &&
       (!f.prio || prioDe(p) === f.prio) &&
+      (!f.pagado || (f.pagado === "si" ? !!p.pagado : !p.pagado)) &&
+      (!f.reporte || (f.reporte === "si" ? !!p.reporteEnviado : !p.reporteEnviado)) &&
       (!f.paso || p.paso === f.paso) &&
       (!f.detenidos || detenido(p))
   );

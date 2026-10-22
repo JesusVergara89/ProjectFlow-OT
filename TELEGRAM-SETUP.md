@@ -33,13 +33,7 @@ En **Site settings → Environment variables** agrega (secretas, SIN `VITE_`):
 123456789:AAExampleTokenAbc...
 ```
 
-`TELEGRAM_DEST`
-```json
-[
-  {"nombre":"Jesus","chat_id":"123456789"},
-  {"nombre":"Leonardo","chat_id":"987654321"},
-  {"nombre":"Equipo","chat_id":"-1001234567890"}
-]
+
 ```
 Puedes poner solo el grupo, solo personas, o una mezcla.
 

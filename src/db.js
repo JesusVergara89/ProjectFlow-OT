@@ -21,6 +21,7 @@ const aApp = r => ({
   monto: Number(r.monto) || 0,
   anticipo: Number(r.anticipo) || 0,
   pagado: Boolean(r.pagado),
+  reporteEnviado: Boolean(r.reporte_enviado),
   cobroMes: Number(r.cobro_mes) || null,
   diferido: Boolean(r.diferido),
   pagosNum: Number(r.pagos_num) || 0,
@@ -77,6 +78,18 @@ export async function leerAvatar(usuario) {
     .maybeSingle();
   if (error) return null;
   return data?.avatar_url || null;
+}
+
+// Lee TODAS las fotos y devuelve un mapa { usuario(minúsculas): avatar_url }.
+export async function leerAvatares() {
+  if (!configurado) return {};
+  const { data, error } = await supabase
+    .from("perfiles_usuario")
+    .select("usuario, avatar_url");
+  if (error || !Array.isArray(data)) return {};
+  const mapa = {};
+  for (const r of data) if (r.avatar_url) mapa[String(r.usuario).toLowerCase()] = r.avatar_url;
+  return mapa;
 }
 
 // Guarda (sube + persiste) la foto del usuario de la sesión. Devuelve { url }.

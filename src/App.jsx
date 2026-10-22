@@ -50,15 +50,24 @@ function Tablas({ usuario, onSalir }) {
     IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
   );
 
-  const [filtros, setFiltros] = useState({
+  const FILTROS_INICIALES = {
     q: "",
     resp: "",
     area: "",
+    tipo: "",
+    cliente: "",
     prio: "",
+    pagado: "",
+    reporte: "",
     estado: "activos",
     paso: null,
     detenidos: false,
-  });
+  };
+  const [filtros, setFiltros] = useState(FILTROS_INICIALES);
+
+  // Restablece todos los filtros (conserva el estado de la vista Lista).
+  const limpiarFiltros = () =>
+    setFiltros((f) => ({ ...FILTROS_INICIALES, estado: f.estado }));
 
   const [orden, setOrden] = useState({
     k: "dias",
@@ -242,8 +251,10 @@ function Tablas({ usuario, onSalir }) {
         <Filtros
           filtros={filtros}
           setFiltro={setFiltro}
+          limpiar={limpiarFiltros}
           vista={vista}
           responsables={responsables}
+          clientes={clientes}
         />
       </div>
 

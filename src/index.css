@@ -85,6 +85,9 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 .filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
 .filtros input,.filtros select,.campo input,.campo select{min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);}
 .filtros input[type="search"]{flex:1 1 200px;min-width:160px}
+.chk-inline{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:13px;white-space:nowrap;cursor:pointer}
+.chk-inline input{margin:0}
+.chip-limpiar{border-color:transparent;background:var(--crit-soft);color:var(--crit)}
 .chip{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border:1px solid var(--accent);border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px}
 
 /* Tablero */
@@ -118,6 +121,10 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 .tag.dec{border-color:transparent;background:var(--accent-soft);color:var(--accent);vertical-align:1px}
 .tag.pagado{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
 .tag.ot{border-color:transparent;background:var(--surface2);color:var(--fg)}
+.tag.reporte-ok{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
+.tag.reporte-falta{border-color:transparent;background:var(--warn-soft);color:var(--warn)}
+.chk-hint{display:block;margin-top:2px;color:var(--muted);font-style:normal;font-size:12px;line-height:1.35}
+.chk.chk-off{opacity:.6}
 .board-top{overflow-x:auto;overflow-y:hidden}
 .board-top>div{height:1px}
 .vacio{padding:14px 12px;border:1px dashed var(--line);border-radius:6px;color:var(--muted);font-size:13px}
@@ -202,6 +209,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .hist{list-style:none;margin:0;padding:0}
 .hist li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .h-f{font:400 12px/1.4 var(--f-mono);color:var(--muted)}
+.h-main{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.h-cuerpo{min-width:0}
+.h-avatar{flex:0 0 auto;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px rgba(127,127,127,.25)}
 .h-t b{font:500 12px var(--f-mono);color:var(--accent)}
 .h-n{margin-top:2px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
 .evid{display:inline-block;margin-top:6px;border:1px solid var(--line);border-radius:8px;overflow:hidden;line-height:0}
@@ -383,6 +393,21 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   max-width: 220px;
   text-align: left;
   box-shadow: var(--shadow);
+}
+
+/* Vista grande de la foto de perfil (modal) */
+.avatar-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--scrim)}
+.avatar-modal-card{position:relative;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 24px 24px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+.avatar-modal-x{position:absolute;top:8px;right:8px}
+.avatar-grande-vista{display:flex;align-items:center;justify-content:center}
+.avatar-grande-vista .avatar-img,
+.avatar-grande-vista .avatar-iniciales{width:220px;height:220px;border-radius:50%;object-fit:cover;font-size:84px;box-shadow:0 0 0 4px var(--surface),0 10px 30px rgba(0,0,0,.3)}
+.avatar-modal-nombre{margin:0;font:600 18px/1.1 var(--f-display)}
+.avatar-modal-acciones{display:flex;gap:8px}
+.avatar-modal-error{margin:0;color:var(--crit);font-size:13px;text-align:center}
+@media (max-width:640px){
+  .avatar-grande-vista .avatar-img,
+  .avatar-grande-vista .avatar-iniciales{width:180px;height:180px}
 }
 
 /* ===== Alertas por tiempo (colores de tarjeta/fila) ===== */

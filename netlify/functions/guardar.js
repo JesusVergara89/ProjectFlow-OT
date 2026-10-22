@@ -16,6 +16,7 @@ const aDb = p => ({
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
   pagado: Boolean(p.pagado),
+  reporte_enviado: Boolean(p.reporteEnviado),
   cobro_mes: p.cobroMes || null,
   diferido: Boolean(p.diferido),
   pagos_num: Math.max(0, Math.floor(+p.pagosNum || 0)),
@@ -140,6 +141,13 @@ export default async function handler(req) {
       const antes = base[c] ?? null;
       const ahora = p[c] ?? null;
       if (String(antes) !== String(ahora)) cambios[c] = { antes, ahora };
+    }
+    // "Reporte enviado": la columna es reporte_enviado y en la app es reporteEnviado.
+    if (Boolean(base.reporte_enviado) !== Boolean(p.reporteEnviado)) {
+      cambios.reporte_enviado = {
+        antes: base.reporte_enviado ? "Sí" : "No",
+        ahora: p.reporteEnviado ? "Sí" : "No"
+      };
     }
     detalle = { cambios };
   }

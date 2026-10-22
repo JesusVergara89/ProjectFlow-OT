@@ -449,6 +449,18 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
                 <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
               </label>
             )}
+            <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
+              <input
+                type="checkbox"
+                checked={!!p.reporteEnviado}
+                disabled={!puedoEditar}
+                onChange={e => onGuardar({ ...p, reporteEnviado: e.target.checked })}
+              />
+              <span>
+                Reporte enviado al cliente.
+                <em className="chk-hint"> Márcalo aunque el proyecto ya se haya cobrado: sirve para ubicar los que se cobraron pero aún no tienen reporte.</em>
+              </span>
+            </label>
             <div className="campo full">
               <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
               <select

@@ -8,7 +8,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
   const act = vivos.filter(p => p.estado === "activo");
   const cerrados = vivos.length - act.length;
   const enFase = id => act.filter(p => paso(p).fase.id === id);
-  const saldoDe = p => (p.pagado || p.cobrado ? 0 : Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)));
+  const saldoDe = p => (p.pagado ? 0 : Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)));
   const saldo = l => l.reduce((a, p) => a + saldoDe(p), 0);
   const cot = enFase("cotizacion");
   const plan = enFase("planeacion");
@@ -25,12 +25,12 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
   const porMes = new Map();
   for (const c of cierres || []) {
     const m = Number(c.mes);
-    porMes.set(m, { mes: m, cobrado: +c.cobrado || 0, pagado: +c.pagado || 0, anticipos: +c.anticipos || 0, total: +c.total || 0 });
+    porMes.set(m, { mes: m, total: +c.total || 0, pagado: +c.pagado || 0, anticipos: +c.anticipos || 0, facturado: +c.facturado || 0 });
   }
   for (const m of mesesConDinero(vivos)) {
     if (m < MES && !porMes.has(m)) {
       const t = totalesDelMes(vivos, m);
-      porMes.set(m, { mes: m, cobrado: t.cobrado, pagado: t.pagado, anticipos: t.anticipos, total: t.total });
+      porMes.set(m, { mes: m, total: t.total, pagado: t.pagado, anticipos: t.anticipos, facturado: t.facturado });
     }
   }
   const historial = [...porMes.values()].filter(h => h.mes < MES).sort((a, b) => b.mes - a.mes).slice(0, 12);
@@ -68,12 +68,16 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
         <span className="k-v">{money(tMes.anticipos)}</span>
         <span className="k-s">{tMes.anticipoNum} {plural(tMes.anticipoNum, "proyecto con anticipo", "proyectos con anticipo")} este mes</span>
       </div>
+      <div className="kpi kpi-facturado">
+        <span className="k-l">Facturado · {nombreMesCorto(MES)}</span>
+        <span className="k-v">{money(tMes.facturado)}</span>
+        <span className="k-s">{tMes.facturadoNum} {plural(tMes.facturadoNum, "facturado sin pagar", "facturados sin pagar")}</span>
+      </div>
       <div className="kpi kpi-cobrado">
         <span className="k-l">Cobrado · {nombreMesCorto(MES)}</span>
         <span className="k-v">{money(tMes.total)}</span>
         <span className="k-s">
-          {tMes.cobradoNum} {plural(tMes.cobradoNum, "cobrado", "cobrados")}
-          {tMes.pagadoNum > 0 && ` + ${money(tMes.pagado)} pagados`}
+          {tMes.pagadoNum} {plural(tMes.pagadoNum, "pagado", "pagados")}
           {tMes.anticipos > 0 && ` + ${money(tMes.anticipos)} en anticipos`}
         </span>
       </div>
@@ -98,7 +102,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
               <span className="c-mes">{nombreMesCorto(h.mes)}</span>
               <span className="c-tot">{money(h.total)}</span>
               <span className="c-br">
-                Cobrado {money(h.cobrado)} · Pagado {money(h.pagado)} · Anticipos {money(h.anticipos)}
+                Cobrado {money(h.total)} · Facturado {money(h.facturado)}
               </span>
             </div>
           ))}

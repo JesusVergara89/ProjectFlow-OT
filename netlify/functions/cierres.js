@@ -18,8 +18,8 @@ const aDinero = r => ({
   monto: +r.monto || 0,
   anticipo: +r.anticipo || 0,
   pagado: !!r.pagado,
-  cobrado: !!r.cobrado,
-  cobradoMes: +r.cobrado_mes || 0,
+  facturado: !!r.facturado,
+  facturadoMes: +r.facturado_mes || 0,
   pagadoMes: +r.pagado_mes || 0,
   anticipoMes: +r.anticipo_mes || 0
 });
@@ -43,7 +43,7 @@ export default async function handler(req) {
   // Meses con dinero, EXCLUYENDO el mes en curso (ese va en vivo).
   const meses = new Set();
   for (const p of lista) {
-    for (const m of [p.cobradoMes, p.pagadoMes, p.anticipoMes]) {
+    for (const m of [p.facturadoMes, p.pagadoMes, p.anticipoMes]) {
       if (m && m < actual) meses.add(m);
     }
   }
@@ -55,13 +55,15 @@ export default async function handler(req) {
     try {
       await sbUpsertCierre({
         mes,
-        cobrado: t.cobrado,
+        cobrado: t.total,            // dinero que entró (pagado + anticipos)
         pagado: t.pagado,
         anticipos: t.anticipos,
+        facturado: t.facturado,       // facturado pendiente de pago
         total: t.total,
-        cobrado_num: t.cobradoNum,
+        cobrado_num: t.pagadoNum + t.anticipoNum,
         pagado_num: t.pagadoNum,
         anticipo_num: t.anticipoNum,
+        facturado_num: t.facturadoNum,
         creado: new Date().toISOString()
       });
       nuevos++;

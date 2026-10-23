@@ -37,8 +37,8 @@ function Tarjeta({ p, onAbrir, marca }) {
       <span className="c-paso"><b>{pa.n}</b><span>{pa.txt}</span></span>
       <span className="c-pie">
         <span className={`prio prio-${prioDe(p)}`}>{PRIO[prioDe(p)]}</span>
-        {p.cobrado && <span className="tag cobrado" title="Cobrado (ya entró el dinero)">Cobrado</span>}
-        {p.pagado && <span className="tag pagado" title="Pagado por adelantado">Pagado</span>}
+        {p.facturado && !p.pagado && <span className="tag facturado" title="Facturado (aceptaron la factura, falta el pago)">Facturado</span>}
+        {p.pagado && <span className="tag pagado" title="Pagado (ya entró el dinero)">Pagado</span>}
         {p.reporteEnviado
           ? <span className="tag reporte-ok" title="Reporte ya enviado al cliente">Reporte ✓</span>
           : (p.estado === "cerrado" || p.pagado) && <span className="tag reporte-falta" title="Se cobró pero aún no se envía el reporte">Sin reporte</span>}

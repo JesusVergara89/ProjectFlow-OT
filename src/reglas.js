@@ -188,6 +188,7 @@ export function filtrar(lista, f) {
       (!f.cliente || p.cliente === f.cliente) &&
       (!f.prio || prioDe(p) === f.prio) &&
       (!f.pagado || (f.pagado === "si" ? !!p.pagado : !p.pagado)) &&
+      (!f.facturado || (f.facturado === "si" ? !!p.facturado : !p.facturado)) &&
       (!f.reporte || (f.reporte === "si" ? !!p.reporteEnviado : !p.reporteEnviado)) &&
       (!f.paso || p.paso === f.paso) &&
       (!f.detenidos || detenido(p))

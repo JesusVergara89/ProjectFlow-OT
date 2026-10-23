@@ -91,7 +91,7 @@ function Tablas({ usuario, onSalir }) {
     cliente: "",
     prio: "",
     pagado: "",
-    cobrado: "",
+    facturado: "",
     reporte: "",
     estado: "activos",
     paso: null,

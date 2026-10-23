@@ -183,7 +183,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const puedoEliminar = puedoEditar;
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
   const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
-  const puedeMarcarCobrado = esPoderTotal || usuarioLower === "yuli";
+  const puedeMarcarFacturado = esPoderTotal || usuarioLower === "yuli" || usuarioLower === "lupita";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -487,14 +487,14 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                 <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado del mes).</span>
               </label>
             )}
-            {puedeMarcarCobrado && (
+            {puedeMarcarFacturado && (
               <label className="chk full">
                 <input
                   type="checkbox"
-                  checked={!!p.cobrado}
-                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, cobrado: c, cobradoMes: c ? (p.cobradoMes || mesActual()) : null }); }}
+                  checked={!!p.facturado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, facturado: c, facturadoMes: c ? (p.facturadoMes || mesActual()) : null }); }}
                 />
-                <span>Cobrado (ya entró el dinero de este proyecto; suma su monto a «Cobrado» del mes en curso). No cierra ni mueve el proyecto en el flujo.</span>
+                <span>Facturado (el cliente ya aceptó la entrada de la factura, pero aún no paga). Suma a «Facturado» del mes (dinero <b>pendiente</b>), <b>no</b> a «Cobrado». No mueve el proyecto en el flujo.</span>
               </label>
             )}
             <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
@@ -523,10 +523,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               </select>
             </div>
           </div>
-          {p.cobrado ? (
-            <p className="sig">Cobrado: {money(+p.monto || 0)} contabilizado en {nombreMes(p.cobradoMes || mesActual())}.</p>
-          ) : p.pagado ? (
-            <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} cuenta como cobrado en {nombreMes(p.pagadoMes || mesActual())} · saldo por cobrar <b>{money(0)}</b>.</p>
+          {p.pagado ? (
+            <p className="sig">Pagado: {money(+p.monto || 0)} cuenta como cobrado en {nombreMes(p.pagadoMes || mesActual())} · saldo por cobrar <b>{money(0)}</b>.</p>
           ) : (+p.anticipo > 0) && (
             <p className="sig">
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.

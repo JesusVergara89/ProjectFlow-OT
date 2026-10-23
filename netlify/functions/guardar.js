@@ -16,8 +16,8 @@ const aDb = p => ({
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
   pagado: Boolean(p.pagado),
-  cobrado: Boolean(p.cobrado),
-  cobrado_mes: p.cobradoMes || null,
+  facturado: Boolean(p.facturado),
+  facturado_mes: p.facturadoMes || null,
   pagado_mes: p.pagadoMes || null,
   anticipo_mes: p.anticipoMes || null,
   reporte_enviado: Boolean(p.reporteEnviado),
@@ -41,7 +41,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "cobrado", "ot", "archivado", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "facturado", "ot", "archivado", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);

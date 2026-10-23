@@ -99,23 +99,25 @@ create policy "lectura perfiles"
 -- Marca "reporte enviado" (se cobró, pero el reporte puede faltar).
 alter table public.proyectos add column if not exists reporte_enviado boolean not null default false;
 
--- Dinero por mes: chulo "Cobrado" + sellos del mes en que se registró cada tipo.
-alter table public.proyectos add column if not exists cobrado      boolean not null default false;
-alter table public.proyectos add column if not exists cobrado_mes  integer;
-alter table public.proyectos add column if not exists pagado_mes   integer;
-alter table public.proyectos add column if not exists anticipo_mes integer;
+-- Dinero por mes: estatus "Facturado" + sellos del mes en que se registró cada tipo.
+alter table public.proyectos add column if not exists facturado     boolean not null default false;
+alter table public.proyectos add column if not exists facturado_mes integer;
+alter table public.proyectos add column if not exists pagado_mes    integer;
+alter table public.proyectos add column if not exists anticipo_mes  integer;
 
 -- Foto mensual de dinero (se congela al cambiar de mes).
 create table if not exists public.cierres_mensuales (
-  mes          integer     primary key,
-  cobrado      numeric     not null default 0,
-  pagado       numeric     not null default 0,
-  anticipos    numeric     not null default 0,
-  total        numeric     not null default 0,
-  cobrado_num  integer     not null default 0,
-  pagado_num   integer     not null default 0,
-  anticipo_num integer     not null default 0,
-  creado       timestamptz not null default now()
+  mes           integer     primary key,
+  cobrado       numeric     not null default 0,
+  pagado        numeric     not null default 0,
+  anticipos     numeric     not null default 0,
+  facturado     numeric     not null default 0,
+  total         numeric     not null default 0,
+  cobrado_num   integer     not null default 0,
+  pagado_num    integer     not null default 0,
+  anticipo_num  integer     not null default 0,
+  facturado_num integer     not null default 0,
+  creado        timestamptz not null default now()
 );
 alter table public.cierres_mensuales enable row level security;
 drop policy if exists "lectura cierres" on public.cierres_mensuales;

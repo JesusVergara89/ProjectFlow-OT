@@ -110,6 +110,19 @@ export function suscribirPerfiles(alCambiar) {
   return () => supabase.removeChannel(canal);
 }
 
+// --- Marcas privadas de "proyecto atrasado" (solo súper admin) ---
+// Devuelve un mapa { proyecto_id: { atrasado, mensaje } }.
+export async function leerMarcasSuper() {
+  const r = await api("marcas", { accion: "listar" });
+  return r.marcas || {};
+}
+export async function guardarMarcaSuper(proyectoId, mensaje) {
+  return api("marcas", { accion: "guardar", proyectoId, mensaje });
+}
+export async function borrarMarcaSuper(proyectoId) {
+  return api("marcas", { accion: "borrar", proyectoId });
+}
+
 export function suscribir(alCambiar) {
   const canal = supabase
     .channel("proyectos-cambios")

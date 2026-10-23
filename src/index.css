@@ -101,6 +101,17 @@ button.kpi[aria-pressed="true"]{background:var(--warn-soft)}
 .cards{display:flex;flex-direction:column;gap:8px}
 .card{display:flex;flex-direction:column;gap:6px;width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;text-align:left;transition:border-color .12s}
 .card:hover{border-color:var(--accent)}
+/* Súper admin: proyecto marcado como atrasado (solo lo ve el súper admin) */
+.card{position:relative}
+.card.atrasado-super{border-color:var(--crit);border-left-width:4px;box-shadow:0 0 0 1px var(--crit) inset}
+.card.atrasado-super:hover{border-color:var(--crit)}
+.card-atraso{position:absolute;top:-8px;right:-6px;z-index:5;display:inline-flex;align-items:center;gap:5px;max-width:82%;padding:3px 9px;border-radius:999px;background:var(--crit,#B3321F);color:#fff;font:600 11px/1.3 var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.card-atraso-pt{flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+/* Sección del súper admin en el panel */
+.super-sec{border:1px solid var(--crit);border-radius:8px;padding:12px;background:var(--crit-soft)}
+.super-sec h3{color:var(--crit)}
+.super-nota{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font:inherit;resize:vertical}
+.super-acciones{display:flex;gap:8px;align-items:center;margin-top:8px}
 .c-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .c-top{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
 .c-tipo{align-self:flex-start;max-width:100%;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:600 10px/1.5 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere}

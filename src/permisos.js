@@ -1,5 +1,13 @@
 import { COMERCIAL, areaDe, usuariosDeArea } from "./servicios.js";
 
+/* SÚPER ADMIN: una sola cuenta (por su "usuario" de login, no por el rol).
+   Solo esta persona ve y define las marcas privadas de "proyecto atrasado".
+   Ni siquiera otros admins las ven. Si algún día cambia, ajusta aquí el usuario
+   (o define la variable SUPER_ADMIN en Netlify para el lado servidor). */
+export const SUPER_ADMIN = "admin";
+export const esSuperAdmin = (usuario) =>
+  String(usuario || "").toLowerCase() === SUPER_ADMIN;
+
 /* Pasos "técnicos" de campo/OT: quién los trabaja depende del ÁREA del proyecto
    (Ingeniería -> German, Planeación -> Leonardo, Comercial -> comercial). */
 export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 23, 24, 25, 27, 28, 30]);

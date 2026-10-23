@@ -121,6 +121,57 @@ export const sbBorrarProyecto = id =>
     headers: { prefer: "return=minimal" }
   });
 
+// --- Marcas privadas de "proyecto atrasado" (solo súper admin) ---
+export const sbLeerMarcas = async () =>
+  (await sb("marcas_super?select=*")) || [];
+
+export const sbUpsertMarca = (proyecto_id, mensaje) =>
+  sb("marcas_super", {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ proyecto_id, atrasado: true, mensaje: mensaje || "", actualizado: new Date().toISOString() })
+  });
+
+export const sbBorrarMarca = proyecto_id =>
+  sb(`marcas_super?proyecto_id=eq.${encodeURIComponent(proyecto_id)}`, {
+    method: "DELETE",
+    headers: { prefer: "return=minimal" }
+  });
+
+// --- Telegram (reutilizable por alertas y por las marcas del súper admin) ---
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+export const escHtml = s =>
+  String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+export function destinatariosTelegram() {
+  try {
+    const arr = JSON.parse(process.env.TELEGRAM_DEST || "[]");
+    return Array.isArray(arr) ? arr.filter(d => d.chat_id) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function enviarTelegram(dest, texto) {
+  if (!TG_TOKEN) return false;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: dest.chat_id,
+        text: texto,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    return res.ok && data.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 // --- Foto de perfil por usuario (upsert por la llave primaria "usuario") ---
 export const sbUpsertPerfil = (usuario, avatar_url) =>
   sb("perfiles_usuario", {

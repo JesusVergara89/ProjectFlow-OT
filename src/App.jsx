@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
 import { sesion as leerSesion, salir } from "./auth.js";
+import { esSuperAdmin } from "./permisos.js";
+import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper } from "./db.js";
 import Kpis from "./components/Kpis.jsx";
 import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
@@ -44,6 +46,27 @@ const escribir = (k, v) => {
 
 function Tablas({ usuario, onSalir }) {
   const { items, listo, error, setError, guardar, quitar } = useProyectos(true);
+
+  // Súper admin: marcas privadas de "proyecto atrasado" (solo las ve él).
+  const soySuper = esSuperAdmin(usuario?.usuario);
+  const [marcas, setMarcas] = useState({});
+  useEffect(() => {
+    if (!soySuper) return;
+    let vivo = true;
+    leerMarcasSuper().then(m => vivo && setMarcas(m || {})).catch(() => {});
+    return () => { vivo = false; };
+  }, [soySuper]);
+
+  const marcarAtrasado = async (id, mensaje) => {
+    setMarcas(m => ({ ...m, [id]: { atrasado: true, mensaje } })); // optimista
+    try { await guardarMarcaSuper(id, mensaje); }
+    catch (e) { setError(e.message || "No se pudo guardar la marca."); }
+  };
+  const quitarAtrasado = async (id) => {
+    setMarcas(m => { const n = { ...m }; delete n[id]; return n; });
+    try { await borrarMarcaSuper(id); }
+    catch (e) { setError(e.message || "No se pudo quitar la marca."); }
+  };
   const [verBitacora, setVerBitacora] = useState(false);
 
   const [vista, setVista] = useState(() =>
@@ -286,6 +309,7 @@ function Tablas({ usuario, onSalir }) {
         ) : vista === "tablero" ? (
           <Tablero
             items={visibles}
+            marcas={soySuper ? marcas : null}
             onAbrir={(id) =>
               setPanel({
                 tipo: "detalle",
@@ -335,6 +359,10 @@ function Tablas({ usuario, onSalir }) {
             quitar(id, proyectoAbierto.nombre);
           }}
           onCerrar={cerrarPanel}
+          soySuper={soySuper}
+          marca={marcas[proyectoAbierto.id]}
+          onMarcar={marcarAtrasado}
+          onQuitarMarca={quitarAtrasado}
         />
       )}
 

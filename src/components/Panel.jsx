@@ -137,7 +137,7 @@ export function Lateral({ onCerrar, children }) {
   );
 }
 
-export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
+export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = false, marca, onMarcar, onQuitarMarca }) {
   const [nota, setNota] = useState("");
   const [borrar, setBorrar] = useState(false);
   const [img, setImg] = useState(null);        // { url, path } de la evidencia subida
@@ -145,6 +145,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const [errImg, setErrImg] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [respRep, setRespRep] = useState(p.responsableReporte || "");
+  const [notaAtraso, setNotaAtraso] = useState(marca?.mensaje || "");
+  useEffect(() => { setNotaAtraso(marca?.mensaje || ""); }, [marca?.mensaje, p.id]);
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
   const cerrado = p.estado === "cerrado";
@@ -366,6 +368,41 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         <button type="button" className="btn icon" data-foco aria-label="Cerrar detalle" onClick={onCerrar}>✕</button>
       </div>
       <div className="d-body">
+        {soySuper && (
+          <div className="d-sec super-sec">
+            <h3>Solo tú · Súper admin</h3>
+            <p className="sig">
+              Marca este proyecto como atrasado. Solo tú ves esta nota (ni los otros admins).
+              Al guardar también se envía por Telegram.
+            </p>
+            <textarea
+              className="super-nota"
+              rows={2}
+              maxLength={500}
+              placeholder="Mensaje de la burbuja (ej. «Atrasado: falta material»)"
+              value={notaAtraso}
+              onChange={e => setNotaAtraso(e.target.value)}
+            />
+            <div className="super-acciones">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => onMarcar?.(p.id, notaAtraso.trim())}
+              >
+                {marca?.atrasado ? "Actualizar marca" : "Marcar atrasado"}
+              </button>
+              {marca?.atrasado && (
+                <button
+                  type="button"
+                  className="btn danger-t"
+                  onClick={() => onQuitarMarca?.(p.id)}
+                >
+                  Quitar marca
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <div>
           <ol className="trk" aria-hidden="true">
             {FASES.map((f, i) => (

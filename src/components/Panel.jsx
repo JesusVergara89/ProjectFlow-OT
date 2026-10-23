@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
-import { fecha, hora, money } from "../format.js";
+import { fecha, hora, money, repartirMonto } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
@@ -509,19 +509,95 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                 <em className="chk-hint"> Márcalo aunque el proyecto ya se haya cobrado: sirve para ubicar los que se cobraron pero aún no tienen reporte.</em>
               </span>
             </label>
-            <div className="campo full">
-              <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
-              <select
-                id="d-mes"
-                value={p.cobroMes || ""}
+            {!p.diferido && (
+              <div className="campo full">
+                <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
+                <select
+                  id="d-mes"
+                  value={p.cobroMes || ""}
+                  disabled={!puedoEditar}
+                  onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
+                >
+                  <option value="">Sin proyectar</option>
+                  {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
+                    .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+                </select>
+              </div>
+            )}
+            <label className="chk full">
+              <input
+                type="checkbox"
+                checked={!!p.diferido}
                 disabled={!puedoEditar}
-                onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
-              >
-                <option value="">Sin proyectar</option>
-                {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
-                  .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
-              </select>
-            </div>
+                onChange={e => {
+                  const on = e.target.checked;
+                  if (on) {
+                    const n = Math.max(2, p.pagosNum || (p.pagosMeses || []).length || 2);
+                    const meses = [...(p.pagosMeses || [])].slice(0, n);
+                    while (meses.length < n) meses.push(null);
+                    onGuardar({ ...p, diferido: true, pagosNum: n, pagosMeses: meses, cobroMes: null });
+                  } else {
+                    onGuardar({ ...p, diferido: false });
+                  }
+                }}
+              />
+              <span>Pagos diferidos (dividir el cobro en varios pagos, cada uno en un mes distinto).</span>
+            </label>
+            {p.diferido && (() => {
+              const n = Math.max(1, p.pagosNum || (p.pagosMeses || []).length || 1);
+              const partes = repartirMonto(+p.monto || 0, n);
+              const setNum = v => {
+                const k = Math.max(1, Math.min(24, Math.floor(+v || 0)));
+                const meses = [...(p.pagosMeses || [])].slice(0, k);
+                while (meses.length < k) meses.push(null);
+                onGuardar({ ...p, pagosNum: k, pagosMeses: meses });
+                return k;
+              };
+              const setMes = (i, ym) => {
+                const meses = [...(p.pagosMeses || [])];
+                while (meses.length < n) meses.push(null);
+                meses[i] = +ym || null;
+                onGuardar({ ...p, pagosMeses: meses });
+              };
+              return (
+                <div className="campo full">
+                  <Campo
+                    id="d-pagos-num"
+                    etiqueta="Número de pagos (en cuántos se divide el monto)"
+                    tipo="number"
+                    min="1"
+                    max="24"
+                    step="1"
+                    inputMode="numeric"
+                    disabled={!puedoEditar}
+                    valor={n}
+                    onGuardar={setNum}
+                  />
+                  <p className="sig">
+                    {money(+p.monto || 0)} ÷ {n} = {money(partes[0])} por pago
+                    {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
+                  </p>
+                  {Array.from({ length: n }).map((_, i) => {
+                    const val = (p.pagosMeses || [])[i] || "";
+                    const opciones = val && !OPCIONES_MES.includes(+val) ? [+val, ...OPCIONES_MES] : OPCIONES_MES;
+                    return (
+                      <div className="campo" key={i} style={{ marginTop: 6 }}>
+                        <label htmlFor={`d-pago-${i}`}>Pago {i + 1} · {money(partes[i])} · mes</label>
+                        <select
+                          id={`d-pago-${i}`}
+                          value={val}
+                          disabled={!puedoEditar}
+                          onChange={e => setMes(i, e.target.value)}
+                        >
+                          <option value="">Sin proyectar</option>
+                          {opciones.map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
           {p.pagado ? (
             <p className="sig">Pagado: {money(+p.monto || 0)} cuenta como cobrado en {nombreMes(p.pagadoMes || mesActual())} · saldo por cobrar <b>{money(0)}</b>.</p>

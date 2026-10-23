@@ -4,7 +4,7 @@ import { AREAS, SERVICIOS } from "../servicios.js";
 // ¿Hay algún filtro activo (además de la búsqueda de texto y el estado)?
 function hayFiltros(f) {
   return Boolean(
-    f.resp || f.area || f.tipo || f.cliente || f.prio || f.pagado || f.reporte || f.paso || f.detenidos
+    f.resp || f.area || f.tipo || f.cliente || f.prio || f.pagado || f.cobrado || f.reporte || f.paso || f.detenidos
   );
 }
 
@@ -61,6 +61,12 @@ export default function Filtros({ filtros, setFiltro, limpiar, vista, responsabl
         <option value="">Pagado o no</option>
         <option value="si">Pagado</option>
         <option value="no">No pagado</option>
+      </select>
+      <label className="sr" htmlFor="f-cobrado">Cobrado</label>
+      <select id="f-cobrado" value={filtros.cobrado || ""} onChange={e => setFiltro({ cobrado: e.target.value })}>
+        <option value="">Cobrado o no</option>
+        <option value="si">Cobrado</option>
+        <option value="no">No cobrado</option>
       </select>
       <label className="sr" htmlFor="f-reporte">Reporte</label>
       <select id="f-reporte" value={filtros.reporte || ""} onChange={e => setFiltro({ reporte: e.target.value })}>

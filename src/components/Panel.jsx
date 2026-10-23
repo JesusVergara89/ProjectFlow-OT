@@ -6,7 +6,7 @@ import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES 
 import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
 import { sesion } from "../auth.js";
 import { subirImagen } from "../db.js";
-import { mesesDesdeHoy, nombreMes } from "../meses.js";
+import { mesesDesdeHoy, nombreMes, mesActual } from "../meses.js";
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
@@ -183,6 +183,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const puedoEliminar = puedoEditar;
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
   const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
+  const puedeMarcarCobrado = esPoderTotal || usuarioLower === "yuli";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -474,16 +475,26 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               inputMode="numeric"
               disabled={!puedoEditar}
               valor={+p.anticipo || 0}
-              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n }); return n; }}
+              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n, anticipoMes: n > 0 ? (p.anticipoMes || mesActual()) : null }); return n; }}
             />
             {puedeMarcarPagado && (
               <label className="chk full">
                 <input
                   type="checkbox"
                   checked={!!p.pagado}
-                  onChange={e => onGuardar({ ...p, pagado: e.target.checked })}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, pagado: c, pagadoMes: c ? (p.pagadoMes || mesActual()) : null }); }}
                 />
-                <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+                <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado del mes).</span>
+              </label>
+            )}
+            {puedeMarcarCobrado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.cobrado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, cobrado: c, cobradoMes: c ? (p.cobradoMes || mesActual()) : null }); }}
+                />
+                <span>Cobrado (ya entró el dinero de este proyecto; suma su monto a «Cobrado» del mes en curso). No cierra ni mueve el proyecto en el flujo.</span>
               </label>
             )}
             <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
@@ -512,8 +523,10 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               </select>
             </div>
           </div>
-          {p.pagado ? (
-            <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>
+          {p.cobrado ? (
+            <p className="sig">Cobrado: {money(+p.monto || 0)} contabilizado en {nombreMes(p.cobradoMes || mesActual())}.</p>
+          ) : p.pagado ? (
+            <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} cuenta como cobrado en {nombreMes(p.pagadoMes || mesActual())} · saldo por cobrar <b>{money(0)}</b>.</p>
           ) : (+p.anticipo > 0) && (
             <p className="sig">
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.

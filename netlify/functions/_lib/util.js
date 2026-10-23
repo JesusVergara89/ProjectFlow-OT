@@ -121,6 +121,17 @@ export const sbBorrarProyecto = id =>
     headers: { prefer: "return=minimal" }
   });
 
+// --- Cierres mensuales (foto de dinero por mes) ---
+export const sbLeerCierres = async () =>
+  (await sb("cierres_mensuales?select=*&order=mes.desc")) || [];
+
+export const sbUpsertCierre = fila =>
+  sb("cierres_mensuales", {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(fila)
+  });
+
 // --- Marcas privadas de "proyecto atrasado" (solo súper admin) ---
 export const sbLeerMarcas = async () =>
   (await sb("marcas_super?select=*")) || [];

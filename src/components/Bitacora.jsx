@@ -17,7 +17,7 @@ const ETIQUETA = {
 const CAMPO = {
   nombre: "Proyecto", cliente: "Cliente", responsable: "Responsable",
   prioridad: "Prioridad", monto: "Monto", estado: "Estado", resultado: "Resultado", paso: "Paso",
-  reporte_enviado: "Reporte enviado"
+  reporte_enviado: "Reporte enviado", pagado: "Pagado", cobrado: "Cobrado"
 };
 
 function Detalle({ accion, d }) {

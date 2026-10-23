@@ -3,7 +3,7 @@ import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
 import { sesion as leerSesion, salir } from "./auth.js";
 import { esSuperAdmin } from "./permisos.js";
-import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper } from "./db.js";
+import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper, leerCierres, asegurarCierres } from "./db.js";
 import Kpis from "./components/Kpis.jsx";
 import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
@@ -57,6 +57,16 @@ function Tablas({ usuario, onSalir }) {
     return () => { vivo = false; };
   }, [soySuper]);
 
+  // Cierres mensuales (foto de meses anteriores). Al entrar, congela los meses
+  // ya terminados que falten y trae todas las fotos.
+  const [cierres, setCierres] = useState([]);
+  useEffect(() => {
+    let vivo = true;
+    leerCierres().then(c => vivo && setCierres(c || [])).catch(() => {});
+    asegurarCierres().then(c => { if (vivo && c && c.length) setCierres(c); }).catch(() => {});
+    return () => { vivo = false; };
+  }, []);
+
   const marcarAtrasado = async (id, mensaje) => {
     setMarcas(m => ({ ...m, [id]: { atrasado: true, mensaje } })); // optimista
     try { await guardarMarcaSuper(id, mensaje); }
@@ -81,6 +91,7 @@ function Tablas({ usuario, onSalir }) {
     cliente: "",
     prio: "",
     pagado: "",
+    cobrado: "",
     reporte: "",
     estado: "activos",
     paso: null,
@@ -248,6 +259,7 @@ function Tablas({ usuario, onSalir }) {
 
       <Kpis
         items={items}
+        cierres={cierres}
         soloDetenidos={filtros.detenidos}
         onToggleDetenidos={() =>
           setFiltro({

@@ -21,6 +21,10 @@ const aApp = r => ({
   monto: Number(r.monto) || 0,
   anticipo: Number(r.anticipo) || 0,
   pagado: Boolean(r.pagado),
+  cobrado: Boolean(r.cobrado),
+  cobradoMes: Number(r.cobrado_mes) || null,
+  pagadoMes: Number(r.pagado_mes) || null,
+  anticipoMes: Number(r.anticipo_mes) || null,
   reporteEnviado: Boolean(r.reporte_enviado),
   cobroMes: Number(r.cobro_mes) || null,
   diferido: Boolean(r.diferido),
@@ -121,6 +125,29 @@ export async function guardarMarcaSuper(proyectoId, mensaje) {
 }
 export async function borrarMarcaSuper(proyectoId) {
   return api("marcas", { accion: "borrar", proyectoId });
+}
+
+// --- Cierres mensuales (foto de meses pasados) ---
+// Lee las fotos ya congeladas (lectura pública con la llave anon).
+export async function leerCierres() {
+  if (!configurado) return [];
+  const { data, error } = await supabase
+    .from("cierres_mensuales")
+    .select("*")
+    .order("mes", { ascending: false });
+  if (error || !Array.isArray(data)) return [];
+  return data;
+}
+
+// Pide al servidor congelar cualquier mes ya terminado que aún no tenga foto.
+// Devuelve las fotos (idempotente: no recalcula las que ya existen).
+export async function asegurarCierres() {
+  try {
+    const r = await api("cierres", {});
+    return r.cierres || [];
+  } catch {
+    return [];
+  }
 }
 
 export function suscribir(alCambiar) {

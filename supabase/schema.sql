@@ -83,6 +83,59 @@ create policy "lectura bitacora"
   to anon, authenticated
   using (true);
 
+-- ---------- Perfiles (foto por usuario) ----------
+create table if not exists public.perfiles_usuario (
+  usuario     text        primary key,
+  avatar_url  text,
+  actualizado timestamptz not null default now()
+);
+alter table public.perfiles_usuario enable row level security;
+drop policy if exists "lectura perfiles" on public.perfiles_usuario;
+create policy "lectura perfiles"
+  on public.perfiles_usuario for select
+  to anon, authenticated
+  using (true);
+
+-- Marca "reporte enviado" (se cobró, pero el reporte puede faltar).
+alter table public.proyectos add column if not exists reporte_enviado boolean not null default false;
+
+-- Dinero por mes: chulo "Cobrado" + sellos del mes en que se registró cada tipo.
+alter table public.proyectos add column if not exists cobrado      boolean not null default false;
+alter table public.proyectos add column if not exists cobrado_mes  integer;
+alter table public.proyectos add column if not exists pagado_mes   integer;
+alter table public.proyectos add column if not exists anticipo_mes integer;
+
+-- Foto mensual de dinero (se congela al cambiar de mes).
+create table if not exists public.cierres_mensuales (
+  mes          integer     primary key,
+  cobrado      numeric     not null default 0,
+  pagado       numeric     not null default 0,
+  anticipos    numeric     not null default 0,
+  total        numeric     not null default 0,
+  cobrado_num  integer     not null default 0,
+  pagado_num   integer     not null default 0,
+  anticipo_num integer     not null default 0,
+  creado       timestamptz not null default now()
+);
+alter table public.cierres_mensuales enable row level security;
+drop policy if exists "lectura cierres" on public.cierres_mensuales;
+create policy "lectura cierres"
+  on public.cierres_mensuales for select
+  to anon, authenticated
+  using (true);
+
+-- ---------- Marcas privadas del súper admin (sin lectura pública) ----------
+create table if not exists public.marcas_super (
+  proyecto_id uuid        primary key references public.proyectos(id) on delete cascade,
+  atrasado    boolean     not null default true,
+  mensaje     text        not null default '',
+  actualizado timestamptz not null default now()
+);
+alter table public.marcas_super enable row level security;
+-- A propósito SIN policy de SELECT: la llave anon no puede leerla; solo el servidor.
+drop policy if exists "lectura marcas" on public.marcas_super;
+
 -- ---------- Tiempo real ----------
 alter publication supabase_realtime add table public.proyectos;
 alter publication supabase_realtime add table public.bitacora;
+alter publication supabase_realtime add table public.perfiles_usuario;

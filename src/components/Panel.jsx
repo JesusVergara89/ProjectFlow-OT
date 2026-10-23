@@ -173,6 +173,50 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
       setSubiendo(false);
     }
   };
+
+  // Captura la pantalla (elige ventana/pantalla), toma un cuadro y lo sube
+  // directo, sin tener que guardar el screenshot a mano.
+  const capturarPantalla = async () => {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setErrImg("Tu navegador no permite capturar la pantalla aquí. Usa «Seleccionar archivo».");
+      return;
+    }
+    setErrImg("");
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    } catch (err) {
+      if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
+        setErrImg("No se pudo capturar la pantalla.");
+      }
+      return; // el usuario canceló o no dio permiso
+    }
+    const video = document.createElement("video");
+    try {
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      await new Promise(r => setTimeout(r, 300)); // deja que llegue el primer cuadro
+      const w = video.videoWidth, h = video.videoHeight;
+      if (!w || !h) throw new Error("No se obtuvo la imagen de la pantalla.");
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(video, 0, 0, w, h);
+      const blob = await new Promise(res => c.toBlob(res, "image/png"));
+      if (!blob) throw new Error("No se pudo generar la captura.");
+      setSubiendo(true);
+      const file = new File([blob], "captura.png", { type: "image/png" });
+      const { base64, tipo } = await procesarImagen(file);
+      const r = await subirImagen({ proyectoId: p.id, tipo, base64 });
+      setImg({ url: r.url, path: r.path });
+    } catch (err) {
+      setErrImg(err?.message || "No se pudo subir la captura.");
+    } finally {
+      video.pause();
+      stream.getTracks().forEach(t => t.stop());
+      setSubiendo(false);
+    }
+  };
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
   // Solo el admin y quien creó el proyecto pueden editar sus datos o eliminarlo.
@@ -230,7 +274,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
           <div className="campos">
             <div className="campo full">
               <label htmlFor="d-img">Imagen del correo con los alcances</label>
-              <input id="d-img" type="file" accept="image/*" disabled={!puedo || subiendo} onChange={onImagen} />
+              <div className="img-acciones">
+                <input id="d-img" type="file" accept="image/*" disabled={!puedo || subiendo} onChange={onImagen} />
+                <button type="button" className="btn" onClick={capturarPantalla} disabled={!puedo || subiendo}>
+                  🖥️ Capturar pantalla
+                </button>
+              </div>
+              <p className="sig">Con «Capturar pantalla» eliges la ventana del correo y se sube sola, sin guardar el screenshot.</p>
               {subiendo && <p className="sig">Subiendo imagen…</p>}
               {errImg && <p className="sig" style={{ color: "var(--crit)" }}>{errImg}</p>}
               {img && (

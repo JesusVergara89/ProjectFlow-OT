@@ -425,6 +425,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .avatar-grande-vista{display:flex;align-items:center;justify-content:center}
 .avatar-grande-vista .avatar-img,
 .avatar-grande-vista .avatar-iniciales{width:220px;height:220px;border-radius:50%;object-fit:cover;font-size:84px;box-shadow:0 0 0 4px var(--surface),0 10px 30px rgba(0,0,0,.3)}
+.img-acciones{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .avatar-modal-nombre{margin:0;font:600 18px/1.1 var(--f-display)}
 .avatar-modal-acciones{display:flex;gap:8px}
 .avatar-modal-error{margin:0;color:var(--crit);font-size:13px;text-align:center}

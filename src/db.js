@@ -150,6 +150,11 @@ export async function asegurarCierres() {
   }
 }
 
+// --- Análisis con IA (manda las métricas, regresa el texto) ---
+export async function analizarIA(metricas) {
+  return api("analisis", { metricas });
+}
+
 export function suscribir(alCambiar) {
   const canal = supabase
     .channel("proyectos-cambios")

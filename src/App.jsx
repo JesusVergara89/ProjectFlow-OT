@@ -16,6 +16,7 @@ import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
 import Bitacora from "./components/Bitacora.jsx";
+import Analisis from "./components/Analisis.jsx";
 import AvatarUsuario from "./components/AvatarUsuario.jsx";
 
 const VISTAS = [
@@ -86,6 +87,8 @@ function Tablas({ usuario, onSalir }) {
     catch (e) { setError(e.message || "No se pudo quitar la marca."); }
   };
   const [verBitacora, setVerBitacora] = useState(false);
+  const [verAnalisis, setVerAnalisis] = useState(false);
+  const esPoderTotal = usuario?.rol === "admin" || String(usuario?.usuario || "").toLowerCase() === "leonardo";
 
   const [vista, setVista] = useState(() =>
     IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
@@ -211,6 +214,15 @@ function Tablas({ usuario, onSalir }) {
             >
               Bitácora
             </button>
+            {esPoderTotal && (
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setVerAnalisis(true)}
+              >
+                ✨ Análisis IA
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -407,6 +419,7 @@ function Tablas({ usuario, onSalir }) {
       )}
 
       {verBitacora && <Bitacora onCerrar={() => setVerBitacora(false)} />}
+      {verAnalisis && <Analisis items={items} onCerrar={() => setVerAnalisis(false)} />}
     </div>
   );
 }

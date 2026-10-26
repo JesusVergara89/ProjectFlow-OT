@@ -7,7 +7,7 @@ import { json, usuarioDe } from "./_lib/util.js";
 //   GEMINI_API_KEY = tu llave gratis de https://aistudio.google.com/apikey
 //   GEMINI_MODEL   = (opcional) por defecto "gemini-1.5-flash" (gratis).
 const KEY = process.env.GEMINI_API_KEY || "";
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // Lista los modelos que SÍ soportan generateContent (para ayudar si el modelo falla).
 async function modelosDisponibles() {

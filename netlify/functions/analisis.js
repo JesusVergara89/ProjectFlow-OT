@@ -20,11 +20,7 @@ const EXCLUIR =
 // Modelos preferidos: solo se utilizarán si Google los devuelve
 // en la lista de modelos compatibles con generateContent.
 const PREFERIDOS = [
-  "gemini-3.8-flash",
-  "gemini-3.6-flash",
   "gemini-3.5-flash-lite",
-  "gemini-3.1-flash-lite",
-  "gemini-3-flash-preview"
 ];
 // Consulta los modelos accesibles con la clave API.
 async function obtenerModelos() {

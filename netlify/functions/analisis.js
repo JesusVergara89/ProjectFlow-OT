@@ -5,22 +5,36 @@ import { json, usuarioDe } from "./_lib/util.js";
 //
 // Variables de entorno (en Netlify, SIN prefijo VITE_, son secretas):
 //   GEMINI_API_KEY = tu llave gratis de https://aistudio.google.com/apikey
-//   GEMINI_MODEL   = (opcional) por defecto "gemini-1.5-flash" (gratis).
+//   GEMINI_MODEL   = (opcional) fuerza un modelo; si no, se autodetecta uno que funcione.
 const KEY = process.env.GEMINI_API_KEY || "";
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL_FIJO = process.env.GEMINI_MODEL || ""; // si se define, se usa solo ese
 
-// Lista los modelos que SÍ soportan generateContent (para ayudar si el modelo falla).
-async function modelosDisponibles() {
+// Orden de preferencia (texto, gratis/baratos primero). Se intersecta con lo
+// que realmente tenga la cuenta.
+const PREFERIDOS = [
+  "gemini-flash-latest", "gemini-2.5-flash", "gemini-3-flash-preview",
+  "gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-flash-lite-latest",
+  "gemini-pro-latest", "gemini-2.5-pro"
+];
+// Modelos que NO sirven para este texto (imagen, voz, embeddings, etc.).
+const EXCLUIR = /image|tts|embedding|nano-banana|customtools|vision|aqa/i;
+
+// Modelos de la cuenta que soportan generateContent, ya ordenados por preferencia.
+async function candidatos() {
+  if (MODEL_FIJO) return [MODEL_FIJO];
+  let lista = [];
   try {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(KEY)}`);
     const d = await r.json().catch(() => ({}));
-    return (d.models || [])
+    lista = (d.models || [])
       .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
       .map(m => String(m.name || "").replace(/^models\//, ""))
-      .slice(0, 20);
-  } catch {
-    return [];
-  }
+      .filter(n => n && !EXCLUIR.test(n));
+  } catch { /* usa los de respaldo */ }
+  if (!lista.length) lista = [...PREFERIDOS];
+  const enLista = n => lista.includes(n);
+  const orden = [...PREFERIDOS.filter(enLista), ...lista.filter(n => !PREFERIDOS.includes(n))];
+  return orden.slice(0, 6);
 }
 
 // Solo admin / Leonardo pueden pedir el análisis (controla acceso).
@@ -76,35 +90,44 @@ export default async function handler(req) {
     `## Recomendaciones\n(acciones concretas y priorizadas)\n` +
     `## Riesgos a vigilar\n(proyectos o patrones que podrían empeorar)`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent?key=${encodeURIComponent(KEY)}`;
+  const cuerpoIA = JSON.stringify({
+    systemInstruction: { parts: [{ text: sistema }] },
+    contents: [{ role: "user", parts: [{ text: pregunta }] }],
+    generationConfig: { maxOutputTokens: 1600, temperature: 0.4 }
+  });
 
-  let res;
-  try {
-    res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sistema }] },
-        contents: [{ role: "user", parts: [{ text: pregunta }] }],
-        generationConfig: { maxOutputTokens: 1600, temperature: 0.4 }
-      })
-    });
-  } catch (e) {
-    return json({ error: "No se pudo contactar a la IA: " + e.message }, 502);
-  }
+  // Prueba una lista de versiones de API y de modelos hasta que uno responda.
+  const versiones = ["v1beta", "v1"];
+  const modelos = await candidatos();
+  let ultimoErr = "";
+  const intentados = [];
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    if (res.status === 404) {
-      const lista = await modelosDisponibles();
-      const sug = lista.length ? ` Modelos disponibles en tu cuenta: ${lista.join(", ")}. Pon uno en la variable GEMINI_MODEL.` : "";
-      return json({ error: `El modelo "${MODEL}" no existe para tu API key.${sug}` }, 502);
+  for (const model of modelos) {
+    for (const ver of versiones) {
+      const url = `https://generativelanguage.googleapis.com/${ver}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(KEY)}`;
+      let res, data;
+      try {
+        res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: cuerpoIA });
+        data = await res.json().catch(() => ({}));
+      } catch (e) {
+        ultimoErr = e.message; continue;
+      }
+      if (res.ok) {
+        const texto = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
+        if (texto) return json({ ok: true, analisis: texto, modelo: model });
+        ultimoErr = "respuesta vacía"; continue;
+      }
+      ultimoErr = data?.error?.message || `HTTP ${res.status}`;
+      intentados.push(`${model}@${ver}`);
+      if (res.status !== 404 && res.status !== 400) {
+        // Error no relacionado con el modelo (p. ej. llave inválida o cuota): no sigas probando.
+        return json({ error: `La IA respondió error: ${ultimoErr}` }, 502);
+      }
     }
-    return json({ error: `La IA respondió error (${res.status}): ${data?.error?.message || "desconocido"}` }, 502);
   }
-  const texto = (data?.candidates?.[0]?.content?.parts || [])
-    .map(p => p.text || "").join("").trim();
-  if (!texto) return json({ error: "La IA no devolvió texto." }, 502);
 
-  return json({ ok: true, analisis: texto, modelo: MODEL });
+  return json({
+    error: `Ningún modelo respondió. Probé: ${intentados.join(", ") || "ninguno"}. Último error: ${ultimoErr}. ` +
+      `Si tienes un modelo de texto preferido, ponlo en la variable GEMINI_MODEL.`
+  }, 502);
 }

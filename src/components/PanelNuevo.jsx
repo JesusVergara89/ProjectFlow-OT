@@ -7,7 +7,7 @@ import { mesesDesdeHoy, nombreMes } from "../meses.js";
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
-export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
+export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, adicional = null }) {
   const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false, cobroMes: "", diferido: false, pagosNum: 2, pagosMeses: [] });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
@@ -51,8 +51,10 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
     <Lateral onCerrar={onCerrar}>
       <div className="d-head">
         <div>
-          <p className="eyebrow">Paso 1 · Solicitud del cliente</p>
-          <h2 id="d-titulo">Nuevo proyecto</h2>
+          <p className="eyebrow">
+            {adicional ? `Servicio adicional ${adicional.idx} de ${adicional.total}` : "Paso 1 · Solicitud del cliente"}
+          </p>
+          <h2 id="d-titulo">{adicional ? "Nuevo proyecto (alcance adicional)" : "Nuevo proyecto"}</h2>
         </div>
         <button type="button" className="btn icon" aria-label="Cerrar" onClick={onCerrar}>✕</button>
       </div>

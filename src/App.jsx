@@ -67,6 +67,14 @@ function Tablas({ usuario, onSalir }) {
     return () => { vivo = false; };
   }, []);
 
+  // Alta en serie de "servicios adicionales" (paso 34): registrar N proyectos uno tras otro.
+  const [adic, setAdic] = useState({ pend: 0, total: 0 });
+  const abrirAdicionales = (n) => {
+    const total = Math.max(1, Math.min(10, Math.floor(+n || 1)));
+    setAdic({ pend: total, total });
+    setPanel({ tipo: "nuevo" });
+  };
+
   const marcarAtrasado = async (id, mensaje) => {
     setMarcas(m => ({ ...m, [id]: { atrasado: true, mensaje } })); // optimista
     try { await guardarMarcaSuper(id, mensaje); }
@@ -374,22 +382,26 @@ function Tablas({ usuario, onSalir }) {
           marca={marcas[proyectoAbierto.id]}
           onMarcar={marcarAtrasado}
           onQuitarMarca={quitarAtrasado}
-          onNuevoProyecto={() => setPanel({ tipo: "nuevo" })}
+          onNuevoProyecto={abrirAdicionales}
         />
       )}
 
       {panel?.tipo === "nuevo" && (
         <PanelNuevo
+          key={"nuevo-" + adic.pend}
           clientes={clientes}
           responsables={responsables}
-          onCerrar={cerrarPanel}
+          adicional={adic.pend > 0 ? { idx: adic.total - adic.pend + 1, total: adic.total } : null}
+          onCerrar={() => { setAdic({ pend: 0, total: 0 }); cerrarPanel(); }}
           onCrear={(p) => {
             guardar(p, "crear");
-
-            setPanel({
-              tipo: "detalle",
-              id: p.id,
-            });
+            if (adic.pend > 1) {
+              setAdic((a) => ({ ...a, pend: a.pend - 1 }));
+              setPanel({ tipo: "nuevo" });
+            } else {
+              setAdic({ pend: 0, total: 0 });
+              setPanel({ tipo: "detalle", id: p.id });
+            }
           }}
         />
       )}

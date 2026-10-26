@@ -16,15 +16,16 @@ export function mesDeISO(iso) {
 }
 
 // Clasificación de dinero por fase. Devuelve 'porfacturar' | 'facturado' | 'cobrado' | null.
+// Los flags MANUALES (pagado / facturado por adelantado) adelantan el estado aunque
+// el proyecto aún no haya llegado a la fase correspondiente.
 export function faseDinero(p) {
   if (!p || p.archivado) return null;
   if (p.resultado === "no-viable" || p.resultado === "archivado") return null;
-  if (p.resultado === "cerrado") return "cobrado";
   const n = +p.paso || 1;
-  if (n >= 41) return "cobrado";
-  if (n >= 39) return "facturado";
+  if (p.pagado || p.resultado === "cerrado" || n >= 41) return "cobrado"; // prepago o llegó al 41
+  if (p.facturado || n >= 39) return "facturado";                          // pre-facturado o llegó al 39
   if (n >= 23) return "porfacturar";
-  return null; // etapas tempranas (1–22): aún no entran al dinero
+  return null; // etapas tempranas (1–22) sin override
 }
 
 export const ETIQUETA_FASE = { porfacturar: "Por facturar", facturado: "Facturado", cobrado: "Cobrado" };
@@ -35,9 +36,10 @@ export function saldoDe(p) {
   return Math.max(0, (+p.monto || 0) - (+p.anticipo || 0));
 }
 
-// Mes (AAAAMM) en que el proyecto llegó al paso 41 (se cobró el saldo). 0 si no aplica.
+// Mes (AAAAMM) en que entró el dinero. 0 si no aplica.
 export function mesCobrado(p) {
   if (faseDinero(p) !== "cobrado") return 0;
+  if (p.pagado && +p.pagadoMes) return +p.pagadoMes; // prepago: el mes en que se marcó
   const h = p.historial || [];
   for (let i = h.length - 1; i >= 0; i--) {
     if (h[i].p === 40 && h[i].f) return mesDeISO(h[i].f); // completó el 40 -> entró al 41

@@ -147,6 +147,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const [enviado, setEnviado] = useState(false);
   const [respRep, setRespRep] = useState(p.responsableReporte || "");
   const [notaAtraso, setNotaAtraso] = useState(marca?.mensaje || "");
+  const [nAdic, setNAdic] = useState(1); // cuántos servicios adicionales registrar (paso 34)
   useEffect(() => { setNotaAtraso(marca?.mensaje || ""); }, [marca?.mensaje, p.id]);
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
@@ -228,6 +229,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const puedoEliminar = puedoEditar;
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
   const fd = faseDinero(p); // estado de dinero automático por fase
+  const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
+  const puedeMarcarFacturado = esPoderTotal || usuarioLower === "yuli" || usuarioLower === "lupita";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -333,12 +336,29 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
             Solo pueden completar este paso: {etiquetaPermiso(pa.n, p)}.
           </p>
         )}
+        {esPaso34 && (
+          <div className="campo full" style={{ marginBottom: 8 }}>
+            <label htmlFor="d-nadic">¿Cuántos servicios adicionales quieres registrar?</label>
+            <input
+              id="d-nadic"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              inputMode="numeric"
+              disabled={!puedo}
+              value={nAdic}
+              onChange={e => setNAdic(Math.max(1, Math.min(10, Math.floor(+e.target.value || 1))))}
+            />
+            <p className="sig">Al dar «Sí» se abrirá un proyecto nuevo por cada uno (uno tras otro) y este proyecto pasará al paso 35.</p>
+          </div>
+        )}
         {pa.tipo === "decision" ? (
           <div className="opciones">
             {["si", "no"].map(v => {
               const a = v === "si" ? pa.si : pa.no;
               const atras = a < pa.n;
-              // Paso 34 «Sí»: no regresa al 7; abre crear-proyecto nuevo (los
+              // Paso 34 «Sí»: no regresa al 7; abre N proyectos nuevos (los
               // alcances adicionales) y este proyecto avanza al paso 35.
               const esAdicionales = esPaso34 && v === "si";
               if (esAdicionales) {
@@ -350,9 +370,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                     className="dbtn"
                     disabled={!puedo}
                     onClick={() => {
-                      onNuevoProyecto?.();
+                      onNuevoProyecto?.(nAdic);
                       mover(q => {
-                        const r = avanzar(q, "si", "Servicios adicionales: se abre un proyecto nuevo con esos alcances.");
+                        const r = avanzar(q, "si", `Servicios adicionales: se abren ${nAdic} proyecto(s) nuevo(s) con esos alcances.`);
                         r.paso = 35;
                         r.pasoDesde = new Date().toISOString();
                         return r;
@@ -360,7 +380,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                     }}
                   >
                     <b>Sí</b>
-                    <span>→ Crea un proyecto nuevo con los alcances y pasa al paso 35</span>
+                    <span>→ Registrar {nAdic} servicio(s) adicional(es) y pasar al paso 35</span>
                   </button>
                 );
               }
@@ -558,6 +578,26 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               Estado de dinero (automático por fase): <b>{fd ? ETIQUETA_FASE[fd] : "Aún en pipeline (antes del paso 23)"}</b>.
               {" "}Por facturar en pasos 23–38, Facturado en 39–40, Cobrado al llegar al 41.
             </p>
+            {puedeMarcarFacturado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.facturado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, facturado: c, facturadoMes: c ? (p.facturadoMes || mesActual()) : null }); }}
+                />
+                <span>Facturado por adelantado (dejaron entrar la factura antes de su fase). Fuerza el estado a «Facturado».</span>
+              </label>
+            )}
+            {puedeMarcarPagado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.pagado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, pagado: c, pagadoMes: c ? (p.pagadoMes || mesActual()) : null }); }}
+                />
+                <span>Pagado por adelantado (el dinero entró antes de su fase). Fuerza el estado a «Cobrado» y suma a «Cobrado» del mes.</span>
+              </label>
+            )}
             <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
               <input
                 type="checkbox"

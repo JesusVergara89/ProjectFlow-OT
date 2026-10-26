@@ -7,7 +7,21 @@ import { json, usuarioDe } from "./_lib/util.js";
 //   GEMINI_API_KEY = tu llave gratis de https://aistudio.google.com/apikey
 //   GEMINI_MODEL   = (opcional) por defecto "gemini-1.5-flash" (gratis).
 const KEY = process.env.GEMINI_API_KEY || "";
-const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+
+// Lista los modelos que SÍ soportan generateContent (para ayudar si el modelo falla).
+async function modelosDisponibles() {
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(KEY)}`);
+    const d = await r.json().catch(() => ({}));
+    return (d.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map(m => String(m.name || "").replace(/^models\//, ""))
+      .slice(0, 20);
+  } catch {
+    return [];
+  }
+}
 
 // Solo admin / Leonardo pueden pedir el análisis (controla acceso).
 function puede(sesion) {
@@ -81,6 +95,11 @@ export default async function handler(req) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
+    if (res.status === 404) {
+      const lista = await modelosDisponibles();
+      const sug = lista.length ? ` Modelos disponibles en tu cuenta: ${lista.join(", ")}. Pon uno en la variable GEMINI_MODEL.` : "";
+      return json({ error: `El modelo "${MODEL}" no existe para tu API key.${sug}` }, 502);
+    }
     return json({ error: `La IA respondió error (${res.status}): ${data?.error?.message || "desconocido"}` }, 502);
   }
   const texto = (data?.candidates?.[0]?.content?.parts || [])

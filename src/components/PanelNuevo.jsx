@@ -99,16 +99,10 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
           <div className="campo">
             <label htmlFor="n-anticipo">Anticipo (MXN)</label>
             <input id="n-anticipo" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.anticipo} onChange={set("anticipo")} />
-            {(+f.anticipo > 0) && !f.pagado && (
+            {(+f.anticipo > 0) && (
               <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
             )}
           </div>
-          {puedeMarcarPagado && (
-            <label className="chk full">
-              <input type="checkbox" checked={f.pagado} onChange={e => setF(prev => ({ ...prev, pagado: e.target.checked }))} />
-              <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
-            </label>
-          )}
           {!f.diferido && (
             <div className="campo full">
               <label htmlFor="n-mes">Tentativo de facturar/cobrar en el mes</label>

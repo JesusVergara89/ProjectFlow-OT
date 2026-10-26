@@ -7,6 +7,7 @@ import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../
 import { sesion } from "../auth.js";
 import { subirImagen } from "../db.js";
 import { mesesDesdeHoy, nombreMes, mesActual } from "../meses.js";
+import { faseDinero, ETIQUETA_FASE } from "../dinero.js";
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
@@ -137,7 +138,7 @@ export function Lateral({ onCerrar, children }) {
   );
 }
 
-export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = false, marca, onMarcar, onQuitarMarca }) {
+export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = false, marca, onMarcar, onQuitarMarca, onNuevoProyecto }) {
   const [nota, setNota] = useState("");
   const [borrar, setBorrar] = useState(false);
   const [img, setImg] = useState(null);        // { url, path } de la evidencia subida
@@ -226,8 +227,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const puedoEditar = esPoderTotal || (p.creadoPor && p.creadoPor.toLowerCase() === usuarioLower);
   const puedoEliminar = puedoEditar;
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
-  const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
-  const puedeMarcarFacturado = esPoderTotal || usuarioLower === "yuli" || usuarioLower === "lupita";
+  const fd = faseDinero(p); // estado de dinero automático por fase
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -239,6 +239,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const anioYY = String(new Date().getFullYear()).slice(2);
   const otRegex = new RegExp(`^${anioYY}-\\d{1,4}$`);
   const esPaso19 = !cerrado && pa.n === 19;
+  const esPaso34 = !cerrado && pa.n === 34;
   const otValida = otRegex.test((p.ot || "").trim());
   // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
   const puedeProgramar = esPoderTotal;
@@ -337,6 +338,32 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
             {["si", "no"].map(v => {
               const a = v === "si" ? pa.si : pa.no;
               const atras = a < pa.n;
+              // Paso 34 «Sí»: no regresa al 7; abre crear-proyecto nuevo (los
+              // alcances adicionales) y este proyecto avanza al paso 35.
+              const esAdicionales = esPaso34 && v === "si";
+              if (esAdicionales) {
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    id="d-si"
+                    className="dbtn"
+                    disabled={!puedo}
+                    onClick={() => {
+                      onNuevoProyecto?.();
+                      mover(q => {
+                        const r = avanzar(q, "si", "Servicios adicionales: se abre un proyecto nuevo con esos alcances.");
+                        r.paso = 35;
+                        r.pasoDesde = new Date().toISOString();
+                        return r;
+                      }, "avanzar");
+                    }}
+                  >
+                    <b>Sí</b>
+                    <span>→ Crea un proyecto nuevo con los alcances y pasa al paso 35</span>
+                  </button>
+                );
+              }
               return (
                 <button
                   key={v}
@@ -527,26 +554,10 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               valor={+p.anticipo || 0}
               onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n, anticipoMes: n > 0 ? (p.anticipoMes || mesActual()) : null }); return n; }}
             />
-            {puedeMarcarPagado && (
-              <label className="chk full">
-                <input
-                  type="checkbox"
-                  checked={!!p.pagado}
-                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, pagado: c, pagadoMes: c ? (p.pagadoMes || mesActual()) : null }); }}
-                />
-                <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado del mes).</span>
-              </label>
-            )}
-            {puedeMarcarFacturado && (
-              <label className="chk full">
-                <input
-                  type="checkbox"
-                  checked={!!p.facturado}
-                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, facturado: c, facturadoMes: c ? (p.facturadoMes || mesActual()) : null }); }}
-                />
-                <span>Facturado (el cliente ya aceptó la entrada de la factura, pero aún no paga). Suma a «Facturado» del mes (dinero <b>pendiente</b>), <b>no</b> a «Cobrado». No mueve el proyecto en el flujo.</span>
-              </label>
-            )}
+            <p className="chk full sig" style={{ margin: 0 }}>
+              Estado de dinero (automático por fase): <b>{fd ? ETIQUETA_FASE[fd] : "Aún en pipeline (antes del paso 23)"}</b>.
+              {" "}Por facturar en pasos 23–38, Facturado en 39–40, Cobrado al llegar al 41.
+            </p>
             <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
               <input
                 type="checkbox"
@@ -649,13 +660,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               );
             })()}
           </div>
-          {p.pagado ? (
-            <p className="sig">Pagado: {money(+p.monto || 0)} cuenta como cobrado en {nombreMes(p.pagadoMes || mesActual())} · saldo por cobrar <b>{money(0)}</b>.</p>
-          ) : (+p.anticipo > 0) && (
+          {fd === "cobrado" ? (
+            <p className="sig">Cobrado: {money(+p.monto || 0)} · ya entró el dinero (paso 41+).</p>
+          ) : (+p.anticipo > 0) ? (
             <p className="sig">
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
             </p>
-          )}
+          ) : null}
         </div>
 
         <div className="d-sec">

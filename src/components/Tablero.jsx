@@ -3,12 +3,14 @@ import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
 import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA } from "../reglas.js";
 import { nombreServicio } from "../servicios.js";
+import { faseDinero } from "../dinero.js";
 
 function Tarjeta({ p, onAbrir, marca }) {
   const pa = paso(p);
   const det = detenido(p);
   const a = evaluarAlerta(p);
   const srv = nombreServicio(p.tipo);
+  const fd = faseDinero(p);
   const atrasado = !!marca?.atrasado;
   return (
     <button
@@ -37,11 +39,11 @@ function Tarjeta({ p, onAbrir, marca }) {
       <span className="c-paso"><b>{pa.n}</b><span>{pa.txt}</span></span>
       <span className="c-pie">
         <span className={`prio prio-${prioDe(p)}`}>{PRIO[prioDe(p)]}</span>
-        {p.facturado && !p.pagado && <span className="tag facturado" title="Facturado (aceptaron la factura, falta el pago)">Facturado</span>}
-        {p.pagado && <span className="tag pagado" title="Pagado (ya entró el dinero)">Pagado</span>}
+        {fd === "cobrado" && <span className="tag pagado" title="Cobrado (ya entró el dinero)">Cobrado</span>}
+        {fd === "facturado" && <span className="tag facturado" title="Facturado (pasos 39–40, sin pagar)">Facturado</span>}
         {p.reporteEnviado
           ? <span className="tag reporte-ok" title="Reporte ya enviado al cliente">Reporte ✓</span>
-          : (p.estado === "cerrado" || p.pagado) && <span className="tag reporte-falta" title="Se cobró pero aún no se envía el reporte">Sin reporte</span>}
+          : (p.estado === "cerrado" || fd === "cobrado") && <span className="tag reporte-falta" title="Se cobró pero aún no se envía el reporte">Sin reporte</span>}
         <span className="c-monto">{+p.monto ? money(p.monto) : ""}</span>
         <span className={"dias" + (det ? " warn" : "")} title="Tiempo en este paso">{diasTxt(dias(p))}</span>
       </span>

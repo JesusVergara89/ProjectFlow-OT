@@ -1,51 +1,92 @@
-/* Lógica de dinero compartida entre el front (Kpis) y el servidor (cierres).
-   Dos indicadores DISTINTOS, cada uno por mes:
-     COBRADO   = dinero que YA ENTRÓ  = Pagado (monto completo) + anticipos.
-     FACTURADO = dinero FACTURADO pero AÚN SIN PAGAR (el cliente aceptó la
-                 factura pero no ha pagado). Es dinero pendiente, por eso va
-                 aparte y NO se mezcla con Cobrado.
-   Cada aporte pertenece al MES en que se registró (sello en el proyecto). */
+/* Lógica de dinero — AHORA DETERMINADA POR LA FASE (el paso) del proyecto.
+   Reglas acordadas:
+     Paso 23–38  -> POR FACTURAR (servicio en proceso/ejecución, aún sin factura)
+     Paso 39–40  -> FACTURADO   (ya se hizo/entró la factura, pero sin pagar)
+     Paso 41–42  -> COBRADO     (se pagó la factura: el dinero entró)
+     Cerrado     -> COBRADO
+   Los anticipos son dinero parcial que ya entró (aparte, por su mes).
+   "Cobrado del mes" se cuenta en el mes en que el proyecto LLEGÓ al paso 41
+   (se saca del historial), y las fotos de meses anteriores lo conservan. */
 
-// Aporte de COBRANZA (dinero que entró): { tipo:'pagado'|'anticipo', monto, mes } o null.
-export function aporteDinero(p) {
-  if (!p || p.archivado) return null;
-  if (p.pagado) return { tipo: "pagado", monto: +p.monto || 0, mes: +p.pagadoMes || 0 };
-  const ant = +p.anticipo || 0;
-  if (ant > 0)  return { tipo: "anticipo", monto: ant, mes: +p.anticipoMes || 0 };
-  return null;
+// Mes AAAAMM desde una fecha ISO (0 si inválida).
+export function mesDeISO(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return 0;
+  return d.getFullYear() * 100 + (d.getMonth() + 1);
 }
 
-// Aporte FACTURADO pendiente (facturado y todavía sin pagar): { monto, mes } o null.
-export function aporteFacturado(p) {
+// Clasificación de dinero por fase. Devuelve 'porfacturar' | 'facturado' | 'cobrado' | null.
+export function faseDinero(p) {
   if (!p || p.archivado) return null;
-  if (p.facturado && !p.pagado) return { monto: +p.monto || 0, mes: +p.facturadoMes || 0 };
-  return null;
+  if (p.resultado === "no-viable" || p.resultado === "archivado") return null;
+  if (p.resultado === "cerrado") return "cobrado";
+  const n = +p.paso || 1;
+  if (n >= 41) return "cobrado";
+  if (n >= 39) return "facturado";
+  if (n >= 23) return "porfacturar";
+  return null; // etapas tempranas (1–22): aún no entran al dinero
 }
 
-// Totales de dinero de una lista para UN mes dado (AAAAMM).
+export const ETIQUETA_FASE = { porfacturar: "Por facturar", facturado: "Facturado", cobrado: "Cobrado" };
+
+// Saldo pendiente de cobro (monto menos anticipo); 0 si ya está cobrado.
+export function saldoDe(p) {
+  if (faseDinero(p) === "cobrado") return 0;
+  return Math.max(0, (+p.monto || 0) - (+p.anticipo || 0));
+}
+
+// Mes (AAAAMM) en que el proyecto llegó al paso 41 (se cobró el saldo). 0 si no aplica.
+export function mesCobrado(p) {
+  if (faseDinero(p) !== "cobrado") return 0;
+  const h = p.historial || [];
+  for (let i = h.length - 1; i >= 0; i--) {
+    if (h[i].p === 40 && h[i].f) return mesDeISO(h[i].f); // completó el 40 -> entró al 41
+  }
+  return mesDeISO(p.cerradoEn || p.pasoDesde || p.creado);
+}
+
+// Monto que entró al cobrar (el saldo; el anticipo ya se contó en su mes).
+export function montoCobrado(p) {
+  if (faseDinero(p) !== "cobrado") return 0;
+  return Math.max(0, (+p.monto || 0) - (+p.anticipo || 0));
+}
+
+// Totales de DINERO QUE ENTRÓ en un mes dado: saldo cobrado + anticipos capturados.
 export function totalesDelMes(lista, mes) {
-  const t = { pagado: 0, anticipos: 0, total: 0, facturado: 0, pagadoNum: 0, anticipoNum: 0, facturadoNum: 0 };
+  const t = { cobrado: 0, anticipos: 0, total: 0, cobradoNum: 0, anticipoNum: 0 };
   for (const p of lista) {
-    const a = aporteDinero(p);
-    if (a && a.mes === mes) {
-      t.total += a.monto;
-      if (a.tipo === "pagado") { t.pagado += a.monto; t.pagadoNum++; }
-      else { t.anticipos += a.monto; t.anticipoNum++; }
+    if (!p || p.archivado) continue;
+    if (faseDinero(p) === "cobrado" && mesCobrado(p) === mes) {
+      const m = montoCobrado(p);
+      if (m > 0) { t.cobrado += m; t.cobradoNum++; }
+    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === mes) {
+      t.anticipos += +p.anticipo || 0; t.anticipoNum++;
     }
-    const f = aporteFacturado(p);
-    if (f && f.mes === mes) { t.facturado += f.monto; t.facturadoNum++; }
+  }
+  t.total = t.cobrado + t.anticipos;
+  return t;
+}
+
+// Totales EN VIVO por fase (no mensuales): saldos por facturar y facturado.
+export function totalesVivos(lista) {
+  const t = { porFacturar: 0, facturado: 0, porFacturarNum: 0, facturadoNum: 0 };
+  for (const p of lista) {
+    const f = faseDinero(p);
+    if (f === "porfacturar") { t.porFacturar += saldoDe(p); t.porFacturarNum++; }
+    else if (f === "facturado") { t.facturado += saldoDe(p); t.facturadoNum++; }
   }
   return t;
 }
 
-// Meses (AAAAMM) con dinero (cobrado o facturado) registrado, de mayor a menor.
+// Meses (AAAAMM) con dinero (cobrado o anticipo), de mayor a menor.
 export function mesesConDinero(lista) {
   const set = new Set();
   for (const p of lista) {
-    const a = aporteDinero(p);
-    if (a && a.mes) set.add(a.mes);
-    const f = aporteFacturado(p);
-    if (f && f.mes) set.add(f.mes);
+    const mc = mesCobrado(p);
+    if (mc) set.add(mc);
+    if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0)) {
+      set.add(+p.anticipoMes);
+    }
   }
-  return [...set].sort((x, y) => y - x);
+  return [...set].sort((a, b) => b - a);
 }

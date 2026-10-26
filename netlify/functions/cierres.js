@@ -1,5 +1,5 @@
 import { json, usuarioDe, sbLeerProyectos, sbLeerCierres, sbUpsertCierre } from "./_lib/util.js";
-import { totalesDelMes } from "../../src/dinero.js";
+import { totalesDelMes, mesesConDinero } from "../../src/dinero.js";
 
 // Congela (si falta) la "foto" de dinero de cada mes YA TERMINADO y devuelve
 // todas las fotos. Idempotente: nunca recalcula un mes que ya tiene foto, así
@@ -17,11 +17,14 @@ const aDinero = r => ({
   archivado: !!r.archivado,
   monto: +r.monto || 0,
   anticipo: +r.anticipo || 0,
-  pagado: !!r.pagado,
-  facturado: !!r.facturado,
-  facturadoMes: +r.facturado_mes || 0,
-  pagadoMes: +r.pagado_mes || 0,
-  anticipoMes: +r.anticipo_mes || 0
+  anticipoMes: +r.anticipo_mes || 0,
+  paso: +r.paso || 1,
+  estado: r.estado,
+  resultado: r.resultado || undefined,
+  historial: Array.isArray(r.historial) ? r.historial : [],
+  cerradoEn: r.cerrado_en || undefined,
+  pasoDesde: r.paso_desde,
+  creado: r.creado
 });
 
 export default async function handler(req) {
@@ -42,10 +45,8 @@ export default async function handler(req) {
 
   // Meses con dinero, EXCLUYENDO el mes en curso (ese va en vivo).
   const meses = new Set();
-  for (const p of lista) {
-    for (const m of [p.facturadoMes, p.pagadoMes, p.anticipoMes]) {
-      if (m && m < actual) meses.add(m);
-    }
+  for (const m of mesesConDinero(lista)) {
+    if (m && m < actual) meses.add(m);
   }
 
   let nuevos = 0;
@@ -55,15 +56,13 @@ export default async function handler(req) {
     try {
       await sbUpsertCierre({
         mes,
-        cobrado: t.total,            // dinero que entró (pagado + anticipos)
-        pagado: t.pagado,
+        cobrado: t.cobrado,          // saldo cobrado (llegó al paso 41) ese mes
+        pagado: t.cobrado,
         anticipos: t.anticipos,
-        facturado: t.facturado,       // facturado pendiente de pago
-        total: t.total,
-        cobrado_num: t.pagadoNum + t.anticipoNum,
-        pagado_num: t.pagadoNum,
+        total: t.total,              // cobrado + anticipos del mes
+        cobrado_num: t.cobradoNum,
+        pagado_num: t.cobradoNum,
         anticipo_num: t.anticipoNum,
-        facturado_num: t.facturadoNum,
         creado: new Date().toISOString()
       });
       nuevos++;

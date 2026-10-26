@@ -90,8 +90,7 @@ function Tablas({ usuario, onSalir }) {
     tipo: "",
     cliente: "",
     prio: "",
-    pagado: "",
-    facturado: "",
+    dinero: "",
     reporte: "",
     estado: "activos",
     paso: null,
@@ -375,6 +374,7 @@ function Tablas({ usuario, onSalir }) {
           marca={marcas[proyectoAbierto.id]}
           onMarcar={marcarAtrasado}
           onQuitarMarca={quitarAtrasado}
+          onNuevoProyecto={() => setPanel({ tipo: "nuevo" })}
         />
       )}
 

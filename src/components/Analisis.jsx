@@ -2,10 +2,29 @@ import { useMemo, useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { paso, detenido, dias } from "../reglas.js";
 import { FASES } from "../flow.js";
-import { money } from "../format.js";
+import { money, repartirMonto } from "../format.js";
+import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
+import { faseDinero, saldoDe, totalesVivos, totalesDelMes, mesesConDinero } from "../dinero.js";
 import { analizarIA } from "../db.js";
 
 const r1 = n => Math.round(n * 10) / 10;
+
+// Mes tentativo de cobro de un proyecto (igual que en Proyección).
+const mesDeCobro = p => {
+  if (p.cobroMes) return p.cobroMes;
+  if (p.resultado === "cerrado") return mesActual();
+  return null;
+};
+// Cobros de un proyecto: un pago, o varios si es diferido.
+const cobrosDe = p => {
+  const monto = +p.monto || 0;
+  const meses = Array.isArray(p.pagosMeses) ? p.pagosMeses.filter(Boolean) : [];
+  if (p.diferido && meses.length) {
+    const partes = repartirMonto(monto, meses.length);
+    return meses.map((mes, i) => ({ mes: +mes || null, monto: partes[i] }));
+  }
+  return [{ mes: mesDeCobro(p), monto }];
+};
 
 // Calcula métricas de desempeño a partir del historial de los proyectos.
 function calcular(items) {
@@ -56,12 +75,54 @@ function calcular(items) {
     return { nombre: f.nombre, n: g ? g.n : 0, promDias: r1(g && g.n ? g.totalDias / g.n : 0), umbral: f.umbral };
   }).filter(f => f.n > 0);
 
+  // ----- DINERO -----
+  const MES = mesActual();
+  const tv = totalesVivos(vivos);                 // por facturar / facturado (saldos en vivo)
+  const tMes = totalesDelMes(vivos, MES);          // cobrado + anticipos de este mes
+  const pipeline = {
+    porFacturar: Math.round(tv.porFacturar), porFacturarNum: tv.porFacturarNum,
+    facturado: Math.round(tv.facturado), facturadoNum: tv.facturadoNum,
+    cobradoMes: Math.round(tMes.cobrado), cobradoNum: tMes.cobradoNum,
+    anticiposMes: Math.round(tMes.anticipos), anticipoNum: tMes.anticipoNum
+  };
+
+  // ----- COBRANZA PROYECTADA POR MES (próximos 6 meses + posterior + sin fecha) -----
+  const baseProy = vivos.filter(p => p.resultado !== "no-viable" && p.resultado !== "archivado");
+  const cols = mesesDesdeHoy(6);
+  const ultimo = cols[cols.length - 1];
+  const bucket = {}; cols.forEach(ym => { bucket[ym] = 0; });
+  let posterior = 0, sinFecha = 0;
+  for (const p of baseProy) {
+    for (const c of cobrosDe(p)) {
+      if (!c.mes) { sinFecha += c.monto; continue; }
+      if (c.mes <= cols[0]) bucket[cols[0]] += c.monto;
+      else if (c.mes > ultimo) posterior += c.monto;
+      else if (bucket[c.mes] != null) bucket[c.mes] += c.monto;
+      else posterior += c.monto;
+    }
+  }
+  const proyeccion = cols.map(ym => ({ ym, mes: nombreMes(ym), corto: nombreMesCorto(ym), monto: Math.round(bucket[ym]) }));
+  if (posterior > 0) proyeccion.push({ ym: "post", mes: "Posterior", corto: "Posterior", monto: Math.round(posterior) });
+  if (sinFecha > 0) proyeccion.push({ ym: "sin", mes: "Sin fecha", corto: "Sin fecha", monto: Math.round(sinFecha) });
+
+  // ----- CIERRES DE MESES ANTERIORES -----
+  const historialMeses = [];
+  for (const mm of mesesConDinero(vivos)) {
+    if (mm < MES) {
+      const t = totalesDelMes(vivos, mm);
+      historialMeses.push({ mes: nombreMes(mm), cobrado: Math.round(t.cobrado), anticipos: Math.round(t.anticipos) });
+    }
+  }
+
   return {
     activos: act.length,
     cerrados: vivos.length - act.length,
     personas: listaPersonas,
     fases: listaFases,
-    detenidos
+    detenidos,
+    pipeline,
+    proyeccion,
+    historialMeses
   };
 }
 
@@ -112,7 +173,7 @@ export default function Analisis({ items, onCerrar }) {
   }
 
   return (
-    <Lateral onCerrar={onCerrar}>
+    <Lateral onCerrar={onCerrar} className="drawer-izq drawer-ancho">
       <div className="d-head">
         <div>
           <p className="eyebrow">Apoyo para decisiones</p>
@@ -124,6 +185,44 @@ export default function Analisis({ items, onCerrar }) {
         <p className="sig">
           Métricas calculadas de tu historial: {m.activos} activos, {m.cerrados} cerrados, {m.detenidos.length} detenidos.
         </p>
+
+        <div className="d-sec">
+          <h3>Dinero</h3>
+          <div className="kpis-mini">
+            <div className="km"><span className="km-l">Por facturar</span><span className="km-v">{money(m.pipeline.porFacturar)}</span></div>
+            <div className="km"><span className="km-l">Facturado</span><span className="km-v">{money(m.pipeline.facturado)}</span></div>
+            <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes)}</span></div>
+            <div className="km"><span className="km-l">Anticipos (mes)</span><span className="km-v">{money(m.pipeline.anticiposMes)}</span></div>
+          </div>
+        </div>
+
+        <div className="d-sec">
+          <h3>Cobranza proyectada por mes</h3>
+          {m.proyeccion.some(x => x.monto) ? (
+            <table className="proy-tabla">
+              <thead><tr><th>Mes</th><th className="num">Cobro proyectado</th></tr></thead>
+              <tbody>
+                {m.proyeccion.map(x => (
+                  <tr key={x.ym}><td>{x.mes}</td><td className="num">{x.monto ? money(x.monto) : "—"}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          ) : <p className="vacio">Aún no hay cobros proyectados (define el mes tentativo de cobro en los proyectos).</p>}
+        </div>
+
+        {m.historialMeses.length > 0 && (
+          <div className="d-sec">
+            <h3>Cierres de meses anteriores</h3>
+            <table className="proy-tabla">
+              <thead><tr><th>Mes</th><th className="num">Cobrado</th><th className="num">Anticipos</th></tr></thead>
+              <tbody>
+                {m.historialMeses.map(h => (
+                  <tr key={h.mes}><td>{h.mes}</td><td className="num">{money(h.cobrado)}</td><td className="num">{money(h.anticipos)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="d-sec">
           <h3>Velocidad por persona (más lento primero)</h3>

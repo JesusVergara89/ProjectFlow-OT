@@ -110,6 +110,22 @@ const resumen = m => {
     )
     .join("\n");
 
+  const mx = n => "$" + Math.round(+n || 0).toLocaleString("es-MX");
+  const pl = m.pipeline || {};
+  const dinero =
+    `- Por facturar (pasos 23–38): ${mx(pl.porFacturar)} (${pl.porFacturarNum || 0} proyectos)\n` +
+    `- Facturado (39–40, sin pagar): ${mx(pl.facturado)} (${pl.facturadoNum || 0} proyectos)\n` +
+    `- Cobrado este mes (llegó al paso 41): ${mx(pl.cobradoMes)} (${pl.cobradoNum || 0})\n` +
+    `- Anticipos este mes: ${mx(pl.anticiposMes)} (${pl.anticipoNum || 0})`;
+
+  const proy = (m.proyeccion || [])
+    .map(x => `- ${x.mes}: ${mx(x.monto)}`)
+    .join("\n");
+
+  const cierres = (m.historialMeses || [])
+    .map(h => `- ${h.mes}: cobrado ${mx(h.cobrado)} · anticipos ${mx(h.anticipos)}`)
+    .join("\n");
+
   return (
     `RESUMEN GENERAL\n` +
     `Proyectos activos: ${m.activos} · ` +
@@ -123,7 +139,14 @@ const resumen = m => {
     `${fases || "sin datos"}\n\n` +
 
     `PROYECTOS DETENIDOS AHORA\n` +
-    `${detenidos || "ninguno"}`
+    `${detenidos || "ninguno"}\n\n` +
+
+    `DINERO (estado actual)\n${dinero}\n\n` +
+
+    `COBRANZA PROYECTADA POR MES (según el mes tentativo de cobro y pagos diferidos)\n` +
+    `${proy || "sin proyección capturada"}\n\n` +
+
+    `CIERRES DE MESES ANTERIORES (dinero que entró)\n${cierres || "sin meses previos"}`
   );
 };
 
@@ -259,8 +282,10 @@ const sistema =
     `(3–5 viñetas con lo más importante)\n` +
     `## Cuellos de botella del flujo\n` +
     `(personas y/o fases con mayores tiempos, respaldados por datos)\n` +
+    `## Dinero y cobranza\n` +
+    `(analiza el pipeline: por facturar vs facturado vs cobrado; la cobranza proyectada por mes y si se ve pareja o concentrada; compara con los cierres de meses anteriores; detecta riesgos de flujo de efectivo)\n` +
     `## Recomendaciones\n` +
-    `(acciones concretas y priorizadas)\n` +
+    `(acciones concretas y priorizadas, incluyendo las de cobranza)\n` +
     `## Riesgos a vigilar\n` +
     `(proyectos o patrones que podrían empeorar)`;
 

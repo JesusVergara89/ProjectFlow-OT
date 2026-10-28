@@ -203,6 +203,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Panel lateral */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;z-index:21;display:flex;flex-direction:column;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Variante: panel a la IZQUIERDA y más ANCHO (p. ej. Análisis IA) */
+.drawer.drawer-izq{right:auto;left:0;border-left:0;border-right:1px solid var(--line)}
+.drawer.drawer-ancho{width:min(860px,96vw)}
 .d-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:16px;border-bottom:1px solid var(--line)}
 .d-head h2{font:600 22px/1.2 var(--f-display);overflow-wrap:anywhere}
 .eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
@@ -229,6 +232,10 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .chk.full{grid-column:1 / -1}
 
 /* Análisis con IA */
+.kpis-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.km{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2)}
+.km-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.km-v{font:700 16px/1.1 var(--f-display)}
 .md{font-size:14px;line-height:1.5}
 .md h2{font:700 16px/1.2 var(--f-display);margin:14px 0 6px}
 .md h3{font:700 14px/1.2 var(--f-display);margin:12px 0 4px;color:var(--accent)}

@@ -113,7 +113,7 @@ function Campo({ id, etiqueta, valor, onGuardar, tipo = "text", completo, ...res
 }
 
 /** Contenedor lateral con foco al abrir, foco de regreso al cerrar y cierre con la tecla Esc. */
-export function Lateral({ onCerrar, children }) {
+export function Lateral({ onCerrar, children, className = "" }) {
   const ref = useRef(null);
   const cerrarRef = useRef(onCerrar);
   cerrarRef.current = onCerrar;
@@ -131,7 +131,7 @@ export function Lateral({ onCerrar, children }) {
   return (
     <>
       <div className="scrim" onClick={onCerrar} />
-      <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="d-titulo" ref={ref}>
+      <aside className={"drawer " + className} role="dialog" aria-modal="true" aria-labelledby="d-titulo" ref={ref}>
         {children}
       </aside>
     </>

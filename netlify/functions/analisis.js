@@ -112,10 +112,13 @@ const resumen = m => {
 
   const mx = n => "$" + Math.round(+n || 0).toLocaleString("es-MX");
   const pl = m.pipeline || {};
+  const META = +m.meta || 3000000;
+  const pct = Math.round((+pl.cobradoMes || 0) / META * 100);
   const dinero =
+    `- META DE COBRANZA MENSUAL: ${mx(META)}\n` +
+    `- Cobrado este mes (llegó al paso 41): ${mx(pl.cobradoMes)} (${pl.cobradoNum || 0}) → ${pct}% de la meta · faltan ${mx(Math.max(0, META - (+pl.cobradoMes || 0)))}\n` +
     `- Por facturar (pasos 23–38): ${mx(pl.porFacturar)} (${pl.porFacturarNum || 0} proyectos)\n` +
     `- Facturado (39–40, sin pagar): ${mx(pl.facturado)} (${pl.facturadoNum || 0} proyectos)\n` +
-    `- Cobrado este mes (llegó al paso 41): ${mx(pl.cobradoMes)} (${pl.cobradoNum || 0})\n` +
     `- Anticipos este mes: ${mx(pl.anticiposMes)} (${pl.anticipoNum || 0})`;
 
   const proy = (m.proyeccion || [])
@@ -283,7 +286,7 @@ const sistema =
     `## Cuellos de botella del flujo\n` +
     `(personas y/o fases con mayores tiempos, respaldados por datos)\n` +
     `## Dinero y cobranza\n` +
-    `(analiza el pipeline: por facturar vs facturado vs cobrado; la cobranza proyectada por mes y si se ve pareja o concentrada; compara con los cierres de meses anteriores; detecta riesgos de flujo de efectivo)\n` +
+    `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
     `## Recomendaciones\n` +
     `(acciones concretas y priorizadas, incluyendo las de cobranza)\n` +
     `## Riesgos a vigilar\n` +

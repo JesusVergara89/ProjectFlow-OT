@@ -8,6 +8,58 @@ import { faseDinero, saldoDe, totalesVivos, totalesDelMes, mesesConDinero } from
 import { analizarIA } from "../db.js";
 
 const r1 = n => Math.round(n * 10) / 10;
+const META_MENSUAL = 3000000; // meta de cobranza del mes (MXN)
+
+// --- Impresión del análisis (abre una ventana limpia y manda a imprimir) ---
+const escHtml = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const inlineHtml = s => escHtml(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+function mdToHtml(md) {
+  const L = String(md || "").split("\n");
+  let html = "", enLista = false, i = 0;
+  const cerrar = () => { if (enLista) { html += "</ul>"; enLista = false; } };
+  while (i < L.length) {
+    const t = L[i].trim();
+    const sig = (L[i + 1] || "").trim();
+    if (t.startsWith("|") && /^[\s|:-]+$/.test(sig) && sig.includes("-")) {
+      cerrar();
+      const cab = t.split("|").slice(1, -1).map(c => c.trim());
+      html += "<table><thead><tr>" + cab.map(c => `<th>${inlineHtml(c)}</th>`).join("") + "</tr></thead><tbody>";
+      i += 2;
+      while (i < L.length && L[i].trim().startsWith("|")) {
+        const cs = L[i].trim().split("|").slice(1, -1).map(c => c.trim());
+        html += "<tr>" + cs.map(c => `<td>${inlineHtml(c)}</td>`).join("") + "</tr>";
+        i++;
+      }
+      html += "</tbody></table>"; continue;
+    }
+    if (t.startsWith("## ")) { cerrar(); html += `<h3>${inlineHtml(t.slice(3))}</h3>`; }
+    else if (t.startsWith("# ")) { cerrar(); html += `<h2>${inlineHtml(t.slice(2))}</h2>`; }
+    else if (t.startsWith("- ") || t.startsWith("* ")) { if (!enLista) { html += "<ul>"; enLista = true; } html += `<li>${inlineHtml(t.slice(2))}</li>`; }
+    else if (!t) { cerrar(); }
+    else { cerrar(); html += `<p>${inlineHtml(t)}</p>`; }
+    i++;
+  }
+  cerrar();
+  return html;
+}
+function imprimir(texto) {
+  const w = window.open("", "_blank");
+  if (!w) return false;
+  w.document.write(
+    `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Análisis del equipo</title>` +
+    `<style>body{font-family:system-ui,-apple-system,Arial,sans-serif;max-width:820px;margin:24px auto;padding:0 20px;color:#111;line-height:1.5}` +
+    `h1{font-size:20px;margin:0 0 2px}h2{font-size:17px;margin:18px 0 6px}h3{font-size:15px;color:#274C8F;margin:14px 0 4px}` +
+    `p{margin:6px 0}ul{margin:6px 0 10px;padding-left:20px}li{margin:3px 0}` +
+    `table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #ccc;padding:4px 8px;text-align:left;font-size:13px}` +
+    `th{background:#f2f4f8}.meta{color:#666;font-size:12px;margin-bottom:12px}@media print{body{margin:0}}</style></head>` +
+    `<body><h1>Análisis del equipo — Tablero de Proyectos y OT</h1>` +
+    `<p class="meta">Generado el ${new Date().toLocaleString("es-MX")} · Meta de cobranza mensual: $${META_MENSUAL.toLocaleString("es-MX")}</p>` +
+    mdToHtml(texto) + `</body></html>`
+  );
+  w.document.close(); w.focus();
+  setTimeout(() => { try { w.print(); } catch { /* el usuario puede imprimir manual */ } }, 250);
+  return true;
+}
 
 // Mes tentativo de cobro de un proyecto (igual que en Proyección).
 const mesDeCobro = p => {
@@ -122,7 +174,8 @@ function calcular(items) {
     detenidos,
     pipeline,
     proyeccion,
-    historialMeses
+    historialMeses,
+    meta: META_MENSUAL
   };
 }
 
@@ -194,6 +247,14 @@ export default function Analisis({ items, onCerrar }) {
             <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes)}</span></div>
             <div className="km"><span className="km-l">Anticipos (mes)</span><span className="km-v">{money(m.pipeline.anticiposMes)}</span></div>
           </div>
+          <div className="meta-barra">
+            <div className="meta-top">
+              <span>Meta mensual: <b>{money(m.meta)}</b></span>
+              <span>{Math.round((m.pipeline.cobradoMes / m.meta) * 100)}% · {money(m.pipeline.cobradoMes)} cobrado</span>
+            </div>
+            <div className="meta-track"><div className="meta-fill" style={{ width: Math.min(100, Math.round((m.pipeline.cobradoMes / m.meta) * 100)) + "%" }} /></div>
+            <span className="sig">Faltan {money(Math.max(0, m.meta - m.pipeline.cobradoMes))} para la meta del mes.</span>
+          </div>
         </div>
 
         <div className="d-sec">
@@ -263,11 +324,16 @@ export default function Analisis({ items, onCerrar }) {
         </div>
 
         <div className="d-sec">
-          <div className="fila" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div className="fila" style={{ justifyContent: "space-between", alignItems: "center", gap: 8 }}>
             <h3 style={{ margin: 0 }}>Análisis con IA</h3>
-            <button type="button" className="btn primary" onClick={pedir} disabled={cargando}>
-              {cargando ? "Analizando…" : (analisis ? "Volver a analizar" : "✨ Analizar con IA")}
-            </button>
+            <div className="fila" style={{ gap: 8 }}>
+              {analisis && (
+                <button type="button" className="btn" onClick={() => imprimir(analisis)}>🖨 Imprimir</button>
+              )}
+              <button type="button" className="btn primary" onClick={pedir} disabled={cargando}>
+                {cargando ? "Analizando…" : (analisis ? "Volver a analizar" : "✨ Analizar con IA")}
+              </button>
+            </div>
           </div>
           {error && <p className="sig" style={{ color: "var(--crit)" }}>{error}</p>}
           {!analisis && !cargando && !error && (

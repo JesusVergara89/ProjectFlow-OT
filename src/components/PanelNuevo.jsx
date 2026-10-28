@@ -40,10 +40,14 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, 
         ? Array.from({ length: Math.max(1, +f.pagosNum || 0) }).map((_, i) => +(f.pagosMeses || [])[i] || null)
         : [],
       estado: "activo",
-      paso: 1,
+      // Los cursos entran directo a planeación (paso 17): no requieren
+      // solicitud/alcances/cotización porque solo se capturan si ya son seguros.
+      paso: f.tipo === "cursos" ? 17 : 1,
       creado: ahora,
       pasoDesde: ahora,
-      historial: []
+      historial: f.tipo === "cursos"
+        ? [{ p: 1, f: ahora, n: "Curso: entra directo a planeación (paso 17)." }]
+        : []
     });
   }
 

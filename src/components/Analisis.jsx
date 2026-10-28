@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Lateral } from "./Panel.jsx";
-import { paso, detenido, dias } from "../reglas.js";
-import { FASES } from "../flow.js";
+import { paso, evaluarAlerta } from "../reglas.js";
 import { money, repartirMonto } from "../format.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 import { faseDinero, saldoDe, totalesVivos, totalesDelMes, mesesConDinero } from "../dinero.js";
@@ -83,49 +82,50 @@ function calcular(items) {
   const vivos = items.filter(p => !p.archivado);
   const act = vivos.filter(p => p.estado === "activo");
 
-  // Velocidad por persona: duración de cada paso = tiempo entre su término y el anterior.
-  const personas = {};
-  const fases = {};
-  for (const p of vivos) {
-    const h = p.historial || [];
-    let prevF = p.creado;
-    for (const e of h) {
-      const quien = (e.nombre || e.u || "—").trim() || "—";
-      const d = Math.max(0, (Date.parse(e.f) - Date.parse(prevF)) / 864e5);
-      prevF = e.f;
-      if (!personas[quien]) personas[quien] = { nombre: quien, pasos: 0, totalDias: 0, maxDias: 0, detenidos: 0 };
-      personas[quien].pasos++;
-      personas[quien].totalDias += d;
-      personas[quien].maxDias = Math.max(personas[quien].maxDias, d);
-
-      const fa = (require_fase(e.p));
-      if (fa) {
-        if (!fases[fa.id]) fases[fa.id] = { id: fa.id, nombre: fa.nombre, n: 0, totalDias: 0, umbral: fa.umbral };
-        fases[fa.id].n++;
-        fases[fa.id].totalDias += d;
-      }
-    }
+  // ----- ATRASOS ACTUALES -----
+  // Un proyecto está atrasado cuando pasa el LÍMITE DE TIEMPO de su etapa
+  // (reglas de alerta), que ya traen el responsable. No se mide por promedio
+  // de días/paso (eso diluye los atrasos y todo sale "óptimo").
+  const atrasos = [];
+  for (const p of act) {
+    const a = evaluarAlerta(p);
+    if (!a) continue;
+    atrasos.push({
+      nombre: p.nombre, cliente: p.cliente, paso: p.paso,
+      fase: paso(p).fase.nombre, regla: a.etiqueta,
+      quien: (a.quien || "—").trim() || "—",
+      dias: a.dias, lim: a.lim, exceso: Math.max(0, a.dias - a.lim)
+    });
   }
+  atrasos.sort((x, y) => y.exceso - x.exceso);
 
-  // Proyectos detenidos ahora + responsable.
-  const detenidos = act.filter(detenido).map(p => ({
-    nombre: p.nombre, cliente: p.cliente, paso: p.paso, dias: dias(p),
-    responsable: p.responsable || paso(p).txt.split(" - ").pop() || "—"
-  })).sort((a, b) => b.dias - a.dias);
-  for (const d of detenidos) {
-    const quien = (d.responsable || "").trim();
-    if (personas[quien]) personas[quien].detenidos++;
+  // Atrasos agrupados por RESPONSABLE (quién está frenando).
+  const porResp = {};
+  for (const t of atrasos) {
+    if (!porResp[t.quien]) porResp[t.quien] = { nombre: t.quien, n: 0, exceso: 0, peor: 0, peorProy: "" };
+    porResp[t.quien].n++;
+    porResp[t.quien].exceso += t.exceso;
+    if (t.exceso > porResp[t.quien].peor) { porResp[t.quien].peor = t.exceso; porResp[t.quien].peorProy = t.nombre; }
   }
+  const atrasosPorResponsable = Object.values(porResp).sort((a, b) => b.exceso - a.exceso);
 
-  const listaPersonas = Object.values(personas)
-    .map(x => ({ ...x, promDias: r1(x.pasos ? x.totalDias / x.pasos : 0), maxDias: r1(x.maxDias) }))
-    .filter(x => x.pasos >= 2)
-    .sort((a, b) => b.promDias - a.promDias);
+  // Atrasos agrupados por ETAPA/regla (dónde se acumulan).
+  const porRegla = {};
+  for (const t of atrasos) {
+    const k = t.regla || t.fase;
+    if (!porRegla[k]) porRegla[k] = { etiqueta: k, n: 0, exceso: 0 };
+    porRegla[k].n++; porRegla[k].exceso += t.exceso;
+  }
+  const atrasosPorRegla = Object.values(porRegla).sort((a, b) => b.exceso - a.exceso);
 
-  const listaFases = FASES.map(f => {
-    const g = fases[f.id];
-    return { nombre: f.nombre, n: g ? g.n : 0, promDias: r1(g && g.n ? g.totalDias / g.n : 0), umbral: f.umbral };
-  }).filter(f => f.n > 0);
+  // Carga (volumen de pasos completados) — SOLO contexto, no mide desempeño.
+  const carga = {};
+  for (const p of vivos) for (const e of (p.historial || [])) {
+    const q = (e.nombre || e.u || "—").trim() || "—";
+    carga[q] = (carga[q] || 0) + 1;
+  }
+  const cargaPersona = Object.entries(carga)
+    .map(([nombre, pasos]) => ({ nombre, pasos })).sort((a, b) => b.pasos - a.pasos).slice(0, 15);
 
   // ----- DINERO -----
   const MES = mesActual();
@@ -169,19 +169,15 @@ function calcular(items) {
   return {
     activos: act.length,
     cerrados: vivos.length - act.length,
-    personas: listaPersonas,
-    fases: listaFases,
-    detenidos,
+    atrasos,
+    atrasosPorResponsable,
+    atrasosPorRegla,
+    cargaPersona,
     pipeline,
     proyeccion,
     historialMeses,
     meta: META_MENSUAL
   };
-}
-
-// Fase (del flujo) a la que pertenece un paso.
-function require_fase(n) {
-  return FASES.find(f => n >= f.rango[0] && n <= f.rango[1]) || null;
 }
 
 // Render muy simple de Markdown (encabezados, viñetas y negritas).
@@ -236,7 +232,7 @@ export default function Analisis({ items, onCerrar }) {
       </div>
       <div className="d-body">
         <p className="sig">
-          Métricas calculadas de tu historial: {m.activos} activos, {m.cerrados} cerrados, {m.detenidos.length} detenidos.
+          {m.activos} proyectos activos · {m.cerrados} cerrados · <b>{m.atrasos.length} atrasados</b> (pasan del límite de tiempo de su etapa).
         </p>
 
         <div className="d-sec">
@@ -286,42 +282,58 @@ export default function Analisis({ items, onCerrar }) {
         )}
 
         <div className="d-sec">
-          <h3>Velocidad por persona (más lento primero)</h3>
-          {m.personas.length ? (
+          <h3>Atrasos por responsable (quién está frenando)</h3>
+          {m.atrasosPorResponsable.length ? (
             <table className="proy-tabla">
               <thead>
-                <tr><th>Persona</th><th className="num">Pasos</th><th className="num">Prom. días/paso</th><th className="num">Paso más lento</th><th className="num">Detenidos</th></tr>
+                <tr><th>Responsable</th><th className="num">Proyectos atrasados</th><th className="num">Días de exceso (suma)</th><th className="num">Peor atraso</th></tr>
               </thead>
               <tbody>
-                {m.personas.map(p => (
-                  <tr key={p.nombre}>
+                {m.atrasosPorResponsable.map(p => (
+                  <tr key={p.nombre} className="fila-alerta">
                     <td>{p.nombre}</td>
-                    <td className="num">{p.pasos}</td>
-                    <td className="num">{p.promDias}</td>
-                    <td className="num">{p.maxDias}</td>
-                    <td className="num">{p.detenidos || "—"}</td>
+                    <td className="num">{p.n}</td>
+                    <td className="num">{p.exceso}</td>
+                    <td className="num" title={p.peorProy}>{p.peor}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : <p className="vacio">Aún no hay suficientes pasos completados para medir.</p>}
+          ) : <p className="vacio">No hay proyectos atrasados ahora mismo. 🎉</p>}
         </div>
 
         <div className="d-sec">
-          <h3>Tiempo por fase</h3>
-          {m.fases.length ? (
+          <h3>Atrasos por etapa (dónde se acumulan)</h3>
+          {m.atrasosPorRegla.length ? (
             <table className="proy-tabla">
-              <thead><tr><th>Fase</th><th className="num">Pasos</th><th className="num">Prom. días</th><th className="num">Límite</th></tr></thead>
+              <thead><tr><th>Etapa / regla</th><th className="num">Proyectos</th><th className="num">Días de exceso (suma)</th></tr></thead>
               <tbody>
-                {m.fases.map(f => (
-                  <tr key={f.nombre} className={f.promDias > f.umbral ? "fila-alerta" : ""}>
-                    <td>{f.nombre}</td><td className="num">{f.n}</td><td className="num">{f.promDias}</td><td className="num">{f.umbral}</td>
+                {m.atrasosPorRegla.map(f => (
+                  <tr key={f.etiqueta} className="fila-alerta">
+                    <td>{f.etiqueta}</td><td className="num">{f.n}</td><td className="num">{f.exceso}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : <p className="vacio">Sin datos de fases todavía.</p>}
+          ) : <p className="vacio">Sin atrasos por etapa.</p>}
         </div>
+
+        {m.atrasos.length > 0 && (
+          <div className="d-sec">
+            <h3>Proyectos atrasados ahora (detalle)</h3>
+            <table className="proy-tabla">
+              <thead><tr><th>Proyecto</th><th>Etapa</th><th>Responsable</th><th className="num">Días</th><th className="num">Exceso</th></tr></thead>
+              <tbody>
+                {m.atrasos.slice(0, 40).map((t, i) => (
+                  <tr key={i} className="fila-alerta">
+                    <td>{t.nombre}</td><td>{t.fase}</td><td>{t.quien}</td>
+                    <td className="num">{t.dias}</td><td className="num">+{t.exceso}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="d-sec">
           <div className="fila" style={{ justifyContent: "space-between", alignItems: "center", gap: 8 }}>

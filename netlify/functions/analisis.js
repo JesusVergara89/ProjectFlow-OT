@@ -83,31 +83,29 @@ function puede(sesion) {
 
 // Construye el resumen de métricas para la IA.
 const resumen = m => {
-  const personas = (m.personas || [])
+  const porResp = (m.atrasosPorResponsable || [])
     .slice(0, 25)
     .map(p =>
-      `- ${p.nombre}: ${p.pasos} pasos completados · ` +
-      `${p.promDias} días/paso en promedio · ` +
-      `paso más lento ${p.maxDias} días` +
-      (p.detenidos
-        ? ` · ${p.detenidos} proyecto(s) detenido(s) a su cargo ahora`
-        : "")
+      `- ${p.nombre}: ${p.n} proyecto(s) atrasado(s) · ${p.exceso} días de exceso acumulados · ` +
+      `peor atraso ${p.peor} días (${p.peorProy})`
     )
     .join("\n");
 
-  const fases = (m.fases || [])
-    .map(f =>
-      `- ${f.nombre}: ${f.n} pasos · ${f.promDias} días/paso ` +
-      `en promedio (límite sugerido ${f.umbral} días)`
-    )
+  const porRegla = (m.atrasosPorRegla || [])
+    .map(f => `- ${f.etiqueta}: ${f.n} proyecto(s) atrasado(s) · ${f.exceso} días de exceso acumulados`)
     .join("\n");
 
-  const detenidos = (m.detenidos || [])
-    .slice(0, 20)
+  const detalle = (m.atrasos || [])
+    .slice(0, 30)
     .map(d =>
-      `- "${d.nombre}" (${d.cliente}) · paso ${d.paso} · ` +
-      `${d.dias} días detenido · responsable: ${d.responsable}`
+      `- "${d.nombre}" (${d.cliente}) · etapa ${d.fase} (paso ${d.paso}) · ` +
+      `lleva ${d.dias} días, límite ${d.lim} → ${d.exceso} días de exceso · responsable: ${d.quien}`
     )
+    .join("\n");
+
+  const carga = (m.cargaPersona || [])
+    .slice(0, 12)
+    .map(c => `- ${c.nombre}: ${c.pasos} pasos`)
     .join("\n");
 
   const mx = n => "$" + Math.round(+n || 0).toLocaleString("es-MX");
@@ -133,16 +131,24 @@ const resumen = m => {
     `RESUMEN GENERAL\n` +
     `Proyectos activos: ${m.activos} · ` +
     `cerrados: ${m.cerrados} · ` +
-    `detenidos ahora: ${(m.detenidos || []).length}\n\n` +
+    `ATRASADOS ahora (pasan del límite de su etapa): ${(m.atrasos || []).length}\n\n` +
 
-    `VELOCIDAD POR PERSONA (más lento primero)\n` +
-    `${personas || "sin datos"}\n\n` +
+    `IMPORTANTE: NO midas el desempeño por "promedio de días por paso" (muchos pasos se ` +
+    `marcan al instante y eso diluye los atrasos). Mide por ATRASOS: proyectos que pasan ` +
+    `del LÍMITE de tiempo de su etapa, y quién es el responsable. "días de exceso" = días ` +
+    `por encima del límite.\n\n` +
 
-    `TIEMPO POR FASE\n` +
-    `${fases || "sin datos"}\n\n` +
+    `ATRASOS POR RESPONSABLE (quién está frenando, mayor exceso primero)\n` +
+    `${porResp || "nadie con atrasos"}\n\n` +
 
-    `PROYECTOS DETENIDOS AHORA\n` +
-    `${detenidos || "ninguno"}\n\n` +
+    `ATRASOS POR ETAPA (dónde se acumulan)\n` +
+    `${porRegla || "ninguna etapa con atrasos"}\n\n` +
+
+    `DETALLE DE PROYECTOS ATRASADOS AHORA\n` +
+    `${detalle || "ninguno"}\n\n` +
+
+    `CARGA (volumen de pasos completados — SOLO contexto, NO es medida de desempeño)\n` +
+    `${carga || "sin datos"}\n\n` +
 
     `DINERO (estado actual)\n${dinero}\n\n` +
 
@@ -283,8 +289,8 @@ const sistema =
     `Estructura la respuesta así:\n` +
     `## Diagnóstico rápido\n` +
     `(3–5 viñetas con lo más importante)\n` +
-    `## Cuellos de botella del flujo\n` +
-    `(personas y/o fases con mayores tiempos, respaldados por datos)\n` +
+    `## Atrasos y responsables\n` +
+    `(con base en los ATRASOS —proyectos que pasan del límite de su etapa—, di qué etapas acumulan más atrasos y QUIÉNES son los responsables que más están frenando, con los días de exceso que lo respaldan. NO uses el promedio de días/paso para juzgar; úsalo a lo más como contexto de carga. No etiquetes como "óptimo" una etapa solo porque su promedio sea bajo si tiene proyectos atrasados)\n` +
     `## Dinero y cobranza\n` +
     `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
     `## Recomendaciones\n` +

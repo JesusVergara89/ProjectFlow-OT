@@ -301,7 +301,7 @@ const sistema =
       parts: [{ text: pregunta }]
     }],
     generationConfig: {
-      maxOutputTokens: 1600,
+      maxOutputTokens: 8192,
       temperature: 0.4
     }
   });
@@ -368,9 +368,10 @@ const sistema =
           .trim();
 
         if (texto) {
+          const cortado = datos?.candidates?.[0]?.finishReason === "MAX_TOKENS";
           return json({
             ok: true,
-            analisis: texto,
+            analisis: cortado ? texto + "\n\n_(El análisis llegó al límite de longitud; vuelve a generarlo si quieres el detalle completo.)_" : texto,
             modelo,
             versionAPI: version
           });

@@ -195,7 +195,7 @@ function Tablas({ usuario, onSalir }) {
     <div className="wrap">
       {esDemo() && (
         <div className="demo-banner">
-          🧪 MODO DEMO · datos ficticios · los cambios no se guardan y no afectan la base real · se reinicia al recargar
+          🧪 MODO DEMO · datos ficticios
         </div>
       )}
       <header className="top">

@@ -60,7 +60,7 @@ export default function Login({ onEntrar }) {
         Ver demo (datos de prueba)
       </button>
       <p className="sig" style={{ marginTop: 6 }}>
-        El modo demo usa datos ficticios en tu navegador; no toca la base real y se reinicia al recargar.
+        El modo demo usa datos ficticios en tu navegador.
       </p>
 
       <footer className="login-creditos">

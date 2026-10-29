@@ -231,6 +231,9 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .campo.full{grid-column:1 / -1}
 .chk.full{grid-column:1 / -1}
 
+/* Banner de modo demo */
+.demo-banner{margin-bottom:12px;padding:8px 14px;border-radius:8px;background:var(--warn-soft);color:var(--warn);border:1px solid transparent;font:600 13px/1.4 var(--f-body);text-align:center}
+
 /* Análisis con IA */
 .kpis-mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
 .km{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2)}

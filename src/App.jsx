@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
-import { sesion as leerSesion, salir } from "./auth.js";
+import { sesion as leerSesion, salir, esDemo } from "./auth.js";
 import { esSuperAdmin } from "./permisos.js";
 import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper, leerCierres, asegurarCierres } from "./db.js";
 import Kpis from "./components/Kpis.jsx";
@@ -193,6 +193,11 @@ function Tablas({ usuario, onSalir }) {
 
   return (
     <div className="wrap">
+      {esDemo() && (
+        <div className="demo-banner">
+          🧪 MODO DEMO · datos ficticios · los cambios no se guardan y no afectan la base real · se reinicia al recargar
+        </div>
+      )}
       <header className="top">
         <div className="top-titulo">
           <h1>Tablero de Proyectos y OT</h1>

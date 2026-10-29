@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { entrar } from "../auth.js";
+import { entrar, entrarDemo } from "../auth.js";
 
 export default function Login({ onEntrar }) {
   const [usuario, setUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [estado, setEstado] = useState({ cargando: false, error: "" });
 
+  function demo() {
+    onEntrar(entrarDemo());
+  }
+
   async function enviar(e) {
     e.preventDefault();
     if (estado.cargando) return;
+    // Usuario de prueba: entra en modo demo (datos ficticios, sin tocar la base).
+    if (usuario.trim().toLowerCase() === "prueba") { demo(); return; }
     setEstado({ cargando: true, error: "" });
     try {
       const s = await entrar(usuario.trim(), contrasena);
@@ -49,6 +55,13 @@ export default function Login({ onEntrar }) {
         </button>
       </form>
       {estado.error && <p className="error" role="alert">{estado.error}</p>}
+
+      <button type="button" className="btn" style={{ marginTop: 10 }} onClick={demo}>
+        Ver demo (datos de prueba)
+      </button>
+      <p className="sig" style={{ marginTop: 6 }}>
+        El modo demo usa datos ficticios en tu navegador; no toca la base real y se reinicia al recargar.
+      </p>
 
       <footer className="login-creditos">
         <p>Desarrollado por Jesus Manuel Vergara.</p>

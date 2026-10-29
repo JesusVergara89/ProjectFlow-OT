@@ -240,7 +240,7 @@ export default function Analisis({ items, onCerrar }) {
           <div className="kpis-mini">
             <div className="km"><span className="km-l">Por facturar</span><span className="km-v">{money(m.pipeline.porFacturar)}</span></div>
             <div className="km"><span className="km-l">Facturado</span><span className="km-v">{money(m.pipeline.facturado)}</span></div>
-            <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes)}</span></div>
+            <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes + m.pipeline.anticiposMes)}</span></div>
             <div className="km"><span className="km-l">Anticipos (mes)</span><span className="km-v">{money(m.pipeline.anticiposMes)}</span></div>
           </div>
           <div className="meta-barra">

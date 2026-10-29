@@ -16,6 +16,11 @@ const aDb = p => ({
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
   pagado: Boolean(p.pagado),
+  facturado: Boolean(p.facturado),
+  facturado_mes: p.facturadoMes || null,
+  pagado_mes: p.pagadoMes || null,
+  anticipo_mes: p.anticipoMes || null,
+  reporte_enviado: Boolean(p.reporteEnviado),
   cobro_mes: p.cobroMes || null,
   diferido: Boolean(p.diferido),
   pagos_num: Math.max(0, Math.floor(+p.pagosNum || 0)),
@@ -36,7 +41,7 @@ const aDb = p => ({
   ejemplo: Boolean(p.ejemplo)
 });
 
-const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "ot", "archivado", "estado", "resultado", "paso"];
+const CAMPOS = ["nombre", "cliente", "tipo", "area", "responsable", "prioridad", "monto", "anticipo", "pagado", "facturado", "ot", "archivado", "estado", "resultado", "paso"];
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -140,6 +145,13 @@ export default async function handler(req) {
       const antes = base[c] ?? null;
       const ahora = p[c] ?? null;
       if (String(antes) !== String(ahora)) cambios[c] = { antes, ahora };
+    }
+    // "Reporte enviado": la columna es reporte_enviado y en la app es reporteEnviado.
+    if (Boolean(base.reporte_enviado) !== Boolean(p.reporteEnviado)) {
+      cambios.reporte_enviado = {
+        antes: base.reporte_enviado ? "Sí" : "No",
+        ahora: p.reporteEnviado ? "Sí" : "No"
+      };
     }
     detalle = { cambios };
   }

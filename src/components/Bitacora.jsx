@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { apiGet } from "../auth.js";
 import { fecha, hora } from "../format.js";
+import Avatar from "./Avatar.jsx";
+import { leerAvatares, suscribirPerfiles } from "../db.js";
 
 const ETIQUETA = {
   ingreso: "Inició sesión",
@@ -14,7 +16,8 @@ const ETIQUETA = {
 
 const CAMPO = {
   nombre: "Proyecto", cliente: "Cliente", responsable: "Responsable",
-  prioridad: "Prioridad", monto: "Monto", estado: "Estado", resultado: "Resultado", paso: "Paso"
+  prioridad: "Prioridad", monto: "Monto", estado: "Estado", resultado: "Resultado", paso: "Paso",
+  reporte_enviado: "Reporte enviado", pagado: "Pagado", facturado: "Facturado"
 };
 
 function Detalle({ accion, d }) {
@@ -48,6 +51,7 @@ function Detalle({ accion, d }) {
 
 export default function Bitacora({ onCerrar }) {
   const [estado, setEstado] = useState({ cargando: true, error: "", registros: [] });
+  const [avatares, setAvatares] = useState({});
 
   useEffect(() => {
     let vivo = true;
@@ -57,6 +61,16 @@ export default function Bitacora({ onCerrar }) {
     return () => {
       vivo = false;
     };
+  }, []);
+
+  // Fotos de perfil de quienes aparecen en la bitácora (se actualizan en vivo).
+  useEffect(() => {
+    let vivo = true;
+    leerAvatares().then(m => vivo && setAvatares(m));
+    const cancelar = suscribirPerfiles(() => {
+      leerAvatares().then(m => vivo && setAvatares(m));
+    });
+    return () => { vivo = false; cancelar(); };
   }, []);
 
   return (
@@ -80,12 +94,21 @@ export default function Bitacora({ onCerrar }) {
             {estado.registros.map((r, i) => (
               <li key={r.id || i}>
                 <span className="h-f">{fecha(r.creado)}<br />{hora(r.creado)}</span>
-                <div>
-                  <span className="h-t">
-                    <b>{r.nombre || r.usuario}</b> · {ETIQUETA[r.accion] || r.accion}
-                    {r.proyecto_nombre ? <> — {r.proyecto_nombre}</> : null}
-                  </span>
-                  <Detalle accion={r.accion} d={r.detalle} />
+                <div className="h-main">
+                  <Avatar
+                    nombre={r.nombre || r.usuario}
+                    url={avatares[String(r.usuario || "").toLowerCase()]}
+                    clave={r.usuario}
+                    size={34}
+                    className="h-avatar"
+                  />
+                  <div className="h-cuerpo">
+                    <span className="h-t">
+                      <b>{r.nombre || r.usuario}</b> · {ETIQUETA[r.accion] || r.accion}
+                      {r.proyecto_nombre ? <> — {r.proyecto_nombre}</> : null}
+                    </span>
+                    <Detalle accion={r.accion} d={r.detalle} />
+                  </div>
                 </div>
               </li>
             ))}

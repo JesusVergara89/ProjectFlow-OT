@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
 import { sesion as leerSesion, salir } from "./auth.js";
+import { esSuperAdmin } from "./permisos.js";
+import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper, leerCierres, asegurarCierres } from "./db.js";
 import Kpis from "./components/Kpis.jsx";
 import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
@@ -14,6 +16,7 @@ import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
 import Bitacora from "./components/Bitacora.jsx";
+import Analisis from "./components/Analisis.jsx";
 import AvatarUsuario from "./components/AvatarUsuario.jsx";
 
 const VISTAS = [
@@ -44,21 +47,71 @@ const escribir = (k, v) => {
 
 function Tablas({ usuario, onSalir }) {
   const { items, listo, error, setError, guardar, quitar } = useProyectos(true);
+
+  // Súper admin: marcas privadas de "proyecto atrasado" (solo las ve él).
+  const soySuper = esSuperAdmin(usuario?.usuario);
+  const [marcas, setMarcas] = useState({});
+  useEffect(() => {
+    if (!soySuper) return;
+    let vivo = true;
+    leerMarcasSuper().then(m => vivo && setMarcas(m || {})).catch(() => {});
+    return () => { vivo = false; };
+  }, [soySuper]);
+
+  // Cierres mensuales (foto de meses anteriores). Al entrar, congela los meses
+  // ya terminados que falten y trae todas las fotos.
+  const [cierres, setCierres] = useState([]);
+  useEffect(() => {
+    let vivo = true;
+    leerCierres().then(c => vivo && setCierres(c || [])).catch(() => {});
+    asegurarCierres().then(c => { if (vivo && c && c.length) setCierres(c); }).catch(() => {});
+    return () => { vivo = false; };
+  }, []);
+
+  // Alta en serie de "servicios adicionales" (paso 34): registrar N proyectos uno tras otro.
+  const [adic, setAdic] = useState({ pend: 0, total: 0 });
+  const abrirAdicionales = (n) => {
+    const total = Math.max(1, Math.min(10, Math.floor(+n || 1)));
+    setAdic({ pend: total, total });
+    setPanel({ tipo: "nuevo" });
+  };
+
+  const marcarAtrasado = async (id, mensaje) => {
+    setMarcas(m => ({ ...m, [id]: { atrasado: true, mensaje } })); // optimista
+    try { await guardarMarcaSuper(id, mensaje); }
+    catch (e) { setError(e.message || "No se pudo guardar la marca."); }
+  };
+  const quitarAtrasado = async (id) => {
+    setMarcas(m => { const n = { ...m }; delete n[id]; return n; });
+    try { await borrarMarcaSuper(id); }
+    catch (e) { setError(e.message || "No se pudo quitar la marca."); }
+  };
   const [verBitacora, setVerBitacora] = useState(false);
+  const [verAnalisis, setVerAnalisis] = useState(false);
+  const esPoderTotal = usuario?.rol === "admin" || String(usuario?.usuario || "").toLowerCase() === "leonardo";
 
   const [vista, setVista] = useState(() =>
     IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
   );
 
-  const [filtros, setFiltros] = useState({
+  const FILTROS_INICIALES = {
     q: "",
     resp: "",
     area: "",
+    tipo: "",
+    cliente: "",
     prio: "",
+    dinero: "",
+    reporte: "",
     estado: "activos",
     paso: null,
     detenidos: false,
-  });
+  };
+  const [filtros, setFiltros] = useState(FILTROS_INICIALES);
+
+  // Restablece todos los filtros (conserva el estado de la vista Lista).
+  const limpiarFiltros = () =>
+    setFiltros((f) => ({ ...FILTROS_INICIALES, estado: f.estado }));
 
   const [orden, setOrden] = useState({
     k: "dias",
@@ -161,6 +214,15 @@ function Tablas({ usuario, onSalir }) {
             >
               Bitácora
             </button>
+            {esPoderTotal && (
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setVerAnalisis(true)}
+              >
+                ✨ Análisis IA
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -216,6 +278,7 @@ function Tablas({ usuario, onSalir }) {
 
       <Kpis
         items={items}
+        cierres={cierres}
         soloDetenidos={filtros.detenidos}
         onToggleDetenidos={() =>
           setFiltro({
@@ -242,8 +305,10 @@ function Tablas({ usuario, onSalir }) {
         <Filtros
           filtros={filtros}
           setFiltro={setFiltro}
+          limpiar={limpiarFiltros}
           vista={vista}
           responsables={responsables}
+          clientes={clientes}
         />
       </div>
 
@@ -275,6 +340,7 @@ function Tablas({ usuario, onSalir }) {
         ) : vista === "tablero" ? (
           <Tablero
             items={visibles}
+            marcas={soySuper ? marcas : null}
             onAbrir={(id) =>
               setPanel({
                 tipo: "detalle",
@@ -324,26 +390,36 @@ function Tablas({ usuario, onSalir }) {
             quitar(id, proyectoAbierto.nombre);
           }}
           onCerrar={cerrarPanel}
+          soySuper={soySuper}
+          marca={marcas[proyectoAbierto.id]}
+          onMarcar={marcarAtrasado}
+          onQuitarMarca={quitarAtrasado}
+          onNuevoProyecto={abrirAdicionales}
         />
       )}
 
       {panel?.tipo === "nuevo" && (
         <PanelNuevo
+          key={"nuevo-" + adic.pend}
           clientes={clientes}
           responsables={responsables}
-          onCerrar={cerrarPanel}
+          adicional={adic.pend > 0 ? { idx: adic.total - adic.pend + 1, total: adic.total } : null}
+          onCerrar={() => { setAdic({ pend: 0, total: 0 }); cerrarPanel(); }}
           onCrear={(p) => {
             guardar(p, "crear");
-
-            setPanel({
-              tipo: "detalle",
-              id: p.id,
-            });
+            if (adic.pend > 1) {
+              setAdic((a) => ({ ...a, pend: a.pend - 1 }));
+              setPanel({ tipo: "nuevo" });
+            } else {
+              setAdic({ pend: 0, total: 0 });
+              setPanel({ tipo: "detalle", id: p.id });
+            }
           }}
         />
       )}
 
       {verBitacora && <Bitacora onCerrar={() => setVerBitacora(false)} />}
+      {verAnalisis && <Analisis items={items} onCerrar={() => setVerAnalisis(false)} />}
     </div>
   );
 }

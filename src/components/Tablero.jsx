@@ -3,21 +3,30 @@ import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
 import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA } from "../reglas.js";
 import { nombreServicio } from "../servicios.js";
+import { faseDinero } from "../dinero.js";
 
-function Tarjeta({ p, onAbrir }) {
+function Tarjeta({ p, onAbrir, marca }) {
   const pa = paso(p);
   const det = detenido(p);
   const a = evaluarAlerta(p);
   const srv = nombreServicio(p.tipo);
+  const fd = faseDinero(p);
+  const atrasado = !!marca?.atrasado;
   return (
     <button
       type="button"
-      className={"card" + (a ? " en-alerta" : "")}
+      className={"card" + (a ? " en-alerta" : "") + (atrasado ? " atrasado-super" : "")}
       style={a ? { borderColor: a.color, borderLeftWidth: 4, background: a.color + "22" } : undefined}
       title={a ? a.motivo : undefined}
       data-proyecto={p.id}
       onClick={() => onAbrir(p.id)}
     >
+      {atrasado && (
+        <span className="card-atraso" title={marca.mensaje || "Proyecto atrasado"}>
+          <span className="card-atraso-pt" aria-hidden="true" />
+          {marca.mensaje || "Proyecto atrasado"}
+        </span>
+      )}
       <span className="c-tags">
         {srv && <span className="c-tipo">{srv}</span>}
         {p.ot && <span className="tag ot">{p.ot}</span>}
@@ -30,7 +39,11 @@ function Tarjeta({ p, onAbrir }) {
       <span className="c-paso"><b>{pa.n}</b><span>{pa.txt}</span></span>
       <span className="c-pie">
         <span className={`prio prio-${prioDe(p)}`}>{PRIO[prioDe(p)]}</span>
-        {p.pagado && <span className="tag pagado" title="Pagado por adelantado">Pagado</span>}
+        {fd === "cobrado" && <span className="tag pagado" title="Cobrado (ya entró el dinero)">Cobrado</span>}
+        {fd === "facturado" && <span className="tag facturado" title="Facturado (pasos 39–40, sin pagar)">Facturado</span>}
+        {p.reporteEnviado
+          ? <span className="tag reporte-ok" title="Reporte ya enviado al cliente">Reporte ✓</span>
+          : (p.estado === "cerrado" || fd === "cobrado") && <span className="tag reporte-falta" title="Se cobró pero aún no se envía el reporte">Sin reporte</span>}
         <span className="c-monto">{+p.monto ? money(p.monto) : ""}</span>
         <span className={"dias" + (det ? " warn" : "")} title="Tiempo en este paso">{diasTxt(dias(p))}</span>
       </span>
@@ -38,7 +51,7 @@ function Tarjeta({ p, onAbrir }) {
   );
 }
 
-export default function Tablero({ items, onAbrir }) {
+export default function Tablero({ items, onAbrir, marcas }) {
   const masAntiguoPrimero = (a, b) => Date.parse(a.pasoDesde) - Date.parse(b.pasoDesde);
 
   // Barra de scroll horizontal también ARRIBA, sincronizada con la del tablero.
@@ -82,7 +95,7 @@ export default function Tablero({ items, onAbrir }) {
             </header>
             <div className="cards">
               {col.length
-                ? col.map(p => <Tarjeta key={p.id} p={p} onAbrir={onAbrir} />)
+                ? col.map(p => <Tarjeta key={p.id} p={p} onAbrir={onAbrir} marca={marcas?.[p.id]} />)
                 : <p className="vacio">Sin proyectos en esta fase</p>}
             </div>
           </section>

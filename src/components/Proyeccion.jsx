@@ -19,30 +19,32 @@ import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js
     AUTORIZADO NO PROGRAMADO . 17–22 (Se entrega a planeación)
     PROYECCIÓN / CON CERTIDUMBRE . 1–16 (antes de autorizar)
 */
+// Etapas alineadas a las fases de dinero acordadas:
+//   Cobrado ...... 41–42 (o cerrado)   Facturado .... 39–40
+//   Por facturar . 23–38               Autorizado ... 17–22
+//   Proyección ... 1–16
 const GRUPOS = [
-  { id: "cobrado",    titulo: "Cobrado",                                      min: null, max: null },
-  { id: "facturado",  titulo: "Facturado",                                    min: 39, max: 42 },
-  { id: "ejecutado",  titulo: "Ejecutado no facturado",                       min: 30, max: 38 },
-  { id: "proceso",    titulo: "En proceso",                                   min: 23, max: 29 },
-  { id: "autorizado", titulo: "Autorizado no programado",                     min: 17, max: 22 },
-  { id: "proyeccion", titulo: "Proyección / con certidumbre de autorización", min: 1,  max: 16 }
+  { id: "cobrado",     titulo: "Cobrado",                                      min: 41, max: 42 },
+  { id: "facturado",   titulo: "Facturado",                                    min: 39, max: 40 },
+  { id: "porfacturar", titulo: "Por facturar",                                 min: 23, max: 38 },
+  { id: "autorizado",  titulo: "Autorizado no programado",                     min: 17, max: 22 },
+  { id: "proyeccion",  titulo: "Proyección / con certidumbre de autorización", min: 1,  max: 16 }
 ];
 
-// Ya cobrado: pagado por adelantado o proyecto cerrado (el dinero ya entró).
-const esCobrado = p => !!p.pagado || p.resultado === "cerrado";
+// Ya cobrado: proyecto cerrado (el dinero ya entró).
+const esCobrado = p => p.resultado === "cerrado";
 
-// Etapa de un proyecto: "Cobrado" si ya entró el dinero; si no, por el paso.
+// Etapa de un proyecto por su paso (cerrado => Cobrado).
 const grupoDe = p => {
   if (esCobrado(p)) return GRUPOS[0];
   const n = +(p && p.paso) || 1;
-  if (n >= 39) return GRUPOS[1];
-  return GRUPOS.find(g => g.min != null && n >= g.min && n <= g.max) || GRUPOS[GRUPOS.length - 1];
+  return GRUPOS.find(g => n >= g.min && n <= g.max) || GRUPOS[GRUPOS.length - 1];
 };
 
 // Mes en que cae el dinero del proyecto (AAAAMM) o null (cobro en un solo pago).
 const mesDe = p => {
   if (p.cobroMes) return p.cobroMes;
-  if (p.pagado || p.resultado === "cerrado") return mesActual();
+  if (p.resultado === "cerrado") return mesActual();
   return null;
 };
 
@@ -195,7 +197,7 @@ export default function Proyeccion({ items, onAbrir }) {
                         onKeyDown={e => { if (e.key === "Enter") onAbrir(p.id); }}>
                       <td>
                         {p.nombre}
-                        {p.pagado ? <span className="tag pagado">Pagado</span> : null}
+                        {esCobrado(p) ? <span className="tag pagado">Cobrado</span> : null}
                         {p.diferido && (p.pagosMeses || []).filter(Boolean).length > 1
                           ? <span className="tag">1 de {(p.pagosMeses || []).filter(Boolean).length} pagos</span> : null}
                       </td>
@@ -238,7 +240,7 @@ export default function Proyeccion({ items, onAbrir }) {
                   {l.map(p => (
                     <tr key={p.id} onClick={() => onAbrir(p.id)} tabIndex={0}
                         onKeyDown={e => { if (e.key === "Enter") onAbrir(p.id); }}>
-                      <td>{p.nombre}{p.pagado ? <span className="tag pagado">Pagado</span> : null}</td>
+                      <td>{p.nombre}{esCobrado(p) ? <span className="tag pagado">Cobrado</span> : null}</td>
                       <td>{p.cliente}</td>
                       <td>{nombreServicio(p.tipo) || "—"}</td>
                       <td>

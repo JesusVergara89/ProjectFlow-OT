@@ -1,5 +1,6 @@
 import { PASOS } from "./flow.js";
 import { norm } from "./format.js";
+import { faseDinero } from "./dinero.js";
  
 export const RES = { "no-viable": "No viable", archivado: "Archivado", cerrado: "Cerrado y pagado" };
 export const PRIO = { alta: "Alta", media: "Media", baja: "Baja" };
@@ -184,7 +185,11 @@ export function filtrar(lista, f) {
       (!q || norm(`${p.nombre} ${p.cliente} ${p.responsable || ""} ${p.ot || ""}`).includes(q)) &&
       (!f.resp || p.responsable === f.resp) &&
       (!f.area || p.area === f.area) &&
+      (!f.tipo || p.tipo === f.tipo) &&
+      (!f.cliente || p.cliente === f.cliente) &&
       (!f.prio || prioDe(p) === f.prio) &&
+      (!f.dinero || faseDinero(p) === f.dinero) &&
+      (!f.reporte || (f.reporte === "si" ? !!p.reporteEnviado : !p.reporteEnviado)) &&
       (!f.paso || p.paso === f.paso) &&
       (!f.detenidos || detenido(p))
   );

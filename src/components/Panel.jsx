@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
-import { fecha, hora, money } from "../format.js";
+import { fecha, hora, money, repartirMonto } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
 import { sesion } from "../auth.js";
 import { subirImagen } from "../db.js";
-import { mesesDesdeHoy, nombreMes } from "../meses.js";
+import { mesesDesdeHoy, nombreMes, mesActual } from "../meses.js";
+import { faseDinero, ETIQUETA_FASE } from "../dinero.js";
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
@@ -112,7 +113,7 @@ function Campo({ id, etiqueta, valor, onGuardar, tipo = "text", completo, ...res
 }
 
 /** Contenedor lateral con foco al abrir, foco de regreso al cerrar y cierre con la tecla Esc. */
-export function Lateral({ onCerrar, children }) {
+export function Lateral({ onCerrar, children, className = "" }) {
   const ref = useRef(null);
   const cerrarRef = useRef(onCerrar);
   cerrarRef.current = onCerrar;
@@ -130,14 +131,14 @@ export function Lateral({ onCerrar, children }) {
   return (
     <>
       <div className="scrim" onClick={onCerrar} />
-      <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="d-titulo" ref={ref}>
+      <aside className={"drawer " + className} role="dialog" aria-modal="true" aria-labelledby="d-titulo" ref={ref}>
         {children}
       </aside>
     </>
   );
 }
 
-export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
+export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = false, marca, onMarcar, onQuitarMarca, onNuevoProyecto }) {
   const [nota, setNota] = useState("");
   const [borrar, setBorrar] = useState(false);
   const [img, setImg] = useState(null);        // { url, path } de la evidencia subida
@@ -145,6 +146,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const [errImg, setErrImg] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [respRep, setRespRep] = useState(p.responsableReporte || "");
+  const [notaAtraso, setNotaAtraso] = useState(marca?.mensaje || "");
+  const [nAdic, setNAdic] = useState(1); // cuántos servicios adicionales registrar (paso 34)
+  useEffect(() => { setNotaAtraso(marca?.mensaje || ""); }, [marca?.mensaje, p.id]);
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
   const cerrado = p.estado === "cerrado";
@@ -171,6 +175,50 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
       setSubiendo(false);
     }
   };
+
+  // Captura la pantalla (elige ventana/pantalla), toma un cuadro y lo sube
+  // directo, sin tener que guardar el screenshot a mano.
+  const capturarPantalla = async () => {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setErrImg("Tu navegador no permite capturar la pantalla aquí. Usa «Seleccionar archivo».");
+      return;
+    }
+    setErrImg("");
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    } catch (err) {
+      if (err?.name !== "NotAllowedError" && err?.name !== "AbortError") {
+        setErrImg("No se pudo capturar la pantalla.");
+      }
+      return; // el usuario canceló o no dio permiso
+    }
+    const video = document.createElement("video");
+    try {
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+      await new Promise(r => setTimeout(r, 300)); // deja que llegue el primer cuadro
+      const w = video.videoWidth, h = video.videoHeight;
+      if (!w || !h) throw new Error("No se obtuvo la imagen de la pantalla.");
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(video, 0, 0, w, h);
+      const blob = await new Promise(res => c.toBlob(res, "image/png"));
+      if (!blob) throw new Error("No se pudo generar la captura.");
+      setSubiendo(true);
+      const file = new File([blob], "captura.png", { type: "image/png" });
+      const { base64, tipo } = await procesarImagen(file);
+      const r = await subirImagen({ proyectoId: p.id, tipo, base64 });
+      setImg({ url: r.url, path: r.path });
+    } catch (err) {
+      setErrImg(err?.message || "No se pudo subir la captura.");
+    } finally {
+      video.pause();
+      stream.getTracks().forEach(t => t.stop());
+      setSubiendo(false);
+    }
+  };
   const yo = sesion() || {};
   const puedo = puedeConPaso(yo.usuario, yo.rol, pa.n, p);
   // Solo el admin y quien creó el proyecto pueden editar sus datos o eliminarlo.
@@ -180,7 +228,9 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const puedoEditar = esPoderTotal || (p.creadoPor && p.creadoPor.toLowerCase() === usuarioLower);
   const puedoEliminar = puedoEditar;
   // Yuli, Leonardo y el admin pueden marcar "pagado por adelantado".
+  const fd = faseDinero(p); // estado de dinero automático por fase
   const puedeMarcarPagado = esPoderTotal || usuarioLower === "yuli";
+  const puedeMarcarFacturado = esPoderTotal || usuarioLower === "yuli" || usuarioLower === "lupita";
   const esPaso10 = !cerrado && pa.n === 10;
   const paso10Valido = !!img && enviado && !subiendo;
   const notaPaso10 = "Se envió por correo la evidencia de alcances a comercial.";
@@ -192,6 +242,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
   const anioYY = String(new Date().getFullYear()).slice(2);
   const otRegex = new RegExp(`^${anioYY}-\\d{1,4}$`);
   const esPaso19 = !cerrado && pa.n === 19;
+  const esPaso34 = !cerrado && pa.n === 34;
   const otValida = otRegex.test((p.ot || "").trim());
   // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
   const puedeProgramar = esPoderTotal;
@@ -227,7 +278,13 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
           <div className="campos">
             <div className="campo full">
               <label htmlFor="d-img">Imagen del correo con los alcances</label>
-              <input id="d-img" type="file" accept="image/*" disabled={!puedo || subiendo} onChange={onImagen} />
+              <div className="img-acciones">
+                <input id="d-img" type="file" accept="image/*" disabled={!puedo || subiendo} onChange={onImagen} />
+                <button type="button" className="btn" onClick={capturarPantalla} disabled={!puedo || subiendo}>
+                  🖥️ Capturar pantalla
+                </button>
+              </div>
+              <p className="sig">Con «Capturar pantalla» eliges la ventana del correo y se sube sola, sin guardar el screenshot.</p>
               {subiendo && <p className="sig">Subiendo imagen…</p>}
               {errImg && <p className="sig" style={{ color: "var(--crit)" }}>{errImg}</p>}
               {img && (
@@ -279,11 +336,54 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
             Solo pueden completar este paso: {etiquetaPermiso(pa.n, p)}.
           </p>
         )}
+        {esPaso34 && (
+          <div className="campo full" style={{ marginBottom: 8 }}>
+            <label htmlFor="d-nadic">¿Cuántos servicios adicionales quieres registrar?</label>
+            <input
+              id="d-nadic"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              inputMode="numeric"
+              disabled={!puedo}
+              value={nAdic}
+              onChange={e => setNAdic(Math.max(1, Math.min(10, Math.floor(+e.target.value || 1))))}
+            />
+            <p className="sig">Al dar «Sí» se abrirá un proyecto nuevo por cada uno (uno tras otro) y este proyecto pasará al paso 35.</p>
+          </div>
+        )}
         {pa.tipo === "decision" ? (
           <div className="opciones">
             {["si", "no"].map(v => {
               const a = v === "si" ? pa.si : pa.no;
               const atras = a < pa.n;
+              // Paso 34 «Sí»: no regresa al 7; abre N proyectos nuevos (los
+              // alcances adicionales) y este proyecto avanza al paso 35.
+              const esAdicionales = esPaso34 && v === "si";
+              if (esAdicionales) {
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    id="d-si"
+                    className="dbtn"
+                    disabled={!puedo}
+                    onClick={() => {
+                      onNuevoProyecto?.(nAdic);
+                      mover(q => {
+                        const r = avanzar(q, "si", `Servicios adicionales: se abren ${nAdic} proyecto(s) nuevo(s) con esos alcances.`);
+                        r.paso = 35;
+                        r.pasoDesde = new Date().toISOString();
+                        return r;
+                      }, "avanzar");
+                    }}
+                  >
+                    <b>Sí</b>
+                    <span>→ Registrar {nAdic} servicio(s) adicional(es) y pasar al paso 35</span>
+                  </button>
+                );
+              }
               return (
                 <button
                   key={v}
@@ -366,6 +466,41 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
         <button type="button" className="btn icon" data-foco aria-label="Cerrar detalle" onClick={onCerrar}>✕</button>
       </div>
       <div className="d-body">
+        {soySuper && (
+          <div className="d-sec super-sec">
+            <h3>Solo tú · Súper admin</h3>
+            <p className="sig">
+              Marca este proyecto como atrasado. Solo tú ves esta nota (ni los otros admins).
+              Al guardar también se envía por Telegram.
+            </p>
+            <textarea
+              className="super-nota"
+              rows={2}
+              maxLength={500}
+              placeholder="Mensaje de la burbuja (ej. «Atrasado: falta material»)"
+              value={notaAtraso}
+              onChange={e => setNotaAtraso(e.target.value)}
+            />
+            <div className="super-acciones">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => onMarcar?.(p.id, notaAtraso.trim())}
+              >
+                {marca?.atrasado ? "Actualizar marca" : "Marcar atrasado"}
+              </button>
+              {marca?.atrasado && (
+                <button
+                  type="button"
+                  className="btn danger-t"
+                  onClick={() => onQuitarMarca?.(p.id)}
+                >
+                  Quitar marca
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         <div>
           <ol className="trk" aria-hidden="true">
             {FASES.map((f, i) => (
@@ -437,39 +572,141 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar }) {
               inputMode="numeric"
               disabled={!puedoEditar}
               valor={+p.anticipo || 0}
-              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n }); return n; }}
+              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n, anticipoMes: n > 0 ? (p.anticipoMes || mesActual()) : null }); return n; }}
             />
+            <p className="chk full sig" style={{ margin: 0 }}>
+              Estado de dinero (automático por fase): <b>{fd ? ETIQUETA_FASE[fd] : "Aún en pipeline (antes del paso 23)"}</b>.
+              {" "}Por facturar en pasos 23–38, Facturado en 39–40, Cobrado al llegar al 41.
+            </p>
+            {puedeMarcarFacturado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.facturado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, facturado: c, facturadoMes: c ? (p.facturadoMes || mesActual()) : null }); }}
+                />
+                <span>Facturado por adelantado (dejaron entrar la factura antes de su fase). Fuerza el estado a «Facturado».</span>
+              </label>
+            )}
             {puedeMarcarPagado && (
               <label className="chk full">
                 <input
                   type="checkbox"
                   checked={!!p.pagado}
-                  onChange={e => onGuardar({ ...p, pagado: e.target.checked })}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, pagado: c, pagadoMes: c ? (p.pagadoMes || mesActual()) : null }); }}
                 />
-                <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
+                <span>Pagado por adelantado (el dinero entró antes de su fase). Fuerza el estado a «Cobrado» y suma a «Cobrado» del mes.</span>
               </label>
             )}
-            <div className="campo full">
-              <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
-              <select
-                id="d-mes"
-                value={p.cobroMes || ""}
+            <label className={"chk full" + (puedoEditar ? "" : " chk-off")}>
+              <input
+                type="checkbox"
+                checked={!!p.reporteEnviado}
                 disabled={!puedoEditar}
-                onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
-              >
-                <option value="">Sin proyectar</option>
-                {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
-                  .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
-              </select>
-            </div>
+                onChange={e => onGuardar({ ...p, reporteEnviado: e.target.checked })}
+              />
+              <span>
+                Reporte enviado al cliente.
+                <em className="chk-hint"> Márcalo aunque el proyecto ya se haya cobrado: sirve para ubicar los que se cobraron pero aún no tienen reporte.</em>
+              </span>
+            </label>
+            {!p.diferido && (
+              <div className="campo full">
+                <label htmlFor="d-mes">Tentativo de facturar/cobrar en el mes</label>
+                <select
+                  id="d-mes"
+                  value={p.cobroMes || ""}
+                  disabled={!puedoEditar}
+                  onChange={e => onGuardar({ ...p, cobroMes: +e.target.value || null })}
+                >
+                  <option value="">Sin proyectar</option>
+                  {(p.cobroMes && !OPCIONES_MES.includes(p.cobroMes) ? [p.cobroMes, ...OPCIONES_MES] : OPCIONES_MES)
+                    .map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+                </select>
+              </div>
+            )}
+            <label className="chk full">
+              <input
+                type="checkbox"
+                checked={!!p.diferido}
+                disabled={!puedoEditar}
+                onChange={e => {
+                  const on = e.target.checked;
+                  if (on) {
+                    const n = Math.max(2, p.pagosNum || (p.pagosMeses || []).length || 2);
+                    const meses = [...(p.pagosMeses || [])].slice(0, n);
+                    while (meses.length < n) meses.push(null);
+                    onGuardar({ ...p, diferido: true, pagosNum: n, pagosMeses: meses, cobroMes: null });
+                  } else {
+                    onGuardar({ ...p, diferido: false });
+                  }
+                }}
+              />
+              <span>Pagos diferidos (dividir el cobro en varios pagos, cada uno en un mes distinto).</span>
+            </label>
+            {p.diferido && (() => {
+              const n = Math.max(1, p.pagosNum || (p.pagosMeses || []).length || 1);
+              const partes = repartirMonto(+p.monto || 0, n);
+              const setNum = v => {
+                const k = Math.max(1, Math.min(24, Math.floor(+v || 0)));
+                const meses = [...(p.pagosMeses || [])].slice(0, k);
+                while (meses.length < k) meses.push(null);
+                onGuardar({ ...p, pagosNum: k, pagosMeses: meses });
+                return k;
+              };
+              const setMes = (i, ym) => {
+                const meses = [...(p.pagosMeses || [])];
+                while (meses.length < n) meses.push(null);
+                meses[i] = +ym || null;
+                onGuardar({ ...p, pagosMeses: meses });
+              };
+              return (
+                <div className="campo full">
+                  <Campo
+                    id="d-pagos-num"
+                    etiqueta="Número de pagos (en cuántos se divide el monto)"
+                    tipo="number"
+                    min="1"
+                    max="24"
+                    step="1"
+                    inputMode="numeric"
+                    disabled={!puedoEditar}
+                    valor={n}
+                    onGuardar={setNum}
+                  />
+                  <p className="sig">
+                    {money(+p.monto || 0)} ÷ {n} = {money(partes[0])} por pago
+                    {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
+                  </p>
+                  {Array.from({ length: n }).map((_, i) => {
+                    const val = (p.pagosMeses || [])[i] || "";
+                    const opciones = val && !OPCIONES_MES.includes(+val) ? [+val, ...OPCIONES_MES] : OPCIONES_MES;
+                    return (
+                      <div className="campo" key={i} style={{ marginTop: 6 }}>
+                        <label htmlFor={`d-pago-${i}`}>Pago {i + 1} · {money(partes[i])} · mes</label>
+                        <select
+                          id={`d-pago-${i}`}
+                          value={val}
+                          disabled={!puedoEditar}
+                          onChange={e => setMes(i, e.target.value)}
+                        >
+                          <option value="">Sin proyectar</option>
+                          {opciones.map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
-          {p.pagado ? (
-            <p className="sig">Pagado por adelantado: {money(+p.monto || 0)} ya cuenta como cobrado · saldo por cobrar <b>{money(0)}</b>.</p>
-          ) : (+p.anticipo > 0) && (
+          {fd === "cobrado" ? (
+            <p className="sig">Cobrado: {money(+p.monto || 0)} · ya entró el dinero (paso 41+).</p>
+          ) : (+p.anticipo > 0) ? (
             <p className="sig">
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
             </p>
-          )}
+          ) : null}
         </div>
 
         <div className="d-sec">

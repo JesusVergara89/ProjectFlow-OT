@@ -21,6 +21,11 @@ const aApp = r => ({
   monto: Number(r.monto) || 0,
   anticipo: Number(r.anticipo) || 0,
   pagado: Boolean(r.pagado),
+  facturado: Boolean(r.facturado),
+  facturadoMes: Number(r.facturado_mes) || null,
+  pagadoMes: Number(r.pagado_mes) || null,
+  anticipoMes: Number(r.anticipo_mes) || null,
+  reporteEnviado: Boolean(r.reporte_enviado),
   cobroMes: Number(r.cobro_mes) || null,
   diferido: Boolean(r.diferido),
   pagosNum: Number(r.pagos_num) || 0,
@@ -79,19 +84,75 @@ export async function leerAvatar(usuario) {
   return data?.avatar_url || null;
 }
 
+// Lee TODAS las fotos y devuelve un mapa { usuario(minúsculas): avatar_url }.
+export async function leerAvatares() {
+  if (!configurado) return {};
+  const { data, error } = await supabase
+    .from("perfiles_usuario")
+    .select("usuario, avatar_url");
+  if (error || !Array.isArray(data)) return {};
+  const mapa = {};
+  for (const r of data) if (r.avatar_url) mapa[String(r.usuario).toLowerCase()] = r.avatar_url;
+  return mapa;
+}
+
 // Guarda (sube + persiste) la foto del usuario de la sesión. Devuelve { url }.
 export async function guardarAvatar({ base64, tipo }) {
   return api("perfil", { base64, tipo });
 }
 
 // Avisa cuando cambie cualquier perfil (p. ej. otro usuario cambia su foto).
+// Nombre de canal ÚNICO por suscripción: varios componentes (encabezado,
+// bitácora) escuchan a la vez y Supabase no permite reusar el mismo canal.
 export function suscribirPerfiles(alCambiar) {
   if (!configurado) return () => {};
+  const nombre = "perfiles-cambios-" + Math.random().toString(36).slice(2);
   const canal = supabase
-    .channel("perfiles-cambios")
+    .channel(nombre)
     .on("postgres_changes", { event: "*", schema: "public", table: "perfiles_usuario" }, alCambiar)
     .subscribe();
   return () => supabase.removeChannel(canal);
+}
+
+// --- Marcas privadas de "proyecto atrasado" (solo súper admin) ---
+// Devuelve un mapa { proyecto_id: { atrasado, mensaje } }.
+export async function leerMarcasSuper() {
+  const r = await api("marcas", { accion: "listar" });
+  return r.marcas || {};
+}
+export async function guardarMarcaSuper(proyectoId, mensaje) {
+  return api("marcas", { accion: "guardar", proyectoId, mensaje });
+}
+export async function borrarMarcaSuper(proyectoId) {
+  return api("marcas", { accion: "borrar", proyectoId });
+}
+
+// --- Cierres mensuales (foto de meses pasados) ---
+// Lee las fotos ya congeladas (lectura pública con la llave anon).
+export async function leerCierres() {
+  if (!configurado) return [];
+  const { data, error } = await supabase
+    .from("cierres_mensuales")
+    .select("*")
+    .order("mes", { ascending: false });
+  if (error || !Array.isArray(data)) return [];
+  return data;
+}
+
+// Pide al servidor congelar cualquier mes ya terminado que aún no tenga foto.
+// Devuelve las fotos (idempotente: no recalcula las que ya existen).
+export async function asegurarCierres() {
+  try {
+    const r = await api("cierres", {});
+    return r.cierres || [];
+  } catch {
+    return [];
+  }
+}
+
+// --- Análisis con IA (manda las métricas, regresa el texto) ---
+export async function analizarIA(metricas) {
+  return api("analisis", { metricas });
 }
 
 export function suscribir(alCambiar) {

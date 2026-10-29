@@ -7,7 +7,7 @@ import { mesesDesdeHoy, nombreMes } from "../meses.js";
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
-export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }) {
+export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, adicional = null }) {
   const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false, cobroMes: "", diferido: false, pagosNum: 2, pagosMeses: [] });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
@@ -40,10 +40,14 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
         ? Array.from({ length: Math.max(1, +f.pagosNum || 0) }).map((_, i) => +(f.pagosMeses || [])[i] || null)
         : [],
       estado: "activo",
-      paso: 1,
+      // Los cursos entran directo a planeación (paso 17): no requieren
+      // solicitud/alcances/cotización porque solo se capturan si ya son seguros.
+      paso: f.tipo === "cursos" ? 17 : 1,
       creado: ahora,
       pasoDesde: ahora,
-      historial: []
+      historial: f.tipo === "cursos"
+        ? [{ p: 1, f: ahora, n: "Curso: entra directo a planeación (paso 17)." }]
+        : []
     });
   }
 
@@ -51,8 +55,10 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
     <Lateral onCerrar={onCerrar}>
       <div className="d-head">
         <div>
-          <p className="eyebrow">Paso 1 · Solicitud del cliente</p>
-          <h2 id="d-titulo">Nuevo proyecto</h2>
+          <p className="eyebrow">
+            {adicional ? `Servicio adicional ${adicional.idx} de ${adicional.total}` : "Paso 1 · Solicitud del cliente"}
+          </p>
+          <h2 id="d-titulo">{adicional ? "Nuevo proyecto (alcance adicional)" : "Nuevo proyecto"}</h2>
         </div>
         <button type="button" className="btn icon" aria-label="Cerrar" onClick={onCerrar}>✕</button>
       </div>
@@ -99,16 +105,10 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar }
           <div className="campo">
             <label htmlFor="n-anticipo">Anticipo (MXN)</label>
             <input id="n-anticipo" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.anticipo} onChange={set("anticipo")} />
-            {(+f.anticipo > 0) && !f.pagado && (
+            {(+f.anticipo > 0) && (
               <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
             )}
           </div>
-          {puedeMarcarPagado && (
-            <label className="chk full">
-              <input type="checkbox" checked={f.pagado} onChange={e => setF(prev => ({ ...prev, pagado: e.target.checked }))} />
-              <span>Pagado por adelantado (el cliente ya pagó el monto completo; cuenta como cobrado).</span>
-            </label>
-          )}
           {!f.diferido && (
             <div className="campo full">
               <label htmlFor="n-mes">Tentativo de facturar/cobrar en el mes</label>

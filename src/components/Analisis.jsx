@@ -249,7 +249,7 @@ export default function Analisis({ items, onCerrar }) {
               <span>{Math.round(((m.pipeline.cobradoMes + m.pipeline.anticiposMes )/ m.meta) * 100)}% · {money(m.pipeline.cobradoMes + m.pipeline.anticiposMes)} cobrado</span>
             </div>
             <div className="meta-track"><div className="meta-fill" style={{ width: Math.min(100, Math.round((m.pipeline.cobradoMes / m.meta) * 100)) + "%" }} /></div>
-            <span className="sig">Faltan {money(Math.max(0, m.meta - m.pipeline.cobradoMes))} para la meta del mes.</span>
+            <span className="sig">Faltan {money(Math.max(0, m.meta - (m.pipeline.cobradoMes + m.pipeline.anticiposMes)))} para la meta del mes.</span>
           </div>
         </div>
 

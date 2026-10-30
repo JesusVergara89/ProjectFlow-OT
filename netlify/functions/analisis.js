@@ -1,4 +1,3 @@
-
 import { json, usuarioDe } from "./_lib/util.js";
 
 // Análisis de proyectos con Google Gemini mediante Netlify Functions.
@@ -111,13 +110,16 @@ const resumen = m => {
   const mx = n => "$" + Math.round(+n || 0).toLocaleString("es-MX");
   const pl = m.pipeline || {};
   const META = +m.meta || 3000000;
-  const pct = Math.round((+pl.cobradoMes || 0) / META * 100);
+  const cobradoMes = +pl.cobradoMes || 0;
+  const anticiposMes = +pl.anticiposMes || 0;
+  const cobradoTotal = cobradoMes + anticiposMes; // los anticipos SÍ cuentan para la meta
+  const pct = Math.round(cobradoTotal / META * 100);
   const dinero =
     `- META DE COBRANZA MENSUAL: ${mx(META)}\n` +
-    `- Cobrado este mes (llegó al paso 41): ${mx(pl.cobradoMes)} (${pl.cobradoNum || 0}) → ${pct}% de la meta · faltan ${mx(Math.max(0, META - (+pl.cobradoMes || 0)))}\n` +
+    `- Cobrado para la meta este mes (pagos + anticipos): ${mx(cobradoTotal)} → ${pct}% de la meta · faltan ${mx(Math.max(0, META - cobradoTotal))}\n` +
+    `    · pagos completos: ${mx(cobradoMes)} (${pl.cobradoNum || 0}) · anticipos: ${mx(anticiposMes)} (${pl.anticipoNum || 0})\n` +
     `- Por facturar (pasos 23–38): ${mx(pl.porFacturar)} (${pl.porFacturarNum || 0} proyectos)\n` +
-    `- Facturado (39–40, sin pagar): ${mx(pl.facturado)} (${pl.facturadoNum || 0} proyectos)\n` +
-    `- Anticipos este mes: ${mx(pl.anticiposMes)} (${pl.anticipoNum || 0})`;
+    `- Facturado (39–40, sin pagar): ${mx(pl.facturado)} (${pl.facturadoNum || 0} proyectos)`;
 
   const proy = (m.proyeccion || [])
     .map(x => `- ${x.mes}: ${mx(x.monto)}`)
@@ -292,7 +294,7 @@ const sistema =
     `## Atrasos y responsables\n` +
     `(con base en los ATRASOS —proyectos que pasan del límite de su etapa—, di qué etapas acumulan más atrasos y QUIÉNES son los responsables que más están frenando, con los días de exceso que lo respaldan. NO uses el promedio de días/paso para juzgar; úsalo a lo más como contexto de carga. No etiquetes como "óptimo" una etapa solo porque su promedio sea bajo si tiene proyectos atrasados)\n` +
     `## Dinero y cobranza\n` +
-    `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
+    `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000, donde cuenta lo cobrado del mes = pagos completos MÁS anticipos: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
     `## Recomendaciones\n` +
     `(acciones concretas y priorizadas, incluyendo las de cobranza)\n` +
     `## Riesgos a vigilar\n` +

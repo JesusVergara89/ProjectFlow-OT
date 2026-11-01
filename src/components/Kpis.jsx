@@ -1,7 +1,7 @@
 import { money, plural } from "../format.js";
 import { paso, detenido } from "../reglas.js";
 import { mesActual, nombreMes, nombreMesCorto } from "../meses.js";
-import { totalesDelMes, totalesVivos, mesesConDinero } from "../dinero.js";
+import { totalesDelMes, totalesVivos } from "../dinero.js";
 
 export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres = [] }) {
   const vivos = items.filter(p => !p.archivado);
@@ -21,18 +21,15 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
   const tMes = totalesDelMes(vivos, MES);
 
   // Foto de meses anteriores (congelada); si falta alguno, se calcula en vivo.
+  // Los meses anteriores salen SOLO de la foto congelada (cierres_mensuales).
+  // No se recalculan en vivo: así el cierre de un mes queda estático como
+  // referencia del desempeño, aunque después los proyectos avancen o cambien.
   const porMes = new Map();
   for (const c of cierres || []) {
     const m = Number(c.mes);
-    porMes.set(m, { mes: m, cobrado: +c.cobrado || 0, anticipos: +c.anticipos || 0, total: +c.total || 0 });
+    if (m < MES) porMes.set(m, { mes: m, cobrado: +c.cobrado || 0, anticipos: +c.anticipos || 0, total: +c.total || 0 });
   }
-  for (const m of mesesConDinero(vivos)) {
-    if (m < MES && !porMes.has(m)) {
-      const t = totalesDelMes(vivos, m);
-      porMes.set(m, { mes: m, cobrado: t.cobrado, anticipos: t.anticipos, total: t.total });
-    }
-  }
-  const historial = [...porMes.values()].filter(h => h.mes < MES).sort((a, b) => b.mes - a.mes).slice(0, 12);
+  const historial = [...porMes.values()].sort((a, b) => b.mes - a.mes).slice(0, 12);
 
   return (
     <>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { money, plural, repartirMonto } from "../format.js";
 import { nombreServicio } from "../servicios.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
-import { faseDinero, mesCobrado } from "../dinero.js";
 
 /*
   Reporte financiero por etapa + proyección por mes (como la hoja).
@@ -67,31 +66,7 @@ export default function Proyeccion({ items, onAbrir }) {
   const [mesSel, setMesSel] = useState(null);  // columna de mes seleccionada para ver el detalle
 
   // Solo proyectos vivos o cerrados-pagados; fuera los descartados y los archivados.
-  const baseTodo = items.filter(p => !p.archivado && p.resultado !== "no-viable" && p.resultado !== "archivado");
-
-  // Los YA COBRADOS de meses ANTERIORES salen de la proyección activa y se
-  // muestran aparte, uno por uno, agrupados por el mes en que se cobraron.
-  // Así la etapa "Cobrado" arranca en cero cada mes, esperando los nuevos.
-  const MES = mesActual();
-  const cobradosHist = baseTodo
-    .filter(p => faseDinero(p) === "cobrado" && mesCobrado(p) && mesCobrado(p) < MES)
-    .sort((a, b) => (mesCobrado(b) - mesCobrado(a)) || ((+b.monto || 0) - (+a.monto || 0)));
-  const histIds = new Set(cobradosHist.map(p => p.id));
-  const base = baseTodo.filter(p => !histIds.has(p.id));
-
-  // Agrupa los cobrados históricos por mes de cobro (más reciente primero).
-  const histPorMes = [];
-  {
-    const mapa = new Map();
-    for (const p of cobradosHist) {
-      const mm = mesCobrado(p);
-      if (!mapa.has(mm)) mapa.set(mm, []);
-      mapa.get(mm).push(p);
-    }
-    for (const mm of [...mapa.keys()].sort((a, b) => b - a)) {
-      histPorMes.push({ mes: mm, proyectos: mapa.get(mm) });
-    }
-  }
+  const base = items.filter(p => !p.archivado && p.resultado !== "no-viable" && p.resultado !== "archivado");
 
   const cols = mesesDesdeHoy(numMeses);
   const primero = cols[0];
@@ -290,37 +265,6 @@ export default function Proyeccion({ items, onAbrir }) {
           </section>
         );
       })}
-
-      {/* Proyectos YA COBRADOS de meses anteriores (uno por uno, por mes) */}
-      {histPorMes.map(bloque => (
-        <section className="proy-grupo proy-cobrados" key={"hist-" + bloque.mes}>
-          <header className="proy-h">
-            <h2>Cobrados en {nombreMes(bloque.mes)}</h2>
-            <span className="proy-cnt">{bloque.proyectos.length} {plural(bloque.proyectos.length, "proyecto", "proyectos")}</span>
-          </header>
-          <table className="proy-tabla">
-            <thead>
-              <tr>
-                <th>Proyecto</th>
-                <th>Cliente</th>
-                <th>Servicio</th>
-                <th className="num">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bloque.proyectos.map(p => (
-                <tr key={p.id} onClick={() => onAbrir(p.id)} tabIndex={0}
-                    onKeyDown={e => { if (e.key === "Enter") onAbrir(p.id); }}>
-                  <td>{p.nombre} <span className="tag pagado">Cobrado</span></td>
-                  <td>{p.cliente}</td>
-                  <td>{nombreServicio(p.tipo) || "—"}</td>
-                  <td className="num">{+p.monto ? money(p.monto) : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      ))}
     </div>
   );
 }

@@ -677,7 +677,9 @@ tr.alerta-rosa td{
 /* ===== Estado (burbuja de emoji sobre la foto) ===== */
 .avatar-wrap{position:relative;display:inline-flex;line-height:0;overflow:visible}
 .avatar-estado{
-  position:absolute;top:-2px;right:-2px;
+  position:absolute;
+  top:calc(var(--est,20px) * -0.42);
+  left:calc(var(--est,20px) * -0.42);
   width:var(--est,20px);height:var(--est,20px);
   display:flex;align-items:center;justify-content:center;
   font-size:calc(var(--est,20px) * .64);line-height:1;
@@ -688,7 +690,7 @@ tr.alerta-rosa td{
 /* Tamaños del encabezado (ahí no se pasa "size", lo fija el contexto). */
 .avatar-usuario .avatar-estado{--est:20px}
 .avatar-usuario.grande .avatar-estado{--est:34px}
-.avatar-grande-vista .avatar-estado{--est:60px;top:2px;right:2px}
+.avatar-grande-vista .avatar-estado{--est:60px}
 
 /* Selector de estado dentro del modal */
 .avatar-estados{margin:.2rem 0 .1rem}

@@ -78,9 +78,10 @@ export async function subirImagen({ proyectoId, tipo, base64 }) {
   return api("subir", { proyectoId, tipo, base64 });
 }
 
-// --- Foto de perfil por usuario ---
-// Lee el avatar de un usuario (lectura pública con la llave anon).
+// --- Foto de perfil + estado por usuario ---
+// Lee el avatar y el estado de un usuario (lectura pública con la llave anon).
 export async function leerAvatar(usuario) {
+  if (esDemo()) return { url: PERFILES_DEMO[String(usuario || "").toLowerCase()] || null, estado: "" };
   if (!configurado || !usuario) return { url: null, estado: "" };
   const { data, error } = await supabase
     .from("perfiles_usuario")
@@ -93,6 +94,7 @@ export async function leerAvatar(usuario) {
 
 // Lee TODOS los perfiles → mapa { usuario(minúsculas): { url, estado } }.
 export async function leerAvatares() {
+  if (esDemo()) return {};
   if (!configurado) return {};
   const { data, error } = await supabase
     .from("perfiles_usuario")
@@ -104,7 +106,14 @@ export async function leerAvatares() {
 }
 
 // Guarda (sube + persiste) la foto del usuario de la sesión. Devuelve { url }.
+export async function guardarAvatar({ base64, tipo }) {
+  if (esDemo()) return { url: base64 || "" }; // demo: muestra tu foto local, no la sube
+  return api("perfil", { base64, tipo });
+}
+
+// Guarda el estado (emoji) del usuario de la sesión. "" lo quita.
 export async function guardarEstado(estado) {
+  if (esDemo()) return { ok: true, estado: estado || "" };
   return api("perfil", { estado: estado || "" });
 }
 

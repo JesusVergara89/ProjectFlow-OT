@@ -18,10 +18,14 @@ export function tonoDe(clave) {
 
 // size opcional: si se pasa, fija el tamaño en línea; si no, lo decide el CSS
 // (así el avatar del encabezado respeta las reglas de .avatar-usuario).
-export default function Avatar({ nombre, url, clave, size, className = "" }) {
+// estado opcional: un emoji que se muestra como burbuja en la esquina
+// superior derecha de la foto (estilo "estado" de WhatsApp).
+export default function Avatar({ nombre, url, clave, size, className = "", estado = "" }) {
   const dim = size ? { width: size, height: size } : null;
+
+  let inner;
   if (url) {
-    return (
+    inner = (
       <img
         className={"avatar-img " + className}
         style={dim || undefined}
@@ -29,16 +33,30 @@ export default function Avatar({ nombre, url, clave, size, className = "" }) {
         alt={nombre || "Foto de perfil"}
       />
     );
+  } else {
+    const estilo = { background: `hsl(${tonoDe(clave || nombre)} 48% 42%)` };
+    if (dim) { estilo.width = size; estilo.height = size; estilo.fontSize = Math.round(size * 0.38); }
+    inner = (
+      <span
+        className={"avatar-iniciales " + className}
+        style={estilo}
+        aria-label={nombre || "Sin foto"}
+      >
+        {inicialesDe(nombre)}
+      </span>
+    );
   }
-  const estilo = { background: `hsl(${tonoDe(clave || nombre)} 48% 42%)` };
-  if (dim) { estilo.width = size; estilo.height = size; estilo.fontSize = Math.round(size * 0.38); }
+
+  // La burbuja se dimensiona con una variable CSS: si conocemos el tamaño la
+  // calculamos; si no (encabezado), la fija el CSS según el contexto.
+  const wrapStyle = {};
+  if (dim) { wrapStyle.width = size; wrapStyle.height = size; }
+  if (size) wrapStyle["--est"] = Math.max(14, Math.round(size * 0.34)) + "px";
+
   return (
-    <span
-      className={"avatar-iniciales " + className}
-      style={estilo}
-      aria-label={nombre || "Sin foto"}
-    >
-      {inicialesDe(nombre)}
+    <span className="avatar-wrap" style={wrapStyle}>
+      {inner}
+      {estado ? <span className="avatar-estado" aria-hidden="true">{estado}</span> : null}
     </span>
   );
 }

@@ -184,11 +184,14 @@ export async function enviarTelegram(dest, texto) {
 }
 
 // --- Foto de perfil por usuario (upsert por la llave primaria "usuario") ---
-export const sbUpsertPerfil = (usuario, avatar_url) =>
+// Upsert parcial: solo escribe las columnas presentes en "campos". Como
+// PostgREST (merge-duplicates) únicamente actualiza las columnas enviadas,
+// guardar el estado NO borra la foto y viceversa.
+export const sbUpsertPerfil = (usuario, campos = {}) =>
   sb("perfiles_usuario", {
     method: "POST",
     headers: { prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify({ usuario, avatar_url, actualizado: new Date().toISOString() })
+    body: JSON.stringify({ usuario, ...campos, actualizado: new Date().toISOString() })
   });
 
 export const sbInsertarBitacora = fila =>

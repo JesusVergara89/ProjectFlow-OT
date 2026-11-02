@@ -28,10 +28,26 @@ export default async function handler(req) {
     return json({ error: "Petición inválida" }, 400);
   }
 
+  const usuario = String(sesion.usuario || "").toLowerCase();
   const { base64 } = cuerpo || {};
   const mime = String(cuerpo?.tipo || "").toLowerCase();
 
-  if (!base64 || typeof base64 !== "string") return json({ error: "Falta la imagen" }, 400);
+  // El estado es opcional (un emoji). Se recorta por seguridad.
+  const tieneEstado = Object.prototype.hasOwnProperty.call(cuerpo || {}, "estado");
+  const estado = tieneEstado ? String(cuerpo.estado || "").slice(0, 16) : undefined;
+
+  // Petición de solo estado (sin foto): se guarda el estado y se termina.
+  if (!base64) {
+    if (!tieneEstado) return json({ error: "Falta la imagen" }, 400);
+    try {
+      await sbUpsertPerfil(usuario, { estado });
+    } catch (e) {
+      return json({ error: `No se pudo guardar el estado: ${e.message}` }, 502);
+    }
+    return json({ ok: true, estado });
+  }
+
+  if (typeof base64 !== "string") return json({ error: "Falta la imagen" }, 400);
   if (!mime.startsWith("image/")) return json({ error: "Solo se permiten imágenes" }, 400);
 
   // Admite "data:image/...;base64,AAAA" o solo "AAAA".
@@ -47,7 +63,6 @@ export default async function handler(req) {
   if (!bytes.length) return json({ error: "Imagen vacía" }, 400);
   if (bytes.length > MAX) return json({ error: "La imagen pesa más de 6 MB. Compártela más pequeña." }, 413);
 
-  const usuario = String(sesion.usuario || "").toLowerCase();
   const ext = EXT[mime] || "bin";
   // Carpeta por usuario; nombre al azar para no reusar el enlace en caché del navegador.
   const path = `avatares/${encodeURIComponent(usuario)}/${randomUUID()}.${ext}`;
@@ -72,10 +87,11 @@ export default async function handler(req) {
   const url = `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`;
 
   try {
-    await sbUpsertPerfil(usuario, url);
+    // Si vino también un estado, se guarda junto con la foto.
+    await sbUpsertPerfil(usuario, tieneEstado ? { avatar_url: url, estado } : { avatar_url: url });
   } catch (e) {
     return json({ error: `No se pudo guardar el perfil: ${e.message}` }, 502);
   }
 
-  return json({ ok: true, url });
+  return json({ ok: true, url, ...(tieneEstado ? { estado } : {}) });
 }

@@ -81,34 +81,31 @@ export async function subirImagen({ proyectoId, tipo, base64 }) {
 // --- Foto de perfil por usuario ---
 // Lee el avatar de un usuario (lectura pública con la llave anon).
 export async function leerAvatar(usuario) {
-  if (esDemo()) return PERFILES_DEMO[String(usuario || "").toLowerCase()] || null;
-  if (!configurado || !usuario) return null;
+  if (!configurado || !usuario) return { url: null, estado: "" };
   const { data, error } = await supabase
     .from("perfiles_usuario")
-    .select("avatar_url")
+    .select("avatar_url, estado")
     .eq("usuario", String(usuario).toLowerCase())
     .maybeSingle();
-  if (error) return null;
-  return data?.avatar_url || null;
+  if (error) return { url: null, estado: "" };
+  return { url: data?.avatar_url || null, estado: data?.estado || "" };
 }
 
-// Lee TODAS las fotos y devuelve un mapa { usuario(minúsculas): avatar_url }.
+// Lee TODOS los perfiles → mapa { usuario(minúsculas): { url, estado } }.
 export async function leerAvatares() {
-  if (esDemo()) return { ...PERFILES_DEMO };
   if (!configurado) return {};
   const { data, error } = await supabase
     .from("perfiles_usuario")
-    .select("usuario, avatar_url");
+    .select("usuario, avatar_url, estado");
   if (error || !Array.isArray(data)) return {};
   const mapa = {};
-  for (const r of data) if (r.avatar_url) mapa[String(r.usuario).toLowerCase()] = r.avatar_url;
+  for (const r of data) mapa[String(r.usuario).toLowerCase()] = { url: r.avatar_url || null, estado: r.estado || "" };
   return mapa;
 }
 
 // Guarda (sube + persiste) la foto del usuario de la sesión. Devuelve { url }.
-export async function guardarAvatar({ base64, tipo }) {
-  if (esDemo()) return { url: base64 || "" }; // demo: muestra tu foto local, no la sube
-  return api("perfil", { base64, tipo });
+export async function guardarEstado(estado) {
+  return api("perfil", { estado: estado || "" });
 }
 
 // Avisa cuando cambie cualquier perfil (p. ej. otro usuario cambia su foto).

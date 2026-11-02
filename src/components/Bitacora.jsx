@@ -97,7 +97,8 @@ export default function Bitacora({ onCerrar }) {
                 <div className="h-main">
                   <Avatar
                     nombre={r.nombre || r.usuario}
-                    url={avatares[String(r.usuario || "").toLowerCase()]}
+                    url={avatares[String(r.usuario || "").toLowerCase()]?.url}
+                    estado={avatares[String(r.usuario || "").toLowerCase()]?.estado}
                     clave={r.usuario}
                     size={34}
                     className="h-avatar"

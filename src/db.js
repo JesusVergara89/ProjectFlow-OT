@@ -78,8 +78,8 @@ export async function subirImagen({ proyectoId, tipo, base64 }) {
   return api("subir", { proyectoId, tipo, base64 });
 }
 
-// --- Foto de perfil + estado por usuario ---
-// Lee el avatar y el estado de un usuario (lectura pública con la llave anon).
+// --- Foto de perfil por usuario ---
+// Lee el avatar de un usuario (lectura pública con la llave anon).
 export async function leerAvatar(usuario) {
   if (esDemo()) return { url: PERFILES_DEMO[String(usuario || "").toLowerCase()] || null, estado: "" };
   if (!configurado || !usuario) return { url: null, estado: "" };
@@ -115,6 +115,38 @@ export async function guardarAvatar({ base64, tipo }) {
 export async function guardarEstado(estado) {
   if (esDemo()) return { ok: true, estado: estado || "" };
   return api("perfil", { estado: estado || "" });
+}
+
+// Presencia en vivo: anuncia a este usuario como "en línea" y avisa quién
+// más tiene la página abierta. No toca la base de datos (solo websockets).
+export function suscribirPresencia(usuario, nombre, alCambiar) {
+  if (esDemo() || !configurado || !usuario) return () => {};
+  const clave = String(usuario).toLowerCase();
+  const canal = supabase.channel("presencia-tablero", {
+    config: { presence: { key: clave } }
+  });
+  const emitir = () => {
+    const estado = canal.presenceState();
+    const mapa = new Map();
+    for (const k of Object.keys(estado)) {
+      const meta = (estado[k] && estado[k][0]) || {};
+      mapa.set(k, { usuario: k, nombre: meta.nombre || k });
+    }
+    alCambiar([...mapa.values()]);
+  };
+  canal
+    .on("presence", { event: "sync" }, emitir)
+    .on("presence", { event: "join" }, emitir)
+    .on("presence", { event: "leave" }, emitir)
+    .subscribe(async st => {
+      if (st === "SUBSCRIBED") {
+        try { await canal.track({ usuario: clave, nombre, at: Date.now() }); } catch {}
+      }
+    });
+  return () => {
+    try { canal.untrack(); } catch {}
+    supabase.removeChannel(canal);
+  };
 }
 
 // Avisa cuando cambie cualquier perfil (p. ej. otro usuario cambia su foto).

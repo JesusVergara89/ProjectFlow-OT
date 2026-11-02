@@ -2,6 +2,7 @@ import { money, plural } from "../format.js";
 import { paso, detenido } from "../reglas.js";
 import { mesActual, nombreMes, nombreMesCorto } from "../meses.js";
 import { totalesDelMes, totalesVivos } from "../dinero.js";
+import EnLinea from "./EnLinea.jsx";
 
 export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres = [] }) {
   const vivos = items.filter(p => !p.archivado);
@@ -84,20 +85,23 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
       </button>
     </section>
 
-    {historial.length > 0 && (
-      <section className="cierres-hist" aria-label="Dinero de meses anteriores">
-        <h3>Cierres de meses anteriores <span>(foto congelada al cambiar de mes)</span></h3>
-        <div className="cierres-row">
-          {historial.map(h => (
-            <div className="cierre" key={h.mes} title={nombreMes(h.mes)}>
-              <span className="c-mes">{nombreMesCorto(h.mes)}</span>
-              <span className="c-tot">{money(h.total)}</span>
-              <span className="c-br">Cobrado {money(h.cobrado)} · Anticipos {money(h.anticipos)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-    )}
+    <div className="banda-inferior">
+      {historial.length > 0 && (
+        <section className="cierres-hist" aria-label="Dinero de meses anteriores">
+          <h3>Cierres de meses anteriores <span>(foto congelada al cambiar de mes)</span></h3>
+          <div className="cierres-row">
+            {historial.map(h => (
+              <div className="cierre" key={h.mes} title={nombreMes(h.mes)}>
+                <span className="c-mes">{nombreMesCorto(h.mes)}</span>
+                <span className="c-tot">{money(h.total)}</span>
+                <span className="c-br">Cobrado {money(h.cobrado)} · Anticipos {money(h.anticipos)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      <EnLinea />
+    </div>
     </>
   );
 }

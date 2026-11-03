@@ -98,7 +98,14 @@ export async function apiGet(ruta) {
   const s = sesion();
   if (s?.demo) {
     // En demo devolvemos datos ficticios sin tocar el servidor.
-    if (ruta === "bitacora") return { registros: BITACORA_DEMO };
+    if (ruta.startsWith("bitacora")) {
+      const q = new URLSearchParams(ruta.split("?")[1] || "");
+      if (q.get("modo") === "dias") {
+        const hoy = new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 10);
+        return { dias: [{ dia: hoy, n: BITACORA_DEMO.length }] };
+      }
+      return { registros: BITACORA_DEMO };
+    }
     return {};
   }
   const res = await fetch("/api/" + ruta, {

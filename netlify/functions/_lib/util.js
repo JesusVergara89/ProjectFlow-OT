@@ -204,6 +204,14 @@ export const sbInsertarBitacora = fila =>
 export const sbLeerBitacora = (limite = 300) =>
   sb(`bitacora?select=*&order=creado.desc&limit=${limite}`);
 
+// Registros dentro de un rango [desdeISO, hastaISO) — un día completo, sin cortar.
+export const sbLeerBitacoraRango = (desdeISO, hastaISO, limite = 3000) =>
+  sb(`bitacora?select=*&creado=gte.${encodeURIComponent(desdeISO)}&creado=lt.${encodeURIComponent(hastaISO)}&order=creado.desc&limit=${limite}`);
+
+// Solo las fechas (para armar la lista de días disponibles, carga ligera).
+export const sbLeerBitacoraFechas = (limite = 8000) =>
+  sb(`bitacora?select=creado&order=creado.desc&limit=${limite}`);
+
 // --- Todos los proyectos (para el barrido de alertas) ---
 export const sbLeerProyectos = async () =>
   (await sb("proyectos?select=*&order=creado.asc")) || [];

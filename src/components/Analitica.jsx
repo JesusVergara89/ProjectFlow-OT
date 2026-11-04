@@ -3,6 +3,7 @@ import { dias, detenido, paso } from "../reglas.js";
 import { FASES } from "../flow.js";
 import { repartirMonto } from "../format.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
+import CurvaMeta from "./CurvaMeta.jsx";
 
 /*
   Página de análisis: gráficas de dinero y de tendencias (atrasos).
@@ -186,6 +187,11 @@ export default function Analitica({ items, onAbrir }) {
 
   return (
     <div className="analitica">
+      {/* Ritmo de cobranza vs. meta (por día y por semana) */}
+      <section className="an-card">
+        <CurvaMeta items={items} />
+      </section>
+
       {/* KPIs de dinero */}
       <section className="an-card an-kpis">
         <div className="an-kpi"><span className="an-kpi-l">Cobrado</span><span className="an-kpi-v ok">{money(cobrado)}</span></div>

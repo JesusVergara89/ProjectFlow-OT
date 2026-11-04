@@ -5,6 +5,8 @@ import { money, repartirMonto } from "../format.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 import { faseDinero, saldoDe, totalesVivos, totalesDelMes, mesesConDinero } from "../dinero.js";
 import { analizarIA } from "../db.js";
+import { ritmoResumen } from "../metas.js";
+import CurvaMeta from "./CurvaMeta.jsx";
 
 const r1 = n => Math.round(n * 10) / 10;
 const META_MENSUAL = 3000000; // meta de cobranza del mes (MXN)
@@ -176,7 +178,8 @@ function calcular(items) {
     pipeline,
     proyeccion,
     historialMeses,
-    meta: META_MENSUAL
+    meta: META_MENSUAL,
+    ritmo: ritmoResumen(vivos, { meta: META_MENSUAL })
   };
 }
 
@@ -240,17 +243,21 @@ export default function Analisis({ items, onCerrar }) {
           <div className="kpis-mini">
             <div className="km"><span className="km-l">Por facturar</span><span className="km-v">{money(m.pipeline.porFacturar)}</span></div>
             <div className="km"><span className="km-l">Facturado</span><span className="km-v">{money(m.pipeline.facturado)}</span></div>
-            <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes + m.pipeline.anticiposMes)}</span></div>
+            <div className="km"><span className="km-l">Cobrado (mes)</span><span className="km-v">{money(m.pipeline.cobradoMes)}</span></div>
             <div className="km"><span className="km-l">Anticipos (mes)</span><span className="km-v">{money(m.pipeline.anticiposMes)}</span></div>
           </div>
           <div className="meta-barra">
             <div className="meta-top">
               <span>Meta mensual: <b>{money(m.meta)}</b></span>
-              <span>{Math.round(((m.pipeline.cobradoMes + m.pipeline.anticiposMes )/ m.meta) * 100)}% · {money(m.pipeline.cobradoMes + m.pipeline.anticiposMes)} cobrado</span>
+              <span>{Math.round((m.pipeline.cobradoMes / m.meta) * 100)}% · {money(m.pipeline.cobradoMes)} cobrado</span>
             </div>
             <div className="meta-track"><div className="meta-fill" style={{ width: Math.min(100, Math.round((m.pipeline.cobradoMes / m.meta) * 100)) + "%" }} /></div>
-            <span className="sig">Faltan {money(Math.max(0, m.meta - (m.pipeline.cobradoMes + m.pipeline.anticiposMes)))} para la meta del mes.</span>
+            <span className="sig">Faltan {money(Math.max(0, m.meta - m.pipeline.cobradoMes))} para la meta del mes.</span>
           </div>
+        </div>
+
+        <div className="d-sec">
+          <CurvaMeta items={items} meta={m.meta} />
         </div>
 
         <div className="d-sec">

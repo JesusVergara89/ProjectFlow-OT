@@ -1,3 +1,4 @@
+
 import { json, usuarioDe } from "./_lib/util.js";
 
 // Análisis de proyectos con Google Gemini mediante Netlify Functions.
@@ -121,6 +122,17 @@ const resumen = m => {
     `- Por facturar (pasos 23–38): ${mx(pl.porFacturar)} (${pl.porFacturarNum || 0} proyectos)\n` +
     `- Facturado (39–40, sin pagar): ${mx(pl.facturado)} (${pl.facturadoNum || 0} proyectos)`;
 
+  // Ritmo de cobranza vs. meta (por día y por semana, acumulable).
+  const rm = m.ritmo || null;
+  const ritmo = rm
+    ? `- Día ${rm.dia} de ${rm.diasMes} (${rm.diasRestantes} días restantes)\n` +
+      `- Real a hoy: ${mx(rm.realHoy)} (${rm.pct}%) · debería llevar: ${mx(rm.idealHoy)} · diferencia: ${rm.dif >= 0 ? "+" : ""}${mx(rm.dif)}\n` +
+      `- Para alcanzar la meta faltan ${mx(rm.falta)}: hay que cobrar ${mx(rm.ritmoNecesarioDia)}/día los días que restan (${mx(rm.ritmoNecesarioSemana)}/día para cerrar la semana ${rm.semanaActual})\n` +
+      `- Proyección a fin de mes al ritmo actual: ${mx(rm.proyeccionFin)} (${rm.pctProyeccion}%) → ${rm.alcanza ? "SÍ alcanzaría la meta" : "NO alcanzaría la meta"}\n` +
+      `- Por semana (meta acumulada de ${mx(rm.meta / 4)} cada una):\n` +
+      rm.semanas.map(s => `    · Semana ${s.semana}: meta acum ${mx(s.metaAcum)} · real acum ${s.transcurrida ? mx(s.realAcum) : "—"} · dif ${s.transcurrida ? (s.dif >= 0 ? "+" : "") + mx(s.dif) : "pendiente"}`).join("\n")
+    : "- (sin datos de ritmo)";
+
   const proy = (m.proyeccion || [])
     .map(x => `- ${x.mes}: ${mx(x.monto)}`)
     .join("\n");
@@ -153,6 +165,7 @@ const resumen = m => {
     `${carga || "sin datos"}\n\n` +
 
     `DINERO (estado actual)\n${dinero}\n\n` +
+    `RITMO DE COBRANZA VS. META (por día y por semana, acumulable)\n${ritmo}\n\n` +
 
     `COBRANZA PROYECTADA POR MES (según el mes tentativo de cobro y pagos diferidos)\n` +
     `${proy || "sin proyección capturada"}\n\n` +
@@ -294,7 +307,7 @@ const sistema =
     `## Atrasos y responsables\n` +
     `(con base en los ATRASOS —proyectos que pasan del límite de su etapa—, di qué etapas acumulan más atrasos y QUIÉNES son los responsables que más están frenando, con los días de exceso que lo respaldan. NO uses el promedio de días/paso para juzgar; úsalo a lo más como contexto de carga. No etiquetes como "óptimo" una etapa solo porque su promedio sea bajo si tiene proyectos atrasados)\n` +
     `## Dinero y cobranza\n` +
-    `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000, donde cuenta lo cobrado del mes = pagos completos MÁS anticipos: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
+    `(evalúa el AVANCE DEL MES CONTRA LA META de $3,000,000, donde cuenta lo cobrado del mes = pagos completos MÁS anticipos: a qué % va, cuánto falta y si es alcanzable según lo que está por facturar/facturado y la cobranza proyectada. USA EL BLOQUE "RITMO DE COBRANZA VS. META": di claramente si el equipo va adelantado o atrasado respecto a lo que DEBERÍA llevar hoy y en la semana actual, cuánto hay que cobrar POR DÍA y POR SEMANA para llegar a la meta, qué tan realista es según el pipeline, y en qué semana se abre o se cierra la brecha. Analiza el pipeline por facturar vs facturado vs cobrado, si la cobranza proyectada por mes se ve pareja o concentrada, compárala con los cierres de meses anteriores y detecta riesgos de flujo de efectivo)\n` +
     `## Recomendaciones\n` +
     `(acciones concretas y priorizadas, incluyendo las de cobranza)\n` +
     `## Riesgos a vigilar\n` +

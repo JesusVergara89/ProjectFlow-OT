@@ -11,7 +11,7 @@ export default function CurvaMeta({ items, mes, meta }) {
   const { nDias, hoy, esMesActual } = r;
 
   // Geometría del SVG.
-  const W = 740, H = 300, pL = 58, pR = 16, pT = 14, pB = 30;
+  const W = 960, H = 320, pL = 64, pR = 18, pT = 16, pB = 32;
   const plotW = W - pL - pR, plotH = H - pT - pB;
   const x = d => pL + ((d - 1) / Math.max(1, nDias - 1)) * plotW;
   const y = v => pT + (1 - Math.min(1, v / r.meta)) * plotH;

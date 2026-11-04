@@ -773,3 +773,12 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 .cm-brecha.bajo{fill:color-mix(in srgb,var(--crit) 16%,transparent)}
 .cm-brecha.ok{fill:color-mix(in srgb,var(--ok) 14%,transparent)}
 
+/* Curva de ritmo: ocupar todo el ancho en Gráficas y ser responsiva */
+.an-curva{grid-column:1/-1;overflow:visible}
+.curva-meta .cm-svg{max-height:380px}
+@media (max-width:620px){
+  .curva-meta .cm-tabla{display:block;overflow-x:auto;white-space:nowrap}
+  .cm-cards{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+  .cm-card .cm-v{font-size:15px}
+  .curva-meta .cm-svg{max-height:300px}
+}

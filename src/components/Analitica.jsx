@@ -188,7 +188,7 @@ export default function Analitica({ items, onAbrir }) {
   return (
     <div className="analitica">
       {/* Ritmo de cobranza vs. meta (por día y por semana) */}
-      <section className="an-card">
+      <section className="an-card an-curva">
         <CurvaMeta items={items} />
       </section>
 

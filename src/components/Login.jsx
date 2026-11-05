@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { entrar, entrarDemo } from "../auth.js";
+import Acerca from "./Acerca.jsx";
 
 export default function Login({ onEntrar }) {
   const [usuario, setUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [estado, setEstado] = useState({ cargando: false, error: "" });
+  const [verAcerca, setVerAcerca] = useState(false);
+
+  if (verAcerca) return <Acerca onVolver={() => setVerAcerca(false)} />;
 
   function demo() {
     onEntrar(entrarDemo());
@@ -59,8 +63,12 @@ export default function Login({ onEntrar }) {
       <button type="button" className="btn" style={{ marginTop: 10 }} onClick={demo}>
         Ver demo (datos de prueba)
       </button>
+
+      <button type="button" className="acerca-link" onClick={() => setVerAcerca(true)}>
+        ℹ ¿Cómo funciona? · Acerca del proyecto
+      </button>
       <p className="sig" style={{ marginTop: 6 }}>
-        El modo demo usa datos ficticios en tu navegador.
+        El modo demo usa datos ficticios en tu navegador; no toca la base real y se reinicia al recargar.
       </p>
 
       <footer className="login-creditos">

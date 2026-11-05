@@ -212,6 +212,14 @@ export const sbLeerBitacoraRango = (desdeISO, hastaISO, limite = 3000) =>
 export const sbLeerBitacoraFechas = (limite = 8000) =>
   sb(`bitacora?select=creado&order=creado.desc&limit=${limite}`);
 
+// Solo id+nombre de proyecto (para armar la lista de proyectos con actividad).
+export const sbLeerBitacoraProyectos = (limite = 8000) =>
+  sb(`bitacora?select=proyecto_id,proyecto_nombre&proyecto_id=not.is.null&order=creado.desc&limit=${limite}`);
+
+// Todos los registros de un proyecto (su rastro completo).
+export const sbLeerBitacoraDeProyecto = (proyectoId, limite = 3000) =>
+  sb(`bitacora?select=*&proyecto_id=eq.${encodeURIComponent(proyectoId)}&order=creado.desc&limit=${limite}`);
+
 // --- Todos los proyectos (para el barrido de alertas) ---
 export const sbLeerProyectos = async () =>
   (await sb("proyectos?select=*&order=creado.asc")) || [];

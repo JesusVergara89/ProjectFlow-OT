@@ -104,6 +104,9 @@ export async function apiGet(ruta) {
         const hoy = new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 10);
         return { dias: [{ dia: hoy, n: BITACORA_DEMO.length }] };
       }
+      if (q.get("modo") === "proyectos") return { proyectos: [] };
+      const pid = q.get("proyecto");
+      if (pid) return { registros: BITACORA_DEMO.filter(r => String(r.proyecto_id) === pid) };
       return { registros: BITACORA_DEMO };
     }
     return {};

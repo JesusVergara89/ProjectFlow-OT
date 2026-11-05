@@ -1,4 +1,4 @@
-import { json, usuarioDe, sbLeerBitacora, sbLeerBitacoraRango, sbLeerBitacoraFechas } from "./_lib/util.js";
+import { json, usuarioDe, sbLeerBitacora, sbLeerBitacoraRango, sbLeerBitacoraFechas, sbLeerBitacoraProyectos, sbLeerBitacoraDeProyecto } from "./_lib/util.js";
 
 // Hora local de CDMX. México no usa horario de verano desde 2022, así que
 // la diferencia con UTC es fija de -06:00 todo el año.
@@ -30,6 +30,28 @@ export default async function handler(req) {
         .map(([dia, n]) => ({ dia, n }))
         .sort((a, b) => (a.dia < b.dia ? 1 : -1)); // más reciente primero
       return json({ dias });
+    }
+
+    // 1b) Lista de proyectos con actividad (para el selector).
+    if (params.get("modo") === "proyectos") {
+      const filas = await sbLeerBitacoraProyectos();
+      const vistos = new Map();
+      for (const f of filas || []) {
+        if (!f.proyecto_id) continue;
+        if (!vistos.has(f.proyecto_id)) {
+          vistos.set(f.proyecto_id, { id: f.proyecto_id, nombre: f.proyecto_nombre || "(sin nombre)", n: 0 });
+        }
+        vistos.get(f.proyecto_id).n++;
+      }
+      const proyectos = [...vistos.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      return json({ proyectos });
+    }
+
+    // 1c) Todo el rastro de un proyecto concreto.
+    const proyecto = params.get("proyecto");
+    if (proyecto) {
+      const filas = await sbLeerBitacoraDeProyecto(proyecto);
+      return json({ registros: filas || [] });
     }
 
     // 2) Registros de un día concreto (YYYY-MM-DD en hora local CDMX).

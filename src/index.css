@@ -791,7 +791,7 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 .h-proy-link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .h-proy-link:hover{opacity:.8}
 
-.card-aviso{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;margin-bottom:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;background:#F5A623;color:#1a1200;box-shadow:0 0 0 2px rgba(245,166,35,.35);animation:aviso-pulso 1.6s ease-in-out infinite}
+.card-aviso{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;margin-bottom:4px;padding:3px 10px;border-radius:999px;font-size:8px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;background:#F5A623;color:#1a1200;box-shadow:0 0 0 2px rgba(245,166,35,.35);animation:aviso-pulso 1.6s ease-in-out infinite}
 @keyframes aviso-pulso{0%,100%{box-shadow:0 0 0 2px rgba(245,166,35,.35)}50%{box-shadow:0 0 0 5px rgba(245,166,35,.12)}}
 
 /* ===== Campana + bandeja de notificaciones (atrasos personales) ===== */

@@ -148,6 +148,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const [respRep, setRespRep] = useState(p.responsableReporte || "");
   const [notaAtraso, setNotaAtraso] = useState(marca?.mensaje || "");
   const [nAdic, setNAdic] = useState(1); // cuántos servicios adicionales registrar (paso 34)
+  const [nReco, setNReco] = useState(0); // cuántas recomendaciones -> proyectos nuevos (paso 38.1)
   useEffect(() => { setNotaAtraso(marca?.mensaje || ""); }, [marca?.mensaje, p.id]);
   const pa = paso(p);
   const fi = FASES.indexOf(pa.fase);
@@ -243,6 +244,7 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const otRegex = new RegExp(`^${anioYY}-\\d{1,4}$`);
   const esPaso19 = !cerrado && pa.n === 19;
   const esPaso34 = !cerrado && pa.n === 34;
+  const esPaso38_1 = !cerrado && pa.n === 38.1; // Recomendaciones posteriores a entrega del reporte
   const otValida = otRegex.test((p.ot || "").trim());
   // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
   const puedeProgramar = esPoderTotal;
@@ -355,6 +357,23 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
             <p className="sig">Al dar «Sí» se abrirá un proyecto nuevo por cada uno (uno tras otro) y este proyecto pasará al paso 35.</p>
           </div>
         )}
+        {esPaso38_1 && (
+          <div className="campo full" style={{ marginBottom: 8 }}>
+            <label htmlFor="d-nreco">¿Cuántas recomendaciones quieres registrar como proyectos nuevos?</label>
+            <input
+              id="d-nreco"
+              type="number"
+              min="0"
+              max="10"
+              step="1"
+              inputMode="numeric"
+              disabled={!puedo}
+              value={nReco}
+              onChange={e => setNReco(Math.max(0, Math.min(10, Math.floor(+e.target.value || 0))))}
+            />
+            <p className="sig">Si pones 0, solo se completa el paso. Con 1 o más, se abre un proyecto nuevo por cada recomendación (uno tras otro) y este proyecto avanza.</p>
+          </div>
+        )}
         {pa.tipo === "decision" ? (
           <div className="opciones">
             {["si", "no"].map(v => {
@@ -443,7 +462,12 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                         ? mover(q => avanzar(q, null, `Servicio programado para ${p.fechaServicio} · responsable ${p.responsableServicio}.`), "avanzar")
                         : esPaso19
                           ? mover(q => avanzar(q, null, `OT creada: ${p.ot}.`), "avanzar")
-                          : mover(q => avanzar(q, null, nota.trim()), "avanzar")
+                          : esPaso38_1
+                            ? (() => {
+                                if (nReco > 0) onNuevoProyecto?.(nReco);
+                                mover(q => avanzar(q, null, nReco > 0 ? `Recomendaciones: se abren ${nReco} proyecto(s) nuevo(s).` : nota.trim()), "avanzar");
+                              })()
+                            : mover(q => avanzar(q, null, nota.trim()), "avanzar")
                 }
               >
                 {pa.fin ? "Completar y cerrar" : "Completar paso"}

@@ -787,3 +787,6 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 .bita-filtro{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 4px 0}
 .bita-filtro label{font-size:12px;color:var(--muted);font-weight:600}
 .bita-filtro select{flex:1;min-width:180px;max-width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font-size:13px}
+
+.h-proy-link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.h-proy-link:hover{opacity:.8}

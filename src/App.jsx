@@ -195,7 +195,7 @@ function Tablas({ usuario, onSalir }) {
     <div className="wrap">
       {esDemo() && (
         <div className="demo-banner">
-          🧪 MODO DEMO · datos ficticios
+          🧪 MODO DEMO · datos ficticios · los cambios no se guardan y no afectan la base real · se reinicia al recargar
         </div>
       )}
       <header className="top">
@@ -423,7 +423,12 @@ function Tablas({ usuario, onSalir }) {
         />
       )}
 
-      {verBitacora && <Bitacora onCerrar={() => setVerBitacora(false)} />}
+      {verBitacora && (
+        <Bitacora
+          onCerrar={() => setVerBitacora(false)}
+          onAbrirProyecto={(id) => { setVerBitacora(false); setPanel({ tipo: "detalle", id }); }}
+        />
+      )}
       {verAnalisis && <Analisis items={items} onCerrar={() => setVerAnalisis(false)} />}
     </div>
   );

@@ -127,10 +127,16 @@ export function evaluarAlerta(p) {
     const ini = entroGrupo(p, r.pasos);
     const d = r.habiles ? diasHabilesDesde(ini) : diasDesde(ini);
     if (d > r.dias) {
+      // Si hay responsable del alcance asignado, el aviso de alcances lo nombra.
+      let quien = r.quien, que = r.que;
+      if (r.key === "levantamiento" && p.responsableAlcance) {
+        quien = p.responsableAlcance;
+        que = "no ha realizado los alcances que se le asignaron tras el levantamiento";
+      }
       return {
         key: r.key, color: r.color, etiqueta: r.etiqueta,
-        quien: r.quien, que: r.que, dias: d, lim: r.dias, habiles: r.habiles,
-        motivo: `${frase(r.dias, r.habiles)}: ${r.quien} ${r.que}`
+        quien, que, dias: d, lim: r.dias, habiles: r.habiles,
+        motivo: `${frase(r.dias, r.habiles)}: ${quien} ${que}`
       };
     }
   }

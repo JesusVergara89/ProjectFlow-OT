@@ -43,7 +43,7 @@ export const LISTA = [
   A(28, "Se ejecuta el servicio - Leonardo", 29),
   A(29, "Se entrega documentación - Calidad", 30),
   A(30, "Se realiza el cierre parcial de la OT - Leonardo", 31),
-  D(31, "¿Se ocupa reporte para facturar? - COMERCIAL", 32, 31),
+  D(31, "¿Se ocupa reporte para facturar? - COMERCIAL", 32, 32),
   A(32, "Se asigna responsable de reporte - German", 33),
   A(33, "Se elabora reporte técnico - Responsable de reporte", 34),
   D(34, "¿Hay servicios adicionales? - COMERCIAL", 7, 35),

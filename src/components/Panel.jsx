@@ -246,6 +246,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
   const otValida = otRegex.test((p.ot || "").trim());
   // Solo Leonardo y el admin pueden poner/cambiar las fechas y datos del servicio.
   const puedeProgramar = esPoderTotal;
+  // El responsable del alcance lo asignan Leonardo, German o el admin.
+  const puedeAlcance = esPoderTotal || usuarioLower === "german" || usuarioLower === "leonardo";
   const cambiar = (clave, normalizar) => v => {
     const nv = normalizar(v);
     if (nv !== p[clave]) onGuardar({ ...p, [clave]: nv });
@@ -707,6 +709,28 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
             </p>
           ) : null}
+        </div>
+
+        <div className="d-sec">
+          <h3>Asignación del alcance</h3>
+          <p className="sig">Leonardo o German asignan quién hace los alcances (mismo personal que los servicios). Si se pasa de 3 días, se avisa por Telegram.</p>
+          <div className="campos">
+            <div className="campo full">
+              <label htmlFor="d-resp-alcance">Responsable del alcance</label>
+              <select
+                id="d-resp-alcance"
+                value={p.responsableAlcance || ""}
+                disabled={!puedeAlcance}
+                onChange={e => onGuardar({ ...p, responsableAlcance: e.target.value })}
+              >
+                <option value="">Selecciona responsable del alcance…</option>
+                {PERSONAL_SERVICIO.map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+              {p.responsableAlcance && (
+                <p className="sig">Alcance asignado a <b>{p.responsableAlcance}</b>.</p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="d-sec">

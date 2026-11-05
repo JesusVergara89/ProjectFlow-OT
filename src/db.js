@@ -38,6 +38,7 @@ const aApp = r => ({
   fechaServicio: r.fecha_servicio || "",
   fechaServicioFin: r.fecha_servicio_fin || "",
   responsableServicio: r.responsable_servicio || "",
+  responsableAlcance: r.responsable_alcance || "",
   apoyo: Array.isArray(r.apoyo) ? r.apoyo : [],
   estado: r.estado,
   resultado: r.resultado || undefined,

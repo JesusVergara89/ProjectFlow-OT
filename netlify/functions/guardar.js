@@ -30,6 +30,7 @@ const aDb = p => ({
   fecha_servicio: p.fechaServicio || null,
   fecha_servicio_fin: p.fechaServicioFin || null,
   responsable_servicio: p.responsableServicio || "",
+  responsable_alcance: p.responsableAlcance || "",
   apoyo: Array.isArray(p.apoyo) ? p.apoyo : [],
   estado: p.estado,
   resultado: p.resultado ?? null,
@@ -114,6 +115,12 @@ export default async function handler(req) {
       p.responsableServicio = previo?.responsable_servicio || "";
       p.apoyo = Array.isArray(previo?.apoyo) ? previo.apoyo : [];
     }
+  }
+
+  // El responsable del alcance lo asignan Leonardo, German o el admin.
+  const esAlcanceEditor = sesion.rol === "admin" || ["leonardo", "german"].includes(usuarioLower);
+  if (!esAlcanceEditor) {
+    p.responsableAlcance = accion === "crear" ? "" : (previo?.responsable_alcance || "");
   }
 
   const historial = Array.isArray(p.historial) ? [...p.historial] : [];

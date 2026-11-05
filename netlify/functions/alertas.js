@@ -33,6 +33,7 @@ const aApp = r => ({
   cliente: r.cliente,
   responsable: r.responsable || "",
   responsableReporte: r.responsable_reporte || "",
+  responsableAlcance: r.responsable_alcance || "",
   estado: r.estado,
   resultado: r.resultado || undefined,
   paso: r.paso,

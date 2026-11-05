@@ -16,6 +16,7 @@ import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
 import Bitacora from "./components/Bitacora.jsx";
+import Notificaciones, { misAtrasos } from "./components/Notificaciones.jsx";
 import Analisis from "./components/Analisis.jsx";
 import AvatarUsuario from "./components/AvatarUsuario.jsx";
 
@@ -87,8 +88,16 @@ function Tablas({ usuario, onSalir }) {
     catch (e) { setError(e.message || "No se pudo quitar la marca."); }
   };
   const [verBitacora, setVerBitacora] = useState(false);
+  const [verNotis, setVerNotis] = useState(false);
+  const [notisAuto, setNotisAuto] = useState(false);
   const [verAnalisis, setVerAnalisis] = useState(false);
   const esPoderTotal = usuario?.rol === "admin" || String(usuario?.usuario || "").toLowerCase() === "leonardo";
+
+  // Mis atrasos (para la campana y para abrir la bandeja al entrar).
+  const nMisAtrasos = useMemo(() => misAtrasos(items, usuario).length, [items, usuario]);
+  useEffect(() => {
+    if (!notisAuto && listo && nMisAtrasos > 0) { setVerNotis(true); setNotisAuto(true); }
+  }, [listo, nMisAtrasos, notisAuto]);
 
   const [vista, setVista] = useState(() =>
     IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
@@ -212,6 +221,16 @@ function Tablas({ usuario, onSalir }) {
           <div className="usuario-bitacora">
             <AvatarUsuario usuario={usuario} />
 
+            <button
+              type="button"
+              className="btn notis-btn"
+              onClick={() => setVerNotis(true)}
+              title="Mis atrasos"
+              aria-label={"Notificaciones" + (nMisAtrasos ? ` (${nMisAtrasos})` : "")}
+            >
+              🔔
+              {nMisAtrasos > 0 && <span className="notis-badge">{nMisAtrasos}</span>}
+            </button>
             <button
               type="button"
               className="btn"
@@ -427,6 +446,15 @@ function Tablas({ usuario, onSalir }) {
         <Bitacora
           onCerrar={() => setVerBitacora(false)}
           onAbrirProyecto={(id) => { setVerBitacora(false); setPanel({ tipo: "detalle", id }); }}
+        />
+      )}
+
+      {verNotis && (
+        <Notificaciones
+          items={items}
+          usuario={usuario}
+          onCerrar={() => setVerNotis(false)}
+          onAbrir={(id) => { setVerNotis(false); setPanel({ tipo: "detalle", id }); }}
         />
       )}
       {verAnalisis && <Analisis items={items} onCerrar={() => setVerAnalisis(false)} />}

@@ -139,6 +139,17 @@ export function evaluarAlerta(p) {
 
 // Color (hex) de la tarjeta, o null.
 export const alerta = p => evaluarAlerta(p)?.color || null;
+
+// Alerta informativa pública: si en el paso 31 ("¿Se ocupa reporte para
+// facturar?") la última respuesta fue "No", el proyecto no necesita reporte.
+// Es solo informativo (no mueve el proyecto) y lo ven todos.
+export function noRequiereReporte(p) {
+  const h = p?.historial || [];
+  for (let i = h.length - 1; i >= 0; i--) {
+    if (Number(h[i].p) === 31) return h[i].d === "no";
+  }
+  return false;
+}
 // Texto del tooltip de la tarjeta.
 export const motivoDe = p => evaluarAlerta(p)?.motivo || "";
  

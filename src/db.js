@@ -41,7 +41,7 @@ const aApp = r => ({
   apoyo: Array.isArray(r.apoyo) ? r.apoyo : [],
   estado: r.estado,
   resultado: r.resultado || undefined,
-  paso: r.paso,
+  paso: Number(r.paso),
   creado: r.creado,
   pasoDesde: r.paso_desde,
   cerradoEn: r.cerrado_en || undefined,

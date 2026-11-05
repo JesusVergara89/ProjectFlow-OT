@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES } from "../flow.js";
 import { money, pad } from "../format.js";
-import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA } from "../reglas.js";
+import { paso, prioDe, PRIO, dias, detenido, diasTxt, evaluarAlerta, LEYENDA, noRequiereReporte } from "../reglas.js";
 import { nombreServicio } from "../servicios.js";
 import { faseDinero } from "../dinero.js";
 
@@ -25,6 +25,11 @@ function Tarjeta({ p, onAbrir, marca }) {
         <span className="card-atraso" title={marca.mensaje || "Proyecto atrasado"}>
           <span className="card-atraso-pt" aria-hidden="true" />
           {marca.mensaje || "Proyecto atrasado"}
+        </span>
+      )}
+      {noRequiereReporte(p) && (
+        <span className="card-aviso" title="No necesita reporte para facturar">
+          ℹ No necesita reporte para facturar
         </span>
       )}
       <span className="c-tags">

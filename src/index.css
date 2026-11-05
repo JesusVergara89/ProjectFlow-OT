@@ -790,3 +790,6 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 
 .h-proy-link{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .h-proy-link:hover{opacity:.8}
+
+.card-aviso{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;margin-bottom:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+

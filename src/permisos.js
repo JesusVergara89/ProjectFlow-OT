@@ -66,7 +66,9 @@ export const PERMISOS = {
   35: REPORTE_EQUIPO, // Se entrega reporte a calidad
   36: ["admin"],      // Se revisa reporte técnico
   37: ["admin"],      // ¿Se cumple con los estándares de calidad?
-  38: ["admin"],      // Se entrega al cliente
+  38: ["german"],     // Se entrega al cliente (ahora de German)
+  38.1: ["german"],   // Recomendaciones posteriores a entrega del reporte
+  38.2: ["yuli", "lupita"], // En espera de facturación
   39: ["yuli", "lupita"], // Se realiza factura
   40: ["yuli", "lupita"], // Se programa pago de factura
   41: ["yuli", "lupita"], // Se paga la factura
@@ -104,6 +106,8 @@ export function usuariosPaso(n, proyecto) {
 function germanEntraComoComercial(n, proyecto) {
   // Pasos de reporte: German actúa por su rol de ingeniería, no como comercial.
   if (n === PASO_ASIGNA_REPORTE || n === PASO_ELABORA_REPORTE || n === PASO_ENTREGA_CALIDAD) return false;
+  // Entrega al cliente (38) y recomendaciones posteriores (38.1): rol de ingeniería.
+  if (n === 38 || n === 38.1) return false;
   // Paso técnico de Ingeniería, o de Planeación (que Ingeniería también cubre): rol de ingeniería.
   if (PASOS_AREA.has(n) && (areaDe(proyecto) === "ingenieria" || areaDe(proyecto) === "planeacion")) return false;
   // En cualquier otro paso donde esté permitido, es por ser del equipo COMERCIAL.

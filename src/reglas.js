@@ -2,14 +2,44 @@ import { PASOS } from "./flow.js";
 import { norm } from "./format.js";
 import { faseDinero } from "./dinero.js";
 import { areaDe, COMERCIAL } from "./servicios.js";
+import { REPORTE_EQUIPO } from "./permisos.js";
 
-// Responsable del alerta de los pasos 7 y 8, según el área del servicio.
+// Responsable de campo según el área del servicio (pasos de alcances 7/8/10).
 // Solo para atribuir el aviso (Telegram y campanita); no cambia permisos.
-function responsableAreaAlcance(p) {
+function responsablesArea(p) {
   const area = areaDe(p);
-  if (area === "ingenieria") return { quien: "German", responsables: ["german"] };
-  if (area === "planeacion") return { quien: "Leonardo", responsables: ["leonardo"] };
-  return { quien: "Comercial", responsables: [...COMERCIAL] }; // curso / comercial
+  if (area === "ingenieria") return ["german"];
+  if (area === "planeacion") return ["leonardo"];
+  return [...COMERCIAL]; // curso / comercial
+}
+
+const cap = u => String(u || "").charAt(0).toUpperCase() + String(u || "").slice(1);
+function mismoConjunto(a, b) {
+  if (a.length !== b.length) return false;
+  const s = new Set(a.map(x => String(x).toLowerCase()));
+  return b.every(x => s.has(String(x).toLowerCase()));
+}
+// Texto legible del responsable a partir de los usuarios (para Telegram).
+function nombresDe(usuarios) {
+  const u = (usuarios || []).map(x => String(x).toLowerCase());
+  if (!u.length) return "Nadie asignado";
+  if (mismoConjunto(u, COMERCIAL)) return "Comercial";
+  if (mismoConjunto(u, REPORTE_EQUIPO)) return "el equipo de reporte";
+  return u.map(cap).join(", ");
+}
+
+// Responsables (usuarios) de la alerta de un proyecto, según el paso real.
+function responsablesAlerta(r, p) {
+  const n = Number(p.paso);
+  if (r.key === "levantamiento") {
+    if (p.responsableAlcance) return [String(p.responsableAlcance).toLowerCase()];
+    if (n === 9) return ["huber"];
+    return responsablesArea(p); // 7, 8, 10 por área
+  }
+  if (r.key === "reporte-tecnico" || r.key === "reporte-a-calidad") {
+    return p.responsableReporte ? [String(p.responsableReporte).toLowerCase()] : REPORTE_EQUIPO;
+  }
+  return r.resp || [];
 }
  
 export const RES = { "no-viable": "No viable", archivado: "Archivado", cerrado: "Cerrado y pagado" };
@@ -73,43 +103,44 @@ export function entroFase(p) {
 // ============================================================
 export const REGLAS = [
   { key: "solicitud",        pasos: [1, 2, 3, 4],                     dias: 1,  habiles: false, color: "#B45309",
-    etiqueta: "Solicitud y viabilidad +1 día (1–4)",       quien: "Comercial", que: "no ha avanzado la solicitud y viabilidad" },
+    etiqueta: "Solicitud y viabilidad +1 día (1–4)",       resp: COMERCIAL, que: "no ha avanzado la solicitud y viabilidad" },
   // Los 3 días del levantamiento se cuentan DESDE que se marca hecho el levantamiento
   // (paso 6 completado → el proyecto entra al paso 7, «Se realizan alcances»).
+  // Responsable dinámico por paso/área: 7,8,10 -> área (German/Leonardo/Comercial), 9 -> Huber.
   { key: "levantamiento",    pasos: [7,8, 9, 10],                              dias: 3,  habiles: false, color: "#E5484D",
-    etiqueta: "Alcances +3 días tras levantamiento (7,8,9,10)",    quien: "Leonardo y German", que: "no han realizado los alcances tras el levantamiento" },
+    etiqueta: "Alcances +3 días tras levantamiento (7,8,9,10)",    que: "no ha realizado los alcances tras el levantamiento" },
   { key: "huber-cotiza",     pasos: [9],                              dias: 1,  habiles: false, color: "#D6409F",
-    etiqueta: "Huber +1 días cotizando materiales (9)",     quien: "Huber",    que: "no ha entregado la cotización de materiales/servicios" },
+    etiqueta: "Huber +1 días cotizando materiales (9)",     resp: ["huber"],    que: "no ha entregado la cotización de materiales/servicios" },
   { key: "comercial",        pasos: [11, 12, 13, 14, 15, 16], dias: 15, habiles: false, color: "#F76808",
-    etiqueta: "Cotización y negociación +15 día (11–16)", quien: "Comercial", que: "no ha autorizado ni declinado la cotización" },
+    etiqueta: "Cotización y negociación +15 día (11–16)", resp: COMERCIAL, que: "no ha autorizado ni declinado la cotización" },
   { key: "crear-ot",         pasos: [17, 18, 19],                     dias: 1,  habiles: false, color: "#8E4EC6",
-    etiqueta: "Crear OT +1 día (17–19)",                    quien: "Leonardo", que: "no ha creado la OT" },
+    etiqueta: "Crear OT +1 día (17–19)",                    resp: ["leonardo"], que: "no ha creado la OT" },
   { key: "requisiciones",    pasos: [20, 21],                         dias: 1,  habiles: false, color: "#0588F0",
-    etiqueta: "Requisiciones / almacén +1 día (20–21)",     quien: "Leonardo", que: "no ha gestionado las requisiciones (envío a almacén y compras)" },
+    etiqueta: "Requisiciones / almacén +1 día (20–21)",     resp: ["leonardo"], que: "no ha gestionado las requisiciones (envío a almacén y compras)" },
   { key: "fecha-entrega",    pasos: [22],                             dias: 2,  habiles: false, color: "#E93D82",
-    etiqueta: "Huber +2 días fecha de entrega (22)",        quien: "Huber",    que: "no ha generado la fecha de entrega" },
+    etiqueta: "Huber +2 días fecha de entrega (22)",        resp: ["huber"],    que: "no ha generado la fecha de entrega" },
   { key: "programacion",     pasos: [23],                             dias: 2,  habiles: false, color: "#0D9488",
-    etiqueta: "Programación +2 días (23)",                  quien: "Leonardo", que: "no ha programado el servicio con el cliente" },
+    etiqueta: "Programación +2 días (23)",                  resp: ["leonardo", "yuli"], que: "no ha programado el servicio con el cliente" },
   { key: "viaticos",         pasos: [24, 25],                         dias: 1,  habiles: false, color: "#0CA5E9",
-    etiqueta: "Viáticos +1 día (24–25)",                    quien: "Leonardo", que: "no ha resuelto ni solicitado los viáticos" },
+    etiqueta: "Viáticos +1 día (24–25)",                    resp: ["leonardo", "yuli"], que: "no ha resuelto ni solicitado los viáticos" },
   { key: "autoriza-viaticos",pasos: [26],                             dias: 1,  habiles: false, color: "#3E63DD",
-    etiqueta: "Adriana +1 día autorizar viáticos (26)",     quien: "Adriana",  que: "no ha autorizado ni gestionado los viáticos" },
+    etiqueta: "Adriana +1 día autorizar viáticos (26)",     resp: ["adriana", "yuli"],  que: "no ha autorizado ni gestionado los viáticos" },
   { key: "plan-calidad",     pasos: [27],                             dias: 1,  habiles: false, color: "#9333EA",
-    etiqueta: "Plan de calidad +1 día (27)",                quien: "Leonardo", que: "no ha creado el plan de calidad" },
+    etiqueta: "Plan de calidad +1 día (27)",                resp: ["leonardo"], que: "no ha creado el plan de calidad" },
   { key: "documentacion",    pasos: [29],                             dias: 1,  habiles: true,  color: "#12A594",
-    etiqueta: "Documentación +1 día hábil (29)",            quien: "Calidad",  que: "no ha entregado ni revisado la documentación" },
+    etiqueta: "Documentación +1 día hábil (29)",            resp: ["admin"],  que: "no ha entregado ni revisado la documentación" },
   { key: "cierre-parcial",   pasos: [30],                             dias: 1,  habiles: false, color: "#30A46C",
-    etiqueta: "Cierre parcial OT +1 día (30)",              quien: "Leonardo", que: "no ha hecho el cierre parcial de la OT" },
+    etiqueta: "Cierre parcial OT +1 día (30)",              resp: ["leonardo"], que: "no ha hecho el cierre parcial de la OT" },
   { key: "asigna-reporte",   pasos: [32],                             dias: 1,  habiles: false, color: "#C2410C",
-    etiqueta: "Asignar responsable reporte +1 día (32)",    quien: "German",   que: "no ha asignado responsable del reporte" },
+    etiqueta: "Asignar responsable reporte +1 día (32)",    resp: ["german"],   que: "no ha asignado responsable del reporte" },
   { key: "reporte-tecnico",  pasos: [33],                             dias: 21, habiles: true,  color: "#6D28D9",
-    etiqueta: "Reporte técnico +21 días hábiles (33)",      quien: "el responsable del reporte", que: "no ha entregado el reporte técnico" },
+    etiqueta: "Reporte técnico +21 días hábiles (33)",      que: "no ha entregado el reporte técnico" },
   { key: "reporte-a-calidad",pasos: [35],                             dias: 1,  habiles: false, color: "#EAB308",
-    etiqueta: "Entregar reporte a calidad +1 día (35)",     quien: "el responsable del reporte", que: "no ha entregado el reporte a calidad" },
+    etiqueta: "Entregar reporte a calidad +1 día (35)",     que: "no ha entregado el reporte a calidad" },
   { key: "revisa-reporte",   pasos: [36],                             dias: 1,  habiles: false, color: "#D97706",
-    etiqueta: "Revisar reporte +1 día (36)",                quien: "Calidad",  que: "no ha revisado el reporte técnico" },
+    etiqueta: "Revisar reporte +1 día (36)",                resp: ["admin"],  que: "no ha revisado el reporte técnico" },
   { key: "entrega-cliente",  pasos: [38],                             dias: 1,  habiles: false, color: "#DB2777",
-    etiqueta: "Entregar al cliente +1 día (38)",            quien: "Calidad",  que: "no ha entregado el reporte al cliente" },
+    etiqueta: "Entregar al cliente +1 día (38)",            resp: ["german"], que: "no ha entregado el reporte al cliente" },
 ];
 // Nota: el paso 28 (ejecución del servicio) NO se vigila a propósito: es muy cambiante.
 
@@ -137,24 +168,13 @@ export function evaluarAlerta(p) {
     const ini = entroGrupo(p, r.pasos);
     const d = r.habiles ? diasHabilesDesde(ini) : diasDesde(ini);
     if (d > r.dias) {
-      // Responsable del aviso. En levantamiento/alcances:
-      //  - si hay responsable del alcance asignado, se nombra a esa persona;
-      //  - si no, en los pasos 7 y 8 se atribuye por área (German/Leonardo/Comercial).
-      let quien = r.quien, que = r.que, responsables = null;
-      if (r.key === "levantamiento") {
-        if (p.responsableAlcance) {
-          quien = p.responsableAlcance;
-          que = "no ha realizado los alcances que se le asignaron tras el levantamiento";
-          responsables = [String(p.responsableAlcance).toLowerCase()];
-        } else {
-          const n = Number(p.paso);
-          if (n === 7 || n === 8) {
-            const ra = responsableAreaAlcance(p);
-            quien = ra.quien;
-            responsables = ra.responsables;
-          }
-        }
+      // Responsable real de la alerta, según el paso (área, persona o equipo).
+      const responsables = responsablesAlerta(r, p);
+      let que = r.que;
+      if (r.key === "levantamiento" && p.responsableAlcance) {
+        que = "no ha realizado los alcances que se le asignaron tras el levantamiento";
       }
+      const quien = nombresDe(responsables);
       return {
         key: r.key, color: r.color, etiqueta: r.etiqueta,
         quien, que, responsables, dias: d, lim: r.dias, habiles: r.habiles,

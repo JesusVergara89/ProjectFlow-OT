@@ -87,11 +87,6 @@ export function usuariosPaso(n, proyecto) {
   const r = String(proyecto?.responsableReporte || "").toLowerCase();
   return r ? [...new Set([r, "german"])] : REPORTE_EQUIPO;
   }
-  // Pasos 7 y 8 (realizar alcances / ¿requiere requisición?): según el área.
-  // Ingeniería -> German; Planeación y Comercial -> Leonardo.
-  if (n === 7 || n === 8) {
-    return areaDe(proyecto) === "ingenieria" ? ["german"] : ["leonardo"];
-  }
   if (PASOS_AREA.has(n)) {
     const area = areaDe(proyecto);
     let base = area ? usuariosDeArea(area) : [];

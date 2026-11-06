@@ -1,6 +1,16 @@
 import { PASOS } from "./flow.js";
 import { norm } from "./format.js";
 import { faseDinero } from "./dinero.js";
+import { areaDe, COMERCIAL } from "./servicios.js";
+
+// Responsable del alerta de los pasos 7 y 8, según el área del servicio.
+// Solo para atribuir el aviso (Telegram y campanita); no cambia permisos.
+function responsableAreaAlcance(p) {
+  const area = areaDe(p);
+  if (area === "ingenieria") return { quien: "German", responsables: ["german"] };
+  if (area === "planeacion") return { quien: "Leonardo", responsables: ["leonardo"] };
+  return { quien: "Comercial", responsables: [...COMERCIAL] }; // curso / comercial
+}
  
 export const RES = { "no-viable": "No viable", archivado: "Archivado", cerrado: "Cerrado y pagado" };
 export const PRIO = { alta: "Alta", media: "Media", baja: "Baja" };
@@ -127,15 +137,27 @@ export function evaluarAlerta(p) {
     const ini = entroGrupo(p, r.pasos);
     const d = r.habiles ? diasHabilesDesde(ini) : diasDesde(ini);
     if (d > r.dias) {
-      // Si hay responsable del alcance asignado, el aviso de alcances lo nombra.
-      let quien = r.quien, que = r.que;
-      if (r.key === "levantamiento" && p.responsableAlcance) {
-        quien = p.responsableAlcance;
-        que = "no ha realizado los alcances que se le asignaron tras el levantamiento";
+      // Responsable del aviso. En levantamiento/alcances:
+      //  - si hay responsable del alcance asignado, se nombra a esa persona;
+      //  - si no, en los pasos 7 y 8 se atribuye por área (German/Leonardo/Comercial).
+      let quien = r.quien, que = r.que, responsables = null;
+      if (r.key === "levantamiento") {
+        if (p.responsableAlcance) {
+          quien = p.responsableAlcance;
+          que = "no ha realizado los alcances que se le asignaron tras el levantamiento";
+          responsables = [String(p.responsableAlcance).toLowerCase()];
+        } else {
+          const n = Number(p.paso);
+          if (n === 7 || n === 8) {
+            const ra = responsableAreaAlcance(p);
+            quien = ra.quien;
+            responsables = ra.responsables;
+          }
+        }
       }
       return {
         key: r.key, color: r.color, etiqueta: r.etiqueta,
-        quien, que, dias: d, lim: r.dias, habiles: r.habiles,
+        quien, que, responsables, dias: d, lim: r.dias, habiles: r.habiles,
         motivo: `${frase(r.dias, r.habiles)}: ${quien} ${que}`
       };
     }

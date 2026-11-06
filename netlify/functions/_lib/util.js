@@ -220,6 +220,22 @@ export const sbLeerBitacoraProyectos = (limite = 8000) =>
 export const sbLeerBitacoraDeProyecto = (proyectoId, limite = 3000) =>
   sb(`bitacora?select=*&proyecto_id=eq.${encodeURIComponent(proyectoId)}&order=creado.desc&limit=${limite}`);
 
+// --- Mensajería entre usuarios ---
+export const sbInsertarMensaje = (fila) =>
+  sb("mensajes", { method: "POST", headers: { prefer: "return=representation" }, body: JSON.stringify(fila) });
+
+// Mensajes donde el usuario es emisor o receptor (los más recientes).
+export const sbLeerMensajes = (usuario, limite = 400) => {
+  const u = encodeURIComponent(String(usuario).toLowerCase());
+  return sb(`mensajes?or=(de.eq.${u},para.eq.${u})&order=creado.desc&limit=${limite}`);
+};
+
+// Marca como leídos los mensajes recibidos por el usuario.
+export const sbMarcarMensajesLeidos = (usuario) =>
+  sb(`mensajes?para=eq.${encodeURIComponent(String(usuario).toLowerCase())}&leido=eq.false`, {
+    method: "PATCH", headers: { prefer: "return=minimal" }, body: JSON.stringify({ leido: true })
+  });
+
 // --- Todos los proyectos (para el barrido de alertas) ---
 export const sbLeerProyectos = async () =>
   (await sb("proyectos?select=*&order=creado.asc")) || [];

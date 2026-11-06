@@ -3,7 +3,7 @@ import { useProyectos } from "./useProyectos.js";
 import { filtrar } from "./reglas.js";
 import { sesion as leerSesion, salir, esDemo } from "./auth.js";
 import { esSuperAdmin } from "./permisos.js";
-import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper, leerCierres, asegurarCierres } from "./db.js";
+import { leerMarcasSuper, guardarMarcaSuper, borrarMarcaSuper, leerCierres, asegurarCierres, leerMensajes } from "./db.js";
 import Kpis from "./components/Kpis.jsx";
 import Filtros from "./components/Filtros.jsx";
 import Tablero from "./components/Tablero.jsx";
@@ -17,6 +17,7 @@ import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
 import Bitacora from "./components/Bitacora.jsx";
 import Notificaciones, { misAtrasos } from "./components/Notificaciones.jsx";
+import Mensajes from "./components/Mensajes.jsx";
 import Analisis from "./components/Analisis.jsx";
 import AvatarUsuario from "./components/AvatarUsuario.jsx";
 
@@ -90,6 +91,8 @@ function Tablas({ usuario, onSalir }) {
   const [verBitacora, setVerBitacora] = useState(false);
   const [verNotis, setVerNotis] = useState(false);
   const [notisAuto, setNotisAuto] = useState(false);
+  const [verMensajes, setVerMensajes] = useState(false);
+  const [noLeidos, setNoLeidos] = useState(0);
   const [verAnalisis, setVerAnalisis] = useState(false);
   const esPoderTotal = usuario?.rol === "admin" || String(usuario?.usuario || "").toLowerCase() === "leonardo";
 
@@ -98,6 +101,22 @@ function Tablas({ usuario, onSalir }) {
   useEffect(() => {
     if (!notisAuto && listo && nMisAtrasos > 0) { setVerNotis(true); setNotisAuto(true); }
   }, [listo, nMisAtrasos, notisAuto]);
+
+  // Mensajes no leídos (sondeo cada 30 s).
+  useEffect(() => {
+    if (!usuario || usuario.demo) return;
+    let vivo = true;
+    const u = String(usuario.usuario || "").toLowerCase();
+    const chk = async () => {
+      try {
+        const ms = await leerMensajes();
+        if (vivo) setNoLeidos(ms.filter(m => String(m.para).toLowerCase() === u && !m.leido).length);
+      } catch {}
+    };
+    chk();
+    const id = setInterval(chk, 30000);
+    return () => { vivo = false; clearInterval(id); };
+  }, [usuario, verMensajes]);
 
   const [vista, setVista] = useState(() =>
     IDS_VISTA.includes(leer("vista")) ? leer("vista") : "tablero",
@@ -230,6 +249,16 @@ function Tablas({ usuario, onSalir }) {
             >
               🔔
               {nMisAtrasos > 0 && <span className="notis-badge">{nMisAtrasos}</span>}
+            </button>
+            <button
+              type="button"
+              className="btn notis-btn"
+              onClick={() => { setNoLeidos(0); setVerMensajes(true); }}
+              title="Mensajes"
+              aria-label={"Mensajes" + (noLeidos ? ` (${noLeidos})` : "")}
+            >
+              ✉️
+              {noLeidos > 0 && <span className="notis-badge">{noLeidos}</span>}
             </button>
             <button
               type="button"
@@ -455,6 +484,15 @@ function Tablas({ usuario, onSalir }) {
           usuario={usuario}
           onCerrar={() => setVerNotis(false)}
           onAbrir={(id) => { setVerNotis(false); setPanel({ tipo: "detalle", id }); }}
+        />
+      )}
+
+      {verMensajes && (
+        <Mensajes
+          items={items}
+          usuario={usuario}
+          onCerrar={() => { setVerMensajes(false); }}
+          onAbrir={(id) => { setVerMensajes(false); setPanel({ tipo: "detalle", id }); }}
         />
       )}
       {verAnalisis && <Analisis items={items} onCerrar={() => setVerAnalisis(false)} />}

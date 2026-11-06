@@ -164,6 +164,26 @@ export function suscribirPerfiles(alCambiar) {
   return () => supabase.removeChannel(canal);
 }
 
+// --- Mensajería entre usuarios ---
+export async function usuariosMensajes() {
+  if (esDemo()) return [];
+  const r = await api("mensajes", { accion: "usuarios" });
+  return r.usuarios || [];
+}
+export async function leerMensajes() {
+  if (esDemo()) return [];
+  const r = await api("mensajes", { accion: "listar" });
+  return r.mensajes || [];
+}
+export async function enviarMensaje({ para, texto, proyectoId, proyectoNombre }) {
+  if (esDemo()) return { ok: true };
+  return api("mensajes", { accion: "enviar", para, texto, proyectoId, proyectoNombre });
+}
+export async function marcarMensajesLeidos() {
+  if (esDemo()) return { ok: true };
+  return api("mensajes", { accion: "leidos" });
+}
+
 // --- Marcas privadas de "proyecto atrasado" (solo súper admin) ---
 // Devuelve un mapa { proyecto_id: { atrasado, mensaje } }.
 export async function leerMarcasSuper() {

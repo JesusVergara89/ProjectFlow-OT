@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lateral } from "./Panel.jsx";
-import { hora, fecha } from "../format.js";
+import { hora, fecha, norm } from "../format.js";
 import { usuariosMensajes, leerMensajes, enviarMensaje, marcarMensajesLeidos } from "../db.js";
 
 export default function Mensajes({ usuario, items = [], onCerrar, onAbrir }) {
@@ -13,14 +13,31 @@ export default function Mensajes({ usuario, items = [], onCerrar, onAbrir }) {
   const [para, setPara] = useState("");
   const [texto, setTexto] = useState("");
   const [proy, setProy] = useState(""); // id del proyecto anexado
+  const [proyBusca, setProyBusca] = useState(""); // texto del buscador de proyecto
   const [enviando, setEnviando] = useState(false);
   const finRef = useRef(null);
 
-  // Proyectos activos para anexar.
+  // Proyectos activos para anexar, con un texto buscable por todas sus variables.
   const proyectos = useMemo(
-    () => (items || []).filter(p => !p.archivado).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")),
+    () => (items || [])
+      .filter(p => !p.archivado)
+      .map(p => ({
+        p,
+        busca: norm([
+          p.nombre, p.cliente, p.ot, p.tipo, p.area, p.prioridad,
+          p.responsable, p.responsableReporte, p.responsableServicio, p.responsableAlcance,
+          ...(p.apoyo || [])
+        ].filter(Boolean).join(" "))
+      }))
+      .sort((a, b) => String(a.p.nombre).localeCompare(String(b.p.nombre), "es")),
     [items]
   );
+  const proySel = useMemo(() => proyectos.find(x => String(x.p.id) === proy)?.p || null, [proyectos, proy]);
+  const proyFiltrados = useMemo(() => {
+    const q = norm(proyBusca.trim());
+    const base = q ? proyectos.filter(x => x.busca.includes(q)) : proyectos;
+    return base.slice(0, 8);
+  }, [proyectos, proyBusca]);
   const nombreDe = useMemo(() => {
     const m = { [yo]: (usuario?.nombre || usuario?.usuario || "Yo") };
     for (const u of usuarios) m[u.usuario] = u.nombre;
@@ -60,11 +77,11 @@ export default function Mensajes({ usuario, items = [], onCerrar, onAbrir }) {
     if (!para || !t || enviando) return;
     setEnviando(true);
     setError("");
-    const proOb = proyectos.find(p => String(p.id) === proy);
     try {
-      await enviarMensaje({ para, texto: t, proyectoId: proOb?.id || null, proyectoNombre: proOb?.nombre || null });
+      await enviarMensaje({ para, texto: t, proyectoId: proySel?.id || null, proyectoNombre: proySel?.nombre || null });
       setTexto("");
       setProy("");
+      setProyBusca("");
       await recargar();
     } catch (err) {
       setError(err.message || "No se pudo enviar.");
@@ -126,10 +143,40 @@ export default function Mensajes({ usuario, items = [], onCerrar, onAbrir }) {
             <option value="">Para…</option>
             {usuarios.map(u => <option key={u.usuario} value={u.usuario}>{u.nombre}</option>)}
           </select>
-          <select value={proy} onChange={e => setProy(e.target.value)} title="Anexar un proyecto (opcional)">
-            <option value="">📎 Anexar proyecto (opcional)</option>
-            {proyectos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-          </select>
+        </div>
+
+        {/* Anexar proyecto: buscador por nombre, empresa, responsable, OT, tipo… */}
+        <div className="msgs-adjuntar">
+          {proySel ? (
+            <div className="msgs-adj-chip">
+              📎 <b>{proySel.nombre}</b> <span>· {proySel.cliente}{proySel.ot ? ` · OT ${proySel.ot}` : ""}</span>
+              <button type="button" onClick={() => { setProy(""); setProyBusca(""); }} aria-label="Quitar proyecto">✕</button>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                className="msgs-adj-busca"
+                placeholder="📎 Anexar proyecto: busca por nombre, empresa, responsable, OT…"
+                value={proyBusca}
+                onChange={e => setProyBusca(e.target.value)}
+              />
+              {proyBusca.trim() && (
+                <ul className="msgs-adj-res">
+                  {proyFiltrados.length === 0 ? (
+                    <li className="msgs-adj-vacio">Sin coincidencias</li>
+                  ) : proyFiltrados.map(({ p }) => (
+                    <li key={p.id}>
+                      <button type="button" onClick={() => { setProy(String(p.id)); setProyBusca(""); }}>
+                        <span className="msgs-adj-nom">{p.nombre}</span>
+                        <span className="msgs-adj-meta">{p.cliente}{p.responsable ? ` · ${p.responsable}` : ""}{p.ot ? ` · OT ${p.ot}` : ""}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
         </div>
         <div className="msgs-fila">
           <textarea

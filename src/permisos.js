@@ -10,7 +10,9 @@ export const esSuperAdmin = (usuario) =>
 
 /* Pasos "técnicos" de campo/OT: quién los trabaja depende del ÁREA del proyecto
    (Ingeniería -> German, Planeación -> Leonardo, Comercial -> comercial). */
-export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 23, 24, 25, 27, 28, 30]);
+// Los pasos de programación/viáticos 23–25 NO van aquí: son de Leonardo y Yuli
+// (ver PERMISOS), no de los responsables de campo del área.
+export const PASOS_AREA = new Set([5, 6, 7, 8, 10, 18, 19, 20, 21, 27, 28, 30]);
 
 /* Equipo que maneja los pasos de reporte (asignar, elaborar, entregar a calidad):
    German y los muchachos de ingeniería. El admin siempre puede (ver puedeConPaso). */
@@ -84,6 +86,11 @@ export function usuariosPaso(n, proyecto) {
   if (n === PASO_ELABORA_REPORTE) {
   const r = String(proyecto?.responsableReporte || "").toLowerCase();
   return r ? [...new Set([r, "german"])] : REPORTE_EQUIPO;
+  }
+  // Pasos 7 y 8 (realizar alcances / ¿requiere requisición?): según el área.
+  // Ingeniería -> German; Planeación y Comercial -> Leonardo.
+  if (n === 7 || n === 8) {
+    return areaDe(proyecto) === "ingenieria" ? ["german"] : ["leonardo"];
   }
   if (PASOS_AREA.has(n)) {
     const area = areaDe(proyecto);

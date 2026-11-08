@@ -68,9 +68,8 @@ export default function Login({ onEntrar }) {
         ℹ ¿Cómo funciona? · Acerca del proyecto
       </button>
       <p className="sig" style={{ marginTop: 6 }}>
-        El modo demo usa datos ficticios en tu navegador; no toca la base real y se reinicia al recargar.
+        El modo demo usa datos ficticios en el navegador
       </p>
-
       <footer className="login-creditos">
         <p>Desarrollado por Jesus Manuel Vergara.</p>
         <p>ERP adaptable a empresas medianas con flujos lineales.</p>

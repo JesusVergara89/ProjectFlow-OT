@@ -1,6 +1,7 @@
 import { PASOS } from "./flow.js";
 import { norm } from "./format.js";
 import { faseDinero } from "./dinero.js";
+import { mesActual } from "./meses.js";
 import { areaDe, COMERCIAL } from "./servicios.js";
 import { REPORTE_EQUIPO } from "./permisos.js";
 
@@ -248,7 +249,7 @@ export function filtrar(lista, f) {
       (!f.cliente || p.cliente === f.cliente) &&
       (!f.prio || prioDe(p) === f.prio) &&
       (!f.dinero || faseDinero(p) === f.dinero) &&
-      (!f.anticipo || (+p.anticipo || 0) > 0) &&
+      (!f.anticipo || ((+p.anticipo || 0) > 0 && faseDinero(p) !== "cobrado" && (+p.anticipoMes || 0) === mesActual())) &&
       (!f.reporte || (f.reporte === "si" ? !!p.reporteEnviado : !p.reporteEnviado)) &&
       (!f.paso || p.paso === f.paso) &&
       (!f.detenidos || detenido(p))

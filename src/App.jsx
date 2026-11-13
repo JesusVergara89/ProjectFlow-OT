@@ -134,6 +134,7 @@ function Tablas({ usuario, onSalir }) {
     estado: "activos",
     paso: null,
     detenidos: false,
+    anticipo: false,
   };
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
 
@@ -210,6 +211,13 @@ function Tablas({ usuario, onSalir }) {
       estado: "activos",
     }));
 
+    setVista("lista");
+    window.scrollTo(0, 0);
+  };
+
+  // Ver los proyectos que tienen anticipo (desde el KPI "Anticipos").
+  const verAnticipos = () => {
+    setFiltros({ ...FILTROS_INICIALES, estado: "todos", anticipo: true });
     setVista("lista");
     window.scrollTo(0, 0);
   };
@@ -332,6 +340,7 @@ function Tablas({ usuario, onSalir }) {
       <Kpis
         items={items}
         cierres={cierres}
+        onVerAnticipos={verAnticipos}
         soloDetenidos={filtros.detenidos}
         onToggleDetenidos={() =>
           setFiltro({

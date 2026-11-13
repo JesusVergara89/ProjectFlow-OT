@@ -4,7 +4,7 @@ import { AREAS, SERVICIOS } from "../servicios.js";
 // ¿Hay algún filtro activo (además de la búsqueda de texto y el estado)?
 function hayFiltros(f) {
   return Boolean(
-    f.resp || f.area || f.tipo || f.cliente || f.prio || f.dinero || f.reporte || f.paso || f.detenidos
+    f.resp || f.area || f.tipo || f.cliente || f.prio || f.dinero || f.reporte || f.paso || f.detenidos || f.anticipo
   );
 }
 
@@ -91,6 +91,11 @@ export default function Filtros({ filtros, setFiltro, limpiar, vista, responsabl
       {filtros.paso && (
         <button type="button" className="chip" onClick={() => setFiltro({ paso: null })}>
           Paso {filtros.paso} · {PASOS[filtros.paso].txt} ✕
+        </button>
+      )}
+      {filtros.anticipo && (
+        <button type="button" className="chip" onClick={() => setFiltro({ anticipo: false })}>
+          Con anticipo ✕
         </button>
       )}
       {hayFiltros(filtros) && (

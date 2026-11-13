@@ -4,7 +4,7 @@ import { mesActual, nombreMes, nombreMesCorto } from "../meses.js";
 import { totalesDelMes, totalesVivos } from "../dinero.js";
 import EnLinea from "./EnLinea.jsx";
 
-export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres = [] }) {
+export default function Kpis({ items, soloDetenidos, onToggleDetenidos, onVerAnticipos, cierres = [] }) {
   const vivos = items.filter(p => !p.archivado);
   const act = vivos.filter(p => p.estado === "activo");
   const cerrados = vivos.length - act.length;
@@ -60,11 +60,17 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
         <span className="k-v">{money(tv.facturado)}</span>
         <span className="k-s">{tv.facturadoNum} {plural(tv.facturadoNum, "proyecto", "proyectos")} · pasos 39–40, sin pagar</span>
       </div>
-      <div className="kpi">
+      <button
+        type="button"
+        className="kpi"
+        onClick={onVerAnticipos}
+        title="Ver los proyectos con anticipo"
+        disabled={!onVerAnticipos}
+      >
         <span className="k-l">Anticipos · {nombreMesCorto(MES)}</span>
         <span className="k-v">{money(tMes.anticipos)}</span>
         <span className="k-s">{tMes.anticipoNum} {plural(tMes.anticipoNum, "proyecto con anticipo", "proyectos con anticipo")} este mes</span>
-      </div>
+      </button>
       <div className="kpi kpi-cobrado">
         <span className="k-l">Cobrado · {nombreMesCorto(MES)}</span>
         <span className="k-v">{money(tMes.total)}</span>

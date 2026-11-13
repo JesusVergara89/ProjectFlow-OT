@@ -57,19 +57,26 @@ export function montoCobrado(p) {
   return Math.max(0, (+p.monto || 0) - anticipoCobrado(p));
 }
 
-// Totales de DINERO QUE ENTRÓ en un mes dado: saldo cobrado + anticipos capturados.
+// Totales de un mes dado.
+//   anticipos          -> TODO anticipo registrado ese mes (pagado o no). Es lo
+//                         que se ve en el KPI "Anticipos": el anticipo siempre existe.
+//   anticiposCobrados  -> solo los anticipos marcados como pagados (dinero real).
+//   total              -> DINERO QUE ENTRÓ = saldo cobrado + anticipos YA pagados.
 export function totalesDelMes(lista, mes) {
-  const t = { cobrado: 0, anticipos: 0, total: 0, cobradoNum: 0, anticipoNum: 0 };
+  const t = { cobrado: 0, anticipos: 0, anticiposCobrados: 0, total: 0, cobradoNum: 0, anticipoNum: 0, anticipoCobradoNum: 0 };
   for (const p of lista) {
     if (!p || p.archivado) continue;
     if (faseDinero(p) === "cobrado" && mesCobrado(p) === mes) {
       const m = montoCobrado(p);
       if (m > 0) { t.cobrado += m; t.cobradoNum++; }
-    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0) === mes) {
-      t.anticipos += anticipoCobrado(p); t.anticipoNum++;
+    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === mes) {
+      // El anticipo SIEMPRE cuenta como anticipo (exista pago o no).
+      t.anticipos += (+p.anticipo || 0); t.anticipoNum++;
+      // Solo si está pagado suma al dinero que realmente entró.
+      if (anticipoCobrado(p) > 0) { t.anticiposCobrados += anticipoCobrado(p); t.anticipoCobradoNum++; }
     }
   }
-  t.total = t.cobrado + t.anticipos;
+  t.total = t.cobrado + t.anticiposCobrados;
   return t;
 }
 
@@ -90,7 +97,7 @@ export function mesesConDinero(lista) {
   for (const p of lista) {
     const mc = mesCobrado(p);
     if (mc) set.add(mc);
-    if (faseDinero(p) && faseDinero(p) !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0)) {
+    if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0)) {
       set.add(+p.anticipoMes);
     }
   }

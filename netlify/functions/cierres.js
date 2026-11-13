@@ -17,6 +17,7 @@ const aDinero = r => ({
   archivado: !!r.archivado,
   monto: +r.monto || 0,
   anticipo: +r.anticipo || 0,
+  anticipoPagado: !!r.anticipo_pagado,
   anticipoMes: +r.anticipo_mes || 0,
   paso: +r.paso || 1,
   estado: r.estado,

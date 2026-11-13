@@ -111,12 +111,14 @@ export default function Analitica({ items, onAbrir }) {
   // ---- KPIs de dinero ----
   const cerradosPagados = base.filter(p => p.resultado === "cerrado");
   const prepagadosVivos = base.filter(p => p.resultado !== "cerrado" && p.pagado);
-  const anticiposVivos = base.filter(p => p.resultado !== "cerrado" && !p.pagado && anticipoCobrado(p) > 0);
+  // Anticipos: los que se VEN (registrados, pagados o no) y, dentro, los ya pagados (dinero real).
+  const anticiposVivos = base.filter(p => p.resultado !== "cerrado" && !p.pagado && (+p.anticipo || 0) > 0);
   const suma = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
-  const sumaAnt = l => l.reduce((a, p) => a + anticipoCobrado(p), 0);
-  const cobrado = suma(cerradosPagados) + suma(prepagadosVivos) + sumaAnt(anticiposVivos);
+  const sumaAntReg = l => l.reduce((a, p) => a + (+p.anticipo || 0), 0);   // anticipos registrados
+  const sumaAntPag = l => l.reduce((a, p) => a + anticipoCobrado(p), 0);   // anticipos pagados
+  const cobrado = suma(cerradosPagados) + suma(prepagadosVivos) + sumaAntPag(anticiposVivos);
   const porCobrar = base.reduce((a, p) => a + (esCobrado(p) ? 0 : Math.max(0, (+p.monto || 0) - anticipoCobrado(p))), 0);
-  const anticipos = sumaAnt(anticiposVivos);
+  const anticipos = sumaAntReg(anticiposVivos);
   const pipeline = suma(base); // monto total en juego
 
   // ---- Dinero por etapa ----

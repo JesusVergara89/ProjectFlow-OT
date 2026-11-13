@@ -70,7 +70,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, cierres 
         <span className="k-v">{money(tMes.total)}</span>
         <span className="k-s">
           {tMes.cobradoNum} {plural(tMes.cobradoNum, "pagado", "pagados")} (paso 41)
-          {tMes.anticipos > 0 && ` + ${money(tMes.anticipos)} en anticipos`}
+          {tMes.anticiposCobrados > 0 && ` + ${money(tMes.anticiposCobrados)} en anticipos pagados`}
         </span>
       </div>
       <button

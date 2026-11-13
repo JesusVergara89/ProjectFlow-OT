@@ -30,10 +30,14 @@ export function faseDinero(p) {
 
 export const ETIQUETA_FASE = { porfacturar: "Por facturar", facturado: "Facturado", cobrado: "Cobrado" };
 
-// Saldo pendiente de cobro (monto menos anticipo); 0 si ya está cobrado.
+// Anticipo que REALMENTE entró: solo cuenta si está marcado como pagado.
+// Un anticipo acordado pero aún no pagado no reduce el saldo ni suma como ingreso.
+export const anticipoCobrado = p => (p && p.anticipoPagado ? (+p.anticipo || 0) : 0);
+
+// Saldo pendiente de cobro (monto menos el anticipo YA pagado); 0 si ya está cobrado.
 export function saldoDe(p) {
   if (faseDinero(p) === "cobrado") return 0;
-  return Math.max(0, (+p.monto || 0) - (+p.anticipo || 0));
+  return Math.max(0, (+p.monto || 0) - anticipoCobrado(p));
 }
 
 // Mes (AAAAMM) en que entró el dinero. 0 si no aplica.
@@ -47,10 +51,10 @@ export function mesCobrado(p) {
   return mesDeISO(p.cerradoEn || p.pasoDesde || p.creado);
 }
 
-// Monto que entró al cobrar (el saldo; el anticipo ya se contó en su mes).
+// Monto que entró al cobrar (el saldo; el anticipo ya pagado se contó en su mes).
 export function montoCobrado(p) {
   if (faseDinero(p) !== "cobrado") return 0;
-  return Math.max(0, (+p.monto || 0) - (+p.anticipo || 0));
+  return Math.max(0, (+p.monto || 0) - anticipoCobrado(p));
 }
 
 // Totales de DINERO QUE ENTRÓ en un mes dado: saldo cobrado + anticipos capturados.
@@ -61,8 +65,8 @@ export function totalesDelMes(lista, mes) {
     if (faseDinero(p) === "cobrado" && mesCobrado(p) === mes) {
       const m = montoCobrado(p);
       if (m > 0) { t.cobrado += m; t.cobradoNum++; }
-    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === mes) {
-      t.anticipos += +p.anticipo || 0; t.anticipoNum++;
+    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0) === mes) {
+      t.anticipos += anticipoCobrado(p); t.anticipoNum++;
     }
   }
   t.total = t.cobrado + t.anticipos;
@@ -86,7 +90,7 @@ export function mesesConDinero(lista) {
   for (const p of lista) {
     const mc = mesCobrado(p);
     if (mc) set.add(mc);
-    if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0)) {
+    if (faseDinero(p) && faseDinero(p) !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0)) {
       set.add(+p.anticipoMes);
     }
   }

@@ -35,6 +35,11 @@ alter table public.proyectos add column if not exists creado_por text not null d
 alter table public.proyectos add column if not exists responsable_reporte text not null default '';
 -- Anticipo pagado por el cliente (se descuenta del monto para el saldo por cobrar).
 alter table public.proyectos add column if not exists anticipo numeric not null default 0 check (anticipo >= 0);
+-- ¿El anticipo ya se pagó? Si es false, es un anticipo acordado pero aún sin cobrar.
+alter table public.proyectos add column if not exists anticipo_pagado boolean not null default false;
+-- Pagos diferidos: modo de reparto ('iguales' | 'porcentaje') y porcentaje por pago.
+alter table public.proyectos add column if not exists pagos_modo text  not null default 'iguales';
+alter table public.proyectos add column if not exists pagos_porc jsonb not null default '[]'::jsonb;
 
 -- El flujo creció a 42 pasos (se dividió Facturación/Cobro, se agregó el paso de suma de
 -- cobrados y el paso de autorización de viáticos): amplía el rango permitido (repetible/seguro).

@@ -15,6 +15,7 @@ const aDb = p => ({
   prioridad: p.prioridad,
   monto: p.monto || 0,
   anticipo: p.anticipo || 0,
+  anticipo_pagado: Boolean(p.anticipoPagado),
   pagado: Boolean(p.pagado),
   facturado: Boolean(p.facturado),
   facturado_mes: p.facturadoMes || null,
@@ -25,6 +26,8 @@ const aDb = p => ({
   diferido: Boolean(p.diferido),
   pagos_num: Math.max(0, Math.floor(+p.pagosNum || 0)),
   pagos_meses: Array.isArray(p.pagosMeses) ? p.pagosMeses.map(m => +m || null) : [],
+  pagos_modo: p.pagosModo === "porcentaje" ? "porcentaje" : "iguales",
+  pagos_porc: Array.isArray(p.pagosPorc) ? p.pagosPorc.map(x => Math.max(0, +x || 0)) : [],
   ot: p.ot || "",
   archivado: Boolean(p.archivado),
   fecha_servicio: p.fechaServicio || null,
@@ -102,6 +105,8 @@ export default async function handler(req) {
   const esYuliOAdmin = sesion.rol === "admin" || usuarioLower === "yuli" || usuarioLower === "leonardo";
   if (!esYuliOAdmin) {
     p.pagado = accion === "crear" ? false : Boolean(previo?.pagado);
+    // "Anticipo pagado" (que el anticipo realmente entró) solo lo cambia Yuli/admin/Leonardo.
+    p.anticipoPagado = accion === "crear" ? false : Boolean(previo?.anticipo_pagado);
   }
 
   // La programación del servicio (fechas, responsable, apoyo) solo la cambia Leonardo o el admin.

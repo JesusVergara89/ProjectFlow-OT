@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { paso, evaluarAlerta } from "../reglas.js";
-import { money, repartirMonto } from "../format.js";
+import { money, partesDiferido } from "../format.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 import { faseDinero, saldoDe, totalesVivos, totalesDelMes, mesesConDinero } from "../dinero.js";
 import { analizarIA } from "../db.js";
@@ -71,11 +71,7 @@ const mesDeCobro = p => {
 // Cobros de un proyecto: un pago, o varios si es diferido.
 const cobrosDe = p => {
   const monto = +p.monto || 0;
-  const meses = Array.isArray(p.pagosMeses) ? p.pagosMeses.filter(Boolean) : [];
-  if (p.diferido && meses.length) {
-    const partes = repartirMonto(monto, meses.length);
-    return meses.map((mes, i) => ({ mes: +mes || null, monto: partes[i] }));
-  }
+  if (p.diferido && (p.pagosMeses || []).some(Boolean)) return partesDiferido(p, monto);
   return [{ mes: mesDeCobro(p), monto }];
 };
 

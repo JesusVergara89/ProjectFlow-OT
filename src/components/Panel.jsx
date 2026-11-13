@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FASES, PASOS } from "../flow.js";
-import { fecha, hora, money, repartirMonto } from "../format.js";
+import { fecha, hora, money, repartirMonto, repartirPorc } from "../format.js";
 import { paso, prioDe, PRIO, RES, dias, detenido, diasTxt, avanzar, deshacer } from "../reglas.js";
 import { puedeConPaso, etiquetaPermiso, PASO_ASIGNA_REPORTE, REPORTE_ASIGNABLES } from "../permisos.js";
 import { SERVICIOS, AREAS, servicioDe, nombreArea, PERSONAL_SERVICIO } from "../servicios.js";
@@ -598,8 +598,23 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
               inputMode="numeric"
               disabled={!puedoEditar}
               valor={+p.anticipo || 0}
-              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n, anticipoMes: n > 0 ? (p.anticipoMes || mesActual()) : null }); return n; }}
+              onGuardar={v => { const n = Math.max(0, +v || 0); if (n !== p.anticipo) onGuardar({ ...p, anticipo: n, anticipoMes: n > 0 ? (p.anticipoMes || mesActual()) : null, anticipoPagado: n > 0 ? !!p.anticipoPagado : false }); return n; }}
             />
+            {(+p.anticipo > 0) && puedeMarcarPagado && (
+              <label className="chk full">
+                <input
+                  type="checkbox"
+                  checked={!!p.anticipoPagado}
+                  onChange={e => { const c = e.target.checked; onGuardar({ ...p, anticipoPagado: c, anticipoMes: c ? (p.anticipoMes || mesActual()) : p.anticipoMes }); }}
+                />
+                <span>Anticipo pagado (el anticipo ya entró). Si no lo marcas, queda como anticipo acordado pero <b>sin cobrar</b>: no suma a los ingresos del mes.</span>
+              </label>
+            )}
+            {(+p.anticipo > 0) && !puedeMarcarPagado && (
+              <p className="chk full sig" style={{ margin: 0 }}>
+                Anticipo {p.anticipoPagado ? "pagado" : <b>pendiente de pago</b>}.
+              </p>
+            )}
             <p className="chk full sig" style={{ margin: 0 }}>
               Estado de dinero (automático por fase): <b>{fd ? ETIQUETA_FASE[fd] : "Aún en pipeline (antes del paso 23)"}</b>.
               {" "}Por facturar en pasos 23–38, Facturado en 39–40, Cobrado al llegar al 41.
@@ -672,13 +687,40 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
             </label>
             {p.diferido && (() => {
               const n = Math.max(1, p.pagosNum || (p.pagosMeses || []).length || 1);
-              const partes = repartirMonto(+p.monto || 0, n);
+              const modo = p.pagosModo === "porcentaje" ? "porcentaje" : "iguales";
+              // Porcentajes iguales por defecto (suman 100 exacto).
+              const porcIguales = k => {
+                const base = Math.floor(100 / k);
+                const arr = Array(k).fill(base);
+                arr[k - 1] = 100 - base * (k - 1);
+                return arr;
+              };
+              const porc = Array.from({ length: n }).map((_, i) => (p.pagosPorc || [])[i] ?? 0);
+              const partes = modo === "porcentaje" ? repartirPorc(+p.monto || 0, porc) : repartirMonto(+p.monto || 0, n);
+              const sumaPorc = porc.reduce((a, b) => a + (+b || 0), 0);
               const setNum = v => {
                 const k = Math.max(1, Math.min(24, Math.floor(+v || 0)));
                 const meses = [...(p.pagosMeses || [])].slice(0, k);
                 while (meses.length < k) meses.push(null);
-                onGuardar({ ...p, pagosNum: k, pagosMeses: meses });
+                let nuevosPorc = [...(p.pagosPorc || [])].slice(0, k);
+                if (modo === "porcentaje") { while (nuevosPorc.length < k) nuevosPorc.push(0); if (!(p.pagosPorc || []).length) nuevosPorc = porcIguales(k); }
+                onGuardar({ ...p, pagosNum: k, pagosMeses: meses, pagosPorc: nuevosPorc });
                 return k;
+              };
+              const setModo = m => {
+                if (m === "porcentaje") {
+                  const base = (p.pagosPorc || []).length ? [...p.pagosPorc].slice(0, n) : porcIguales(n);
+                  while (base.length < n) base.push(0);
+                  onGuardar({ ...p, pagosModo: "porcentaje", pagosPorc: base });
+                } else {
+                  onGuardar({ ...p, pagosModo: "iguales" });
+                }
+              };
+              const setPorc = (i, v) => {
+                const arr = [...(p.pagosPorc || [])];
+                while (arr.length < n) arr.push(0);
+                arr[i] = Math.max(0, Math.min(100, Math.round(+v || 0)));
+                onGuardar({ ...p, pagosPorc: arr });
               };
               const setMes = (i, ym) => {
                 const meses = [...(p.pagosMeses || [])];
@@ -700,16 +742,49 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
                     valor={n}
                     onGuardar={setNum}
                   />
-                  <p className="sig">
-                    {money(+p.monto || 0)} ÷ {n} = {money(partes[0])} por pago
-                    {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
-                  </p>
+                  <div className="campo" style={{ marginTop: 6 }}>
+                    <label htmlFor="d-pagos-modo">Cómo se divide</label>
+                    <select
+                      id="d-pagos-modo"
+                      value={modo}
+                      disabled={!puedoEditar}
+                      onChange={e => setModo(e.target.value)}
+                    >
+                      <option value="iguales">Partes iguales</option>
+                      <option value="porcentaje">Por porcentaje (ej. 30% / 40% / 30%)</option>
+                    </select>
+                  </div>
+                  {modo === "iguales" ? (
+                    <p className="sig">
+                      {money(+p.monto || 0)} ÷ {n} = {money(partes[0])} por pago
+                      {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
+                    </p>
+                  ) : (
+                    <p className="sig">
+                      Porcentajes suman <b>{sumaPorc}%</b>
+                      {sumaPorc !== 100 ? " — se ajustan proporcionalmente al 100% del monto." : "."}
+                    </p>
+                  )}
                   {Array.from({ length: n }).map((_, i) => {
                     const val = (p.pagosMeses || [])[i] || "";
                     const opciones = val && !OPCIONES_MES.includes(+val) ? [+val, ...OPCIONES_MES] : OPCIONES_MES;
                     return (
                       <div className="campo" key={i} style={{ marginTop: 6 }}>
                         <label htmlFor={`d-pago-${i}`}>Pago {i + 1} · {money(partes[i])} · mes</label>
+                        {modo === "porcentaje" && (
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            inputMode="numeric"
+                            disabled={!puedoEditar}
+                            value={(p.pagosPorc || [])[i] ?? ""}
+                            placeholder="% de este pago"
+                            onChange={e => setPorc(i, e.target.value)}
+                            style={{ marginBottom: 4 }}
+                          />
+                        )}
                         <select
                           id={`d-pago-${i}`}
                           value={val}
@@ -730,7 +805,8 @@ export default function Panel({ p, onGuardar, onEliminar, onCerrar, soySuper = f
             <p className="sig">Cobrado: {money(+p.monto || 0)} · ya entró el dinero (paso 41+).</p>
           ) : (+p.anticipo > 0) ? (
             <p className="sig">
-              Anticipo {money(+p.anticipo || 0)} · saldo por cobrar <b>{money(Math.max(0, (+p.monto || 0) - (+p.anticipo || 0)))}</b>.
+              Anticipo {money(+p.anticipo || 0)} {p.anticipoPagado ? "(pagado)" : "(pendiente de pago)"} · saldo por cobrar{" "}
+              <b>{money(Math.max(0, (+p.monto || 0) - (p.anticipoPagado ? (+p.anticipo || 0) : 0)))}</b>.
             </p>
           ) : null}
         </div>

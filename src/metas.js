@@ -4,7 +4,7 @@
    "Real" = dinero que entró (cobros + anticipos) por su fecha registrada.
    Devuelve series por día y por semana (ideal vs real) y el cierre del mes. */
 import { mesActual } from "./meses.js";
-import { faseDinero, mesCobrado, montoCobrado, mesDeISO } from "./dinero.js";
+import { faseDinero, mesCobrado, montoCobrado, mesDeISO, anticipoCobrado } from "./dinero.js";
 
 export const META_MENSUAL = 3000000;
 
@@ -64,8 +64,8 @@ export function ritmoMeta(lista, opciones = {}) {
         porDia[diaEnMes(isoCobro(p), ym) || sinDia] += monto;
         totalReal += monto;
       }
-    } else if (fase && fase !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === ym) {
-      const a = +p.anticipo || 0;
+    } else if (fase && fase !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0) === ym) {
+      const a = anticipoCobrado(p);
       porDia[diaEnMes(isoAnticipo(p, ym), ym) || sinDia] += a;
       totalReal += a;
     }

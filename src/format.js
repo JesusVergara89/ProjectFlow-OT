@@ -18,6 +18,41 @@ export function repartirMonto(total, n) {
   return partes;
 }
 
+// Reparte un monto en pesos ENTEROS según una lista de porcentajes (desiguales).
+// Los porcentajes se normalizan a su propia suma (no es obligatorio que den 100),
+// cada parte se redondea hacia abajo y la ÚLTIMA absorbe el residuo, así siempre
+// suman exacto el total. Si no hay porcentajes válidos, cae a partes iguales.
+// Ej.: 25500 con [30,40,30] = [7650, 10200, 7650].
+export function repartirPorc(total, porcentajes) {
+  const t = Math.round(+total || 0);
+  const ps = (Array.isArray(porcentajes) ? porcentajes : []).map(x => Math.max(0, +x || 0));
+  const k = ps.length;
+  if (!k) return [];
+  const suma = ps.reduce((a, b) => a + b, 0);
+  if (suma <= 0) return repartirMonto(t, k); // sin porcentajes -> iguales
+  const partes = ps.map(p => Math.floor((t * p) / suma));
+  const dado = partes.reduce((a, b) => a + b, 0);
+  partes[k - 1] += t - dado; // el último cuadra el total
+  return partes;
+}
+
+// Partes de un cobro diferido alineadas a los meses SELECCIONADOS (en orden),
+// respetando el modo del proyecto: "porcentaje" usa p.pagosPorc; cualquier otro
+// (por defecto "iguales") divide en partes iguales. Devuelve [{ mes, monto }].
+export function partesDiferido(p, total) {
+  const pares = (Array.isArray(p?.pagosMeses) ? p.pagosMeses : [])
+    .map((mes, i) => ({ mes: +mes || null, i }))
+    .filter(x => x.mes);
+  if (!pares.length) return [];
+  let partes;
+  if (p?.pagosModo === "porcentaje") {
+    partes = repartirPorc(total, pares.map(x => (p.pagosPorc || [])[x.i]));
+  } else {
+    partes = repartirMonto(total, pares.length);
+  }
+  return pares.map((x, j) => ({ mes: x.mes, monto: partes[j] }));
+}
+
 export const plural = (n, a, b) => (n === 1 ? a : b);
 
 export function fecha(iso) {

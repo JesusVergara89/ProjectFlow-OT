@@ -1,7 +1,7 @@
-import { money, plural } from "../format.js";
+import { money, plural, partesDiferido } from "../format.js";
 import { dias, detenido, paso } from "../reglas.js";
 import { FASES } from "../flow.js";
-import { repartirMonto } from "../format.js";
+import { anticipoCobrado } from "../dinero.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 import CurvaMeta from "./CurvaMeta.jsx";
 
@@ -36,11 +36,7 @@ const mesDe = p => {
 };
 const cobrosDe = p => {
   const monto = +p.monto || 0;
-  const meses = Array.isArray(p.pagosMeses) ? p.pagosMeses.filter(Boolean) : [];
-  if (p.diferido && meses.length) {
-    const partes = repartirMonto(monto, meses.length);
-    return meses.map((mes, i) => ({ mes: +mes || null, monto: partes[i] }));
-  }
+  if (p.diferido && (p.pagosMeses || []).some(Boolean)) return partesDiferido(p, monto);
   return [{ mes: mesDe(p), monto }];
 };
 
@@ -115,11 +111,11 @@ export default function Analitica({ items, onAbrir }) {
   // ---- KPIs de dinero ----
   const cerradosPagados = base.filter(p => p.resultado === "cerrado");
   const prepagadosVivos = base.filter(p => p.resultado !== "cerrado" && p.pagado);
-  const anticiposVivos = base.filter(p => p.resultado !== "cerrado" && !p.pagado && (+p.anticipo || 0) > 0);
+  const anticiposVivos = base.filter(p => p.resultado !== "cerrado" && !p.pagado && anticipoCobrado(p) > 0);
   const suma = l => l.reduce((a, p) => a + (+p.monto || 0), 0);
-  const sumaAnt = l => l.reduce((a, p) => a + (+p.anticipo || 0), 0);
+  const sumaAnt = l => l.reduce((a, p) => a + anticipoCobrado(p), 0);
   const cobrado = suma(cerradosPagados) + suma(prepagadosVivos) + sumaAnt(anticiposVivos);
-  const porCobrar = base.reduce((a, p) => a + (esCobrado(p) ? 0 : Math.max(0, (+p.monto || 0) - (+p.anticipo || 0))), 0);
+  const porCobrar = base.reduce((a, p) => a + (esCobrado(p) ? 0 : Math.max(0, (+p.monto || 0) - anticipoCobrado(p))), 0);
   const anticipos = sumaAnt(anticiposVivos);
   const pipeline = suma(base); // monto total en juego
 

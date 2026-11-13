@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { Lateral } from "./Panel.jsx";
 import { SERVICIOS, AREAS, servicioDe } from "../servicios.js";
-import { money, repartirMonto } from "../format.js";
+import { money, repartirMonto, repartirPorc } from "../format.js";
 import { sesion } from "../auth.js";
-import { mesesDesdeHoy, nombreMes } from "../meses.js";
+import { mesesDesdeHoy, nombreMes, mesActual } from "../meses.js";
+
+// Porcentajes iguales por defecto (suman 100 exacto).
+const porcIguales = k => {
+  const base = Math.floor(100 / k);
+  const arr = Array(k).fill(base);
+  arr[k - 1] = 100 - base * (k - 1);
+  return arr;
+};
 
 const OPCIONES_MES = mesesDesdeHoy(18); // mes en curso + 17 siguientes
 
 export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, adicional = null }) {
-  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", pagado: false, cobroMes: "", diferido: false, pagosNum: 2, pagosMeses: [] });
+  const [f, setF] = useState({ nombre: "", cliente: "", tipo: "", responsable: "", prioridad: "media", monto: "", anticipo: "", anticipoPagado: false, pagado: false, cobroMes: "", diferido: false, pagosNum: 2, pagosMeses: [], pagosModo: "iguales", pagosPorc: [] });
   const [error, setError] = useState("");
   const set = k => e => setF(prev => ({ ...prev, [k]: e.target.value }));
   const srv = servicioDe(f.tipo);
@@ -32,12 +40,18 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, 
       prioridad: f.prioridad,
       monto: Math.max(0, +f.monto || 0),
       anticipo: Math.max(0, +f.anticipo || 0),
+      anticipoPagado: (+f.anticipo || 0) > 0 ? !!f.anticipoPagado : false,
+      anticipoMes: ((+f.anticipo || 0) > 0 && !!f.anticipoPagado) ? mesActual() : null,
       pagado: !!f.pagado,
       cobroMes: f.diferido ? null : (+f.cobroMes || null),
       diferido: !!f.diferido,
       pagosNum: f.diferido ? Math.max(1, +f.pagosNum || 0) : 0,
       pagosMeses: f.diferido
         ? Array.from({ length: Math.max(1, +f.pagosNum || 0) }).map((_, i) => +(f.pagosMeses || [])[i] || null)
+        : [],
+      pagosModo: f.diferido ? (f.pagosModo === "porcentaje" ? "porcentaje" : "iguales") : "iguales",
+      pagosPorc: (f.diferido && f.pagosModo === "porcentaje")
+        ? Array.from({ length: Math.max(1, +f.pagosNum || 0) }).map((_, i) => Math.max(0, +(f.pagosPorc || [])[i] || 0))
         : [],
       estado: "activo",
       // Los cursos entran directo a planeación (paso 17): no requieren
@@ -106,7 +120,17 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, 
             <label htmlFor="n-anticipo">Anticipo (MXN)</label>
             <input id="n-anticipo" type="number" min="0" step="1000" inputMode="numeric" placeholder="0" value={f.anticipo} onChange={set("anticipo")} />
             {(+f.anticipo > 0) && (
-              <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (+f.anticipo || 0)))}</p>
+              <p className="sig">Saldo por cobrar: {money(Math.max(0, (+f.monto || 0) - (f.anticipoPagado ? (+f.anticipo || 0) : 0)))}</p>
+            )}
+            {(+f.anticipo > 0) && puedeMarcarPagado && (
+              <label className="chk full" style={{ marginTop: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={!!f.anticipoPagado}
+                  onChange={e => setF(prev => ({ ...prev, anticipoPagado: e.target.checked }))}
+                />
+                <span>Anticipo pagado (ya entró). Si no lo marcas, queda como anticipo acordado pero <b>sin cobrar</b>.</span>
+              </label>
             )}
           </div>
           {!f.diferido && (
@@ -128,12 +152,29 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, 
           </label>
           {f.diferido && (() => {
             const n = Math.max(1, Math.min(24, Math.floor(+f.pagosNum || 1)));
-            const partes = repartirMonto(+f.monto || 0, n);
+            const modo = f.pagosModo === "porcentaje" ? "porcentaje" : "iguales";
+            const porc = Array.from({ length: n }).map((_, i) => (f.pagosPorc || [])[i] ?? 0);
+            const partes = modo === "porcentaje" ? repartirPorc(+f.monto || 0, porc) : repartirMonto(+f.monto || 0, n);
+            const sumaPorc = porc.reduce((a, b) => a + (+b || 0), 0);
             const setMes = (i, ym) => setF(prev => {
               const meses = [...(prev.pagosMeses || [])];
               while (meses.length < n) meses.push(null);
               meses[i] = +ym || null;
               return { ...prev, pagosMeses: meses };
+            });
+            const setPorc = (i, v) => setF(prev => {
+              const arr = [...(prev.pagosPorc || [])];
+              while (arr.length < n) arr.push(0);
+              arr[i] = Math.max(0, Math.min(100, Math.round(+v || 0)));
+              return { ...prev, pagosPorc: arr };
+            });
+            const setModo = m => setF(prev => {
+              if (m === "porcentaje") {
+                const base = (prev.pagosPorc || []).length ? [...prev.pagosPorc].slice(0, n) : porcIguales(n);
+                while (base.length < n) base.push(0);
+                return { ...prev, pagosModo: "porcentaje", pagosPorc: base };
+              }
+              return { ...prev, pagosModo: "iguales" };
             });
             return (
               <div className="campo full">
@@ -148,13 +189,40 @@ export default function PanelNuevo({ clientes, responsables, onCrear, onCerrar, 
                   value={f.pagosNum}
                   onChange={e => setF(prev => ({ ...prev, pagosNum: e.target.value }))}
                 />
-                <p className="sig">
-                  {money(+f.monto || 0)} ÷ {n} = {money(partes[0])} por pago
-                  {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
-                </p>
+                <div className="campo" style={{ marginTop: 6 }}>
+                  <label htmlFor="n-pagos-modo">Cómo se divide</label>
+                  <select id="n-pagos-modo" value={modo} onChange={e => setModo(e.target.value)}>
+                    <option value="iguales">Partes iguales</option>
+                    <option value="porcentaje">Por porcentaje (ej. 30% / 40% / 30%)</option>
+                  </select>
+                </div>
+                {modo === "iguales" ? (
+                  <p className="sig">
+                    {money(+f.monto || 0)} ÷ {n} = {money(partes[0])} por pago
+                    {partes[n - 1] !== partes[0] ? ` (el último: ${money(partes[n - 1])})` : ""}.
+                  </p>
+                ) : (
+                  <p className="sig">
+                    Porcentajes suman <b>{sumaPorc}%</b>
+                    {sumaPorc !== 100 ? " — se ajustan proporcionalmente al 100% del monto." : "."}
+                  </p>
+                )}
                 {Array.from({ length: n }).map((_, i) => (
                   <div className="campo" key={i} style={{ marginTop: 6 }}>
                     <label htmlFor={`n-pago-${i}`}>Pago {i + 1} · {money(partes[i])} · mes</label>
+                    {modo === "porcentaje" && (
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        inputMode="numeric"
+                        value={(f.pagosPorc || [])[i] ?? ""}
+                        placeholder="% de este pago"
+                        onChange={e => setPorc(i, e.target.value)}
+                        style={{ marginBottom: 4 }}
+                      />
+                    )}
                     <select id={`n-pago-${i}`} value={(f.pagosMeses || [])[i] || ""} onChange={e => setMes(i, e.target.value)}>
                       <option value="">Sin proyectar</option>
                       {OPCIONES_MES.map(ym => <option key={ym} value={ym}>{nombreMes(ym)}</option>)}

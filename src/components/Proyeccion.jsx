@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { money, plural, repartirMonto } from "../format.js";
+import { money, plural, partesDiferido } from "../format.js";
 import { nombreServicio } from "../servicios.js";
 import { mesActual, mesesDesdeHoy, nombreMes, nombreMesCorto } from "../meses.js";
 import { faseDinero, mesCobrado } from "../dinero.js";
@@ -54,11 +54,7 @@ const mesDe = p => {
 // - Diferido: el monto se divide en partes iguales y una cae en cada mes elegido.
 const cobrosDe = p => {
   const monto = +p.monto || 0;
-  const meses = Array.isArray(p.pagosMeses) ? p.pagosMeses.filter(Boolean) : [];
-  if (p.diferido && meses.length) {
-    const partes = repartirMonto(monto, meses.length);
-    return meses.map((mes, i) => ({ mes: +mes || null, monto: partes[i] }));
-  }
+  if (p.diferido && (p.pagosMeses || []).some(Boolean)) return partesDiferido(p, monto);
   return [{ mes: mesDe(p), monto }];
 };
 

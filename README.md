@@ -4,10 +4,7 @@ ERP ligero y adaptable para empresas medianas con flujos lineales. Da seguimient
 
 Los datos viven en **Supabase** y se sincronizan en tiempo real entre todas las pantallas abiertas. El acceso es con usuarios propios (sin registro) y cada acción queda registrada en una **bitácora** con quién la hizo y cuándo.
 
-> Desarrollado por **Jesus Manuel Vergara**.
-> Repositorio: https://github.com/JesusVergara89/ProjectFlow-OT
-
----
+--
 
 ## Características
 

@@ -12,6 +12,7 @@ import Flujo from "./components/Flujo.jsx";
 import Proyeccion from "./components/Proyeccion.jsx";
 import Analitica from "./components/Analitica.jsx";
 import Calendario from "./components/Calendario.jsx";
+import KpiFases from "./components/KpiFases.jsx";
 import Panel from "./components/Panel.jsx";
 import PanelNuevo from "./components/PanelNuevo.jsx";
 import Login from "./components/Login.jsx";
@@ -27,6 +28,7 @@ const VISTAS = [
   ["flujo", "Flujo"],
   ["proyeccion", "Proyección"],
   ["graficas", "Gráficas"],
+  ["kpi", "KPI"],
   ["calendario", "Calendario"],
 ];
 const IDS_VISTA = VISTAS.map((v) => v[0]);
@@ -179,6 +181,9 @@ function Tablas({ usuario, onSalir }) {
 
   const visibles = useMemo(() => {
     const base = items.filter((p) => {
+      // Filtro "con anticipo": muestra TODOS los que tienen anticipo (pagado o no,
+      // activos, cerrados o archivados). filtrar() luego los acota a anticipo > 0.
+      if (filtros.anticipo) return true;
       if (vista === "lista") {
         if (filtros.estado === "archivados") return p.archivado;
         if (p.archivado) return false;
@@ -431,6 +436,11 @@ function Tablas({ usuario, onSalir }) {
           />
         ) : vista === "graficas" ? (
           <Analitica
+            items={items}
+            onAbrir={(id) => setPanel({ tipo: "detalle", id })}
+          />
+        ) : vista === "kpi" ? (
+          <KpiFases
             items={items}
             onAbrir={(id) => setPanel({ tipo: "detalle", id })}
           />

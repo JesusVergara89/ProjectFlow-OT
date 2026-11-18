@@ -881,3 +881,28 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 [class*="netlify-badge"], a[href*="netlify.com"][target="_blank"]{display:none !important}
 
 
+
+/* ===== Sección KPI por fase (dinero por grupo de pasos) ===== */
+.kpi-fases{margin-top:4px}
+.kpi-fases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.kpi-fase{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.kpi-fase-h{display:flex;flex-direction:column;gap:2px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.kpi-fase-h .k-v{color:var(--ok)}
+.kpi-fase-list{list-style:none;margin:0;padding:0;overflow-y:auto;max-height:420px}
+.kpi-fase-list li{border-bottom:1px solid var(--line)}
+.kpi-fase-list li:last-child{border-bottom:0}
+.kpi-fase-item{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nom monto" "sub monto";gap:0 10px;width:100%;text-align:left;background:none;border:0;padding:10px 16px;color:var(--fg);cursor:pointer}
+.kpi-fase-item:hover{background:var(--surface2)}
+.kf-nom{grid-area:nom;overflow-wrap:anywhere}
+.kf-ot{font:600 12px var(--f-mono);color:var(--muted);margin-right:4px}
+.kf-sub{grid-area:sub;font-size:12px;color:var(--muted)}
+.kf-monto{grid-area:monto;align-self:center;font-variant-numeric:tabular-nums;font-weight:600}
+.kpi-fase-vacio{padding:14px 16px;color:var(--muted);font-size:13px}
+
+/* Aviso de proyectos sin monto dentro de cada fase KPI */
+.kpi-fase-aviso{border-top:1px solid var(--line);background:var(--warn-soft)}
+.kf-aviso-h{display:flex;align-items:center;gap:6px;padding:10px 16px 4px;font-weight:600;color:var(--warn)}
+.kf-aviso-txt{padding:0 16px 10px;margin:0;font-size:12px;color:var(--muted)}
+.kpi-fase-aviso .kpi-fase-list{background:var(--surface)}
+.kpi-fase-item.sin-dinero .kf-nom{color:var(--fg)}
+.kf-falta{color:var(--warn);font-weight:600}

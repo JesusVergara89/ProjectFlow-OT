@@ -94,7 +94,7 @@ export default function Kpis({ items, soloDetenidos, onToggleDetenidos, onVerAnt
     <div className="banda-inferior">
       {historial.length > 0 && (
         <section className="cierres-hist" aria-label="Dinero de meses anteriores">
-          <h3>Cierres de meses anteriores <span>(foto congelada al cambiar de mes)</span></h3>
+          <h3>Cierres de meses anteriores</h3>
           <div className="cierres-row">
             {historial.map(h => (
               <div className="cierre" key={h.mes} title={nombreMes(h.mes)}>

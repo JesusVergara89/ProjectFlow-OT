@@ -69,7 +69,7 @@ export function totalesDelMes(lista, mes) {
     if (faseDinero(p) === "cobrado" && mesCobrado(p) === mes) {
       const m = montoCobrado(p);
       if (m > 0) { t.cobrado += m; t.cobradoNum++; }
-    } else if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === mes) {
+    } else if (faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0) === mes) {
       // El anticipo SIEMPRE cuenta como anticipo (exista pago o no).
       t.anticipos += (+p.anticipo || 0); t.anticipoNum++;
       // Solo si está pagado suma al dinero que realmente entró.
@@ -97,7 +97,7 @@ export function mesesConDinero(lista) {
   for (const p of lista) {
     const mc = mesCobrado(p);
     if (mc) set.add(mc);
-    if (faseDinero(p) && faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0)) {
+    if (faseDinero(p) !== "cobrado" && (+p.anticipo || 0) > 0 && (+p.anticipoMes || 0)) {
       set.add(+p.anticipoMes);
     }
   }

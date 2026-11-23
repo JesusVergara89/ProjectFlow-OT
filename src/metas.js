@@ -64,7 +64,7 @@ export function ritmoMeta(lista, opciones = {}) {
         porDia[diaEnMes(isoCobro(p), ym) || sinDia] += monto;
         totalReal += monto;
       }
-    } else if (fase && fase !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0) === ym) {
+    } else if (fase !== "cobrado" && anticipoCobrado(p) > 0 && (+p.anticipoMes || 0) === ym) {
       const a = anticipoCobrado(p);
       porDia[diaEnMes(isoAnticipo(p, ym), ym) || sinDia] += a;
       totalReal += a;

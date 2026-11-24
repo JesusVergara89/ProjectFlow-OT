@@ -906,3 +906,22 @@ td.ok{color:var(--ok)}td.bajo{color:var(--crit)}
 .kpi-fase-aviso .kpi-fase-list{background:var(--surface)}
 .kpi-fase-item.sin-dinero .kf-nom{color:var(--fg)}
 .kf-falta{color:var(--warn);font-weight:600}
+
+/* "En línea": botón de cada persona (antes era div) */
+.en-linea-item{background:none;border:0;padding:0;cursor:pointer;font:inherit}
+.en-linea-item:hover .en-linea-nom{color:var(--accent)}
+.en-linea-item:hover .en-linea-ava{transform:scale(1.06);transition:transform .12s}
+
+/* Modal de perfil en grande (solo para quien está en línea) */
+.en-linea-modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.en-linea-card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 28px;max-width:320px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.en-linea-cerrar{position:absolute;top:8px;right:10px;background:none;border:0;font-size:18px;line-height:1;color:var(--muted);cursor:pointer;padding:4px}
+.en-linea-cerrar:hover{color:var(--fg)}
+.en-linea-foto{display:flex;justify-content:center}
+.en-linea-info{text-align:center}
+.en-linea-info h4{margin:2px 0 6px;font:600 18px var(--f-body);color:var(--fg)}
+.en-linea-ok{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#16a34a;text-transform:uppercase;letter-spacing:.04em}
+.en-linea-ok-pt{width:9px;height:9px;border-radius:50%;background:#22c55e}
+.en-linea-estado{margin:0;font-size:14px;color:var(--fg);display:flex;align-items:center;justify-content:center;gap:8px}
+.en-linea-estado .ee-emoji{font-size:26px}
+.en-linea-estado.sin{color:var(--muted)}
